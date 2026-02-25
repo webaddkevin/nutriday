@@ -1,0 +1,18 @@
+{
+  "name": "nutriday",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nutriday Monorepo - 营养管理平台",
+  "scripts": {
+    "dev:mini": "pnpm --filter miniprogram dev",
+    "dev:server": "pnpm --filter server start:dev",
+    "dev": "pnpm run dev:mini & pnpm run dev:server",
+    "build:mini": "pnpm --filter miniprogram build",
+    "build:server": "pnpm --filter server build",
+    "type-check": "pnpm -r exec tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

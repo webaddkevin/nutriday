@@ -1,0 +1,16 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@nutriday/shared-types": ["../../packages/shared-types/src"],
+      "@nutriday/shared-utils": ["../../packages/shared-utils/src"],
+      "@nutriday/shared-constants": ["../../packages/shared-constants/src"]
+    },
+    "lib": ["esnext", "dom"],
+    "types": ["@dcloudio/types"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
+}

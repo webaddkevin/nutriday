@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@nutriday/shared-types": ["packages/shared-types/src"],
+      "@nutriday/shared-utils": ["packages/shared-utils/src"],
+      "@nutriday/shared-constants": ["packages/shared-constants/src"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}
