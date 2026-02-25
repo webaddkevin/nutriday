@@ -1,0 +1,11 @@
+node_modules
+dist
+.output
+.nuxt
+coverage
+*.min.*
+pnpm-lock.yaml
+
+# uni-app 构建产物
+apps/miniprogram/dist
+unpackage
