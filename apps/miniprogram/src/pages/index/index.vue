@@ -31,7 +31,7 @@
             :color="item.color"
           />
           <text class="item-label">{{ item.label }}</text>
-          <text class="item-value">{{ item.value }}g</text>
+          <text class="item-value" :style="{ color: item.color }">{{ item.value }}g</text>
         </view>
       </view>
     </view>
@@ -100,15 +100,21 @@ const caloriePercent = computed(() =>
   Math.min(100, (consumed.value.calories / targetCalories.value) * 100),
 );
 
+const colors = {
+  protein: '#f59e0b', // Amber 500
+  carbs: '#3b82f6', // Blue 500
+  fat: '#ef4444', // Red 500
+};
+
 const caloriesColor = computed(() => {
-  if (caloriePercent.value > 100) return '#E74C3C';
-  return '#2ECC71';
+  if (caloriePercent.value > 100) return colors.fat;
+  return '#00B171'; // 使用新的品牌翠绿色
 });
 
 const nutrientStats = computed(() => [
-  { label: '蛋白质', value: consumed.value.protein, percent: 45, color: '#E67E22' },
-  { label: '碳水', value: consumed.value.carbs, percent: 60, color: '#3498DB' },
-  { label: '脂肪', value: consumed.value.fat, percent: 30, color: '#E74C3C' },
+  { label: '蛋白质', value: consumed.value.protein, percent: 45, color: colors.protein },
+  { label: '碳水', value: consumed.value.carbs, percent: 60, color: colors.carbs },
+  { label: '脂肪', value: consumed.value.fat, percent: 30, color: colors.fat },
 ]);
 
 onLoad(() => {
@@ -124,9 +130,11 @@ onLoad(() => {
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
-  background-color: #000;
+  /* 使用在 uni.scss 中统一定义的明亮高级背景色 */
+  background-color: $nutri-dark;
   padding: 40rpx;
-  color: #fff;
+  /* 主文字变为深蓝色 */
+  color: $uni-text-color;
 }
 
 .header {
@@ -138,7 +146,7 @@ onLoad(() => {
   }
   .date {
     font-size: 28rpx;
-    color: rgba(255, 255, 255, 0.6);
+    color: $uni-text-color-grey;
   }
 }
 
@@ -153,18 +161,20 @@ onLoad(() => {
     padding: 20rpx 0;
 
     .ring-label {
-      font-size: 24rpx;
-      color: rgba(255, 255, 255, 0.6);
+      font-size: 26rpx;
+      color: $uni-text-color; /* 加深为最高对比度的主颜色 */
+      font-weight: 500;
     }
     .ring-value {
-      font-size: 64rpx;
-      font-weight: 700;
+      font-size: 72rpx;
+      font-weight: 800;
       line-height: 1;
-      margin: 10rpx 0;
+      margin: 12rpx 0;
     }
     .ring-unit {
       font-size: 24rpx;
-      color: rgba(255, 255, 255, 0.4);
+      color: $uni-text-color; /* 加深为最高对比度的主颜色 */
+      font-weight: 500;
     }
   }
 
@@ -172,7 +182,7 @@ onLoad(() => {
     display: flex;
     justify-content: space-around;
     margin-top: 40rpx;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
     padding-top: 40rpx;
 
     .stat-item {
@@ -180,13 +190,14 @@ onLoad(() => {
       flex-direction: column;
 
       .item-label {
-        font-size: 22rpx;
-        color: rgba(255, 255, 255, 0.5);
-        margin-top: 12rpx;
+        font-size: 24rpx;
+        color: $uni-text-color-grey;
+        margin-top: 16rpx;
       }
       .item-value {
-        font-size: 26rpx;
-        font-weight: 500;
+        font-size: 32rpx;
+        font-weight: 700;
+        margin-top: 8rpx;
       }
     }
   }
@@ -218,7 +229,7 @@ onLoad(() => {
     margin-right: 30rpx;
     width: 80rpx;
     height: 80rpx;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.03);
     border-radius: 20rpx;
     @include flex-center;
   }
@@ -232,7 +243,7 @@ onLoad(() => {
     }
     .meal-status {
       font-size: 24rpx;
-      color: rgba(255, 255, 255, 0.4);
+      color: $uni-text-color-placeholder;
     }
   }
 
@@ -242,12 +253,8 @@ onLoad(() => {
     border-radius: 30rpx;
     background: $nutri-primary;
     @include flex-center;
-    font-size: 40rpx;
+    color: white;
     font-weight: 300;
   }
-}
-
-.shadow-glass {
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 </style>

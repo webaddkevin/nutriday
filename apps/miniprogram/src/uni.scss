@@ -15,38 +15,38 @@
 /* 颜色变量 */
 
 /* 行为相关颜色 */
-$uni-color-primary: #2ecc71; // Nutriday Green
-$uni-color-success: #2ecc71;
-$uni-color-warning: #f39c12;
-$uni-color-error: #e74c3c;
+$uni-color-primary: #00b171; // 品牌升级：高饱和生机的翠绿色
+$uni-color-success: #00b171;
+$uni-color-warning: #f59e0b; // Amber 500
+$uni-color-error: #ef4444; // Red 500
 
 /* Nutriday 特定颜色 */
-$nutri-primary: #2ecc71;
-$nutri-secondary: #27ae60;
-$nutri-dark: #1a1a1a;
-$nutri-card-bg: rgb(255 255 255 / 5%);
+$nutri-primary: #00b171;
+$nutri-secondary: #00d387; // 辅色：透亮的荧光绿
+$nutri-dark: #f0f3f6; /* 改为柔和的浅蓝灰色背景，显得透气干净 */
+$nutri-card-bg: rgb(255 255 255 / 70%); /* 浅色高透光卡片底色 */
 
-/* 营养素特定颜色 */
-$color-calories: #2ecc71;
-$color-protein: #e67e22;
-$color-carbs: #3498db;
-$color-fat: #e74c3c;
+/* 营养素特定颜色（调和饱和度适配浅色UI） */
+$color-calories: #00b171;
+$color-protein: #f59e0b;
+$color-carbs: #3b82f6; // Blue 500
+$color-fat: #ef4444; // Red 500
 
-/* 文字基本颜色 */
-$uni-text-color: #333; // 基本色
+/* 文字基本颜色 (Slate 色系重构) */
+$uni-text-color: #1e293b; // Slate 800 - 深沉高级的蓝黑色，用来做主标题色
 $uni-text-color-inverse: #fff; // 反色
-$uni-text-color-grey: #999; // 辅助灰色，如加载更多的提示信息
-$uni-text-color-placeholder: #808080;
-$uni-text-color-disable: #c0c0c0;
+$uni-text-color-grey: #64748b; // Slate 500 - 兼高级质感的说明字
+$uni-text-color-placeholder: #94a3b8; // Slate 400 - 暗提示
+$uni-text-color-disable: #cbd5e1; // Slate 300 - 禁用态
 
 /* 背景颜色 */
 $uni-bg-color: #fff;
-$uni-bg-color-grey: #f8f8f8;
-$uni-bg-color-hover: #f1f1f1; // 点击状态颜色
-$uni-bg-color-mask: rgb(0 0 0 / 40%); // 遮罩颜色
+$uni-bg-color-grey: #f8fafc; // Slate 50
+$uni-bg-color-hover: #f1f5f9; // Slate 100
+$uni-bg-color-mask: rgb(15 23 42 / 40%); // Slate 900 masking
 
 /* 边框颜色 */
-$uni-border-color: #c8c7cc;
+$uni-border-color: #e2e8f0; // Slate 200
 
 /* 尺寸变量 */
 
@@ -89,9 +89,10 @@ $uni-font-size-paragraph: 15px;
 
 /* Nutriday 混合宏 */
 @mixin glass-morphism {
-  background: rgb(255 255 255 / 8%);
-  border: 1px solid rgb(255 255 255 / 10%);
-  backdrop-filter: blur(10px);
+  background: rgb(255 255 255 / 65%); /* 提升白色的纯净度 */
+  border: 1px solid rgb(255 255 255 / 80%); /* 若隐若现纯白剔透边 */
+  box-shadow: 0 8px 32px rgb(31 38 135 / 5%); /* 蓝灰色极淡光晕阴影，替代死黑 */
+  backdrop-filter: blur(20px); /* 强化磨砂模糊质感 */
 }
 
 @mixin flex-center {

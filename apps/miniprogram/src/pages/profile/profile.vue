@@ -28,7 +28,7 @@
           <text class="menu-subtitle">减脂 / 增肌 / 保持健康</text>
         </view>
         <view class="menu-arrow">
-          <uni-icons type="right" size="16" color="rgba(255, 255, 255, 0.3)"></uni-icons>
+          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
         </view>
       </view>
 
@@ -40,7 +40,7 @@
           <text class="menu-subtitle">过敏原 / 身体情况信息</text>
         </view>
         <view class="menu-arrow">
-          <uni-icons type="right" size="16" color="rgba(255, 255, 255, 0.3)"></uni-icons>
+          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
         </view>
       </view>
 
@@ -52,7 +52,7 @@
           <text class="menu-subtitle">饮食趋势与身体变化</text>
         </view>
         <view class="menu-arrow">
-          <uni-icons type="right" size="16" color="rgba(255, 255, 255, 0.3)"></uni-icons>
+          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
         </view>
       </view>
     </view>
@@ -77,14 +77,16 @@ onShow(() => {
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
-  background-color: #000;
+  /* 使用全局定义的浅亮色背景，而不是用纯黑 */
+  background-color: $nutri-dark;
   padding: 40rpx;
-  color: #fff;
+  /* 基础文字颜色改为深灰色，更高级 */
+  color: $uni-text-color;
 }
 
 .shadow-glass {
   @include glass-morphism;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  /* 移除了强烈的黑阴影，依赖 mixin 自带的柔和蓝灰光晕 */
 }
 
 .header {
@@ -98,15 +100,16 @@ onShow(() => {
     width: 120rpx;
     height: 120rpx;
     border-radius: 60rpx;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, rgba(200, 200, 200, 0.1), rgba(255, 255, 255, 0.6));
+    border: 1px solid rgba(255, 255, 255, 0.5);
     @include flex-center;
     margin-right: 30rpx;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
     .avatar-text {
       font-size: 50rpx;
       font-weight: 700;
-      color: #fff;
+      color: $nutri-primary;
     }
   }
 
@@ -122,16 +125,16 @@ onShow(() => {
 
     .user-desc {
       font-size: 24rpx;
-      color: rgba(255, 255, 255, 0.5);
+      color: $uni-text-color-grey;
     }
   }
 
   .edit-btn {
     font-size: 28rpx;
-    color: rgba(255, 255, 255, 0.6);
+    color: $uni-text-color-grey;
     padding: 10rpx 20rpx;
     border-radius: 30rpx;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.04);
   }
 }
 
@@ -181,13 +184,13 @@ onShow(() => {
 
     .menu-subtitle {
       font-size: 24rpx;
-      color: rgba(255, 255, 255, 0.4);
+      color: $uni-text-color-placeholder;
     }
   }
 
   .menu-arrow {
     font-size: 32rpx;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(0, 0, 0, 0.2);
   }
 }
 </style>
