@@ -116,6 +116,12 @@ importers:
       '@dcloudio/uni-quickapp-webview':
         specifier: 3.0.0-4080720251210001
         version: 3.0.0-4080720251210001(postcss@8.5.6)(rollup@4.59.0)(ts-node@10.9.2(@types/node@22.19.11)(typescript@5.9.3))(vue@3.5.29(typescript@5.9.3))
+      '@dcloudio/uni-ui':
+        specifier: ^1.5.11
+        version: 1.5.11
+      '@escook/request-miniprogram':
+        specifier: ^0.2.1
+        version: 0.2.1
       '@nutriday/shared-constants':
         specifier: workspace:*
         version: link:../../packages/shared-constants
@@ -1230,6 +1236,9 @@ packages:
   '@dcloudio/uni-stat@3.0.0-4080720251210001':
     resolution: {integrity: sha512-r0lnxnVSTZZ1/j0IcqnotkkvXLgwqcX8i76oTEf9g+MJgBFi9Ay0ZRCoGtPoLu2+FbHOb86K1JeI4KR3+wYhDg==}
 
+  '@dcloudio/uni-ui@1.5.11':
+    resolution: {integrity: sha512-DBtk046ofmeFd82zRI7d89SoEwrAxYzUN3WVPm1DIBkpLPG5F5QDNkHMnZGu2wNrMEmGBjBpUh3vqEY1L3jaMw==}
+
   '@dcloudio/vite-plugin-uni@3.0.0-4080720251210001':
     resolution: {integrity: sha512-WmxQxETumZ9diyua5XT28Y80lVVSqh8bkgwVyZB5z5aVn/sYDTFdVdjWBK0qiU1Ah6LtGCSaGCp7RSwzTKmKog==}
     engines: {node: ^14.18.0 || >=16.0.0}
@@ -1383,6 +1392,9 @@ packages:
     engines: {node: '>=12'}
     cpu: [x64]
     os: [win32]
+
+  '@escook/request-miniprogram@0.2.1':
+    resolution: {integrity: sha512-ueWV5YsaEm/ycQZuEjMiA88GFMhfBQSjy9GrP9omy4xAQajkGTbYIlnhzsDfWzRPmRC1fKmAiKMrCVcgS+SHcQ==}
 
   '@eslint-community/eslint-utils@4.9.1':
     resolution: {integrity: sha512-phrYmNiYppR7znFEdqgfWHXR6NCkZEK7hwWDHZUjit/2/U0r6XvkDl0SYnoM51Hq7FhCGdLDT6zxCCOY1hexsQ==}
@@ -8045,6 +8057,8 @@ snapshots:
       - ts-node
       - vue
 
+  '@dcloudio/uni-ui@1.5.11': {}
+
   '@dcloudio/vite-plugin-uni@3.0.0-4080720251210001(postcss@8.5.6)(rollup@4.59.0)(ts-node@10.9.2(@types/node@22.19.11)(typescript@5.9.3))(vite@5.2.8(@types/node@22.19.11)(sass@1.97.3)(terser@5.46.0))(vue@3.5.29(typescript@5.9.3))':
     dependencies:
       '@babel/core': 7.25.2
@@ -8167,6 +8181,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.20.2':
     optional: true
+
+  '@escook/request-miniprogram@0.2.1': {}
 
   '@eslint-community/eslint-utils@4.9.1(eslint@9.39.3(jiti@2.6.1))':
     dependencies:

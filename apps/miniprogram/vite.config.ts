@@ -21,4 +21,8 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    // 强制将字体等静态资源转换为 base64 格式，避免小程序中无法加载本地静态资源导致方块（uniicons.ttf 约 36KB）
+    assetsInlineLimit: 100000,
+  },
 });
