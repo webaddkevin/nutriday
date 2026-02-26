@@ -9,11 +9,11 @@
  * @returns 格式化后的日期字符串
  */
 export function formatDate(date: Date | number): string {
-  const d = new Date(date)
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -22,8 +22,36 @@ export function formatDate(date: Date | number): string {
  * @returns 是否为空
  */
 export function isEmpty(value: unknown): boolean {
-  if (value === null || value === undefined) return true
-  if (typeof value === 'string') return value.trim().length === 0
-  if (Array.isArray(value)) return value.length === 0
-  return false
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return value.trim().length === 0;
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
+}
+
+import { Gender, ActivityLevel } from '@nutriday/shared-types';
+
+/**
+ * 计算基础代谢率 (BMR) - 使用 Mifflin-St Jeor 公式
+ * @param gender - 性别
+ * @param age - 年龄
+ * @param height - 身高 (cm)
+ * @param weight - 体重 (kg)
+ * @returns BMR (kcal/day)
+ */
+export function calculateBMR(gender: Gender, age: number, height: number, weight: number): number {
+  if (gender === Gender.MALE) {
+    return 10 * weight + 6.25 * height - 5 * age + 5;
+  } else {
+    return 10 * weight + 6.25 * height - 5 * age - 161;
+  }
+}
+
+/**
+ * 计算每日总能量消耗 (TDEE)
+ * @param bmr - 基础代谢率
+ * @param activityLevel - 活动水平系数
+ * @returns TDEE (kcal/day)
+ */
+export function calculateTDEE(bmr: number, activityLevel: ActivityLevel): number {
+  return Math.round(bmr * activityLevel);
 }
