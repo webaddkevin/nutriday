@@ -10,11 +10,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 示例模型：用户
+// 用户模型
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int          @id @default(autoincrement())
+  email     String       @unique
   name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  nickname  String? // 用户昵称
+  avatarUrl String? // 用户头像 URL
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  profile   UserProfile?
+}
+
+// 用户画像（onboarding 信息）
+model UserProfile {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  gender        String // male / female
+  age           Int
+  height        Float // 身高 cm
+  weight        Float // 体重 kg
+  goal          String // HealthGoal 枚举值
+  tags          String   @default("[]") // JSON 数组存储 SpecialTag[]
+  activityLevel Float // ActivityLevel 数值
+  bmr           Float?
+  tdee          Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
 }

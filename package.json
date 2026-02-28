@@ -6,7 +6,7 @@
   "scripts": {
     "dev:mini": "pnpm --filter miniprogram dev",
     "dev:server": "pnpm --filter server start:dev",
-    "dev": "pnpm run dev:mini & pnpm run dev:server",
+    "dev": "concurrently \"pnpm run dev:mini\" \"pnpm run dev:server\"",
     "build:mini": "pnpm --filter miniprogram build",
     "build:server": "pnpm --filter server build",
     "type-check": "pnpm -r exec tsc --noEmit",
@@ -44,6 +44,7 @@
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
     "@eslint/js": "^9.39.3",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vue": "^10.8.0",

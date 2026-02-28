@@ -132,6 +132,7 @@
 import { ref, computed, reactive } from 'vue';
 import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
 import { Gender, HealthGoal, SpecialTag, ActivityLevel } from '@nutriday/shared-types';
+import { saveProfile } from '@/api/profile-api';
 
 const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight || 0);
 const currentStep = ref(1);
@@ -197,13 +198,33 @@ const prevStep = () => {
   if (currentStep.value > 1) currentStep.value--;
 };
 
-const finish = () => {
-  // 持久化数据
-  uni.setStorageSync('user_profile', {
+const finish = async () => {
+  // 本地持久化（兜底）
+  const profileData = {
     ...profile,
     bmr: bmr.value,
     tdee: tdee.value,
-  });
+  };
+  uni.setStorageSync('user_profile', profileData);
+
+  // 调用后端接口保存用户画像
+  try {
+    await saveProfile({
+      userId: 1, // TODO: 接入用户登录后替换为真实用户 ID
+      gender: profile.gender,
+      age: Number(profile.age),
+      height: Number(profile.height),
+      weight: Number(profile.weight),
+      goal: profile.goal,
+      tags: profile.tags,
+      activityLevel: profile.activityLevel,
+      bmr: bmr.value,
+      tdee: tdee.value,
+    });
+  } catch (e) {
+    console.warn('保存用户画像到服务器失败：', e);
+  }
+
   uni.reLaunch({
     url: '/pages/index/index',
   });

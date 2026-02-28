@@ -67,6 +67,8 @@ export enum ActivityLevel {
 /** 用户画像 */
 export interface UserProfile {
   name?: string;
+  nickname?: string;
+  avatarUrl?: string;
   gender: Gender;
   age: number;
   height: number; // cm

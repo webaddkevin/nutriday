@@ -1,4 +1,5 @@
 ---
+trigger: always_on
 description: 代码基础架构
 ---
 
@@ -22,4 +23,4 @@ uni-app
 
 nestjs
 
-## 数据库mysql
+## 数据库sqlite
