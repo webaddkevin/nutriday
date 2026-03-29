@@ -72,6 +72,8 @@ model Food {
   servingSize Float     @default(100)
   unit        String    @default("g")
   imageUrl    String?
+  barcode     String?   @unique  // 条形码
+  brand       String?   // 品牌
   source      String    @default("custom")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -80,6 +82,7 @@ model Food {
 
   @@index([name])
   @@index([category])
+  @@index([barcode])
 }
 
 // 饮食记录

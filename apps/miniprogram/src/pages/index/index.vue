@@ -78,6 +78,18 @@
           <uni-icons type="right" size="20" color="#fff"></uni-icons>
         </view>
       </view>
+
+      <!-- 扫码入口 -->
+      <view class="scan-card" @tap="goToScan">
+        <view class="scan-icon">📷</view>
+        <view class="scan-content">
+          <text class="scan-title">扫码识别</text>
+          <text class="scan-desc">扫描食品条码，快速获取营养信息</text>
+        </view>
+        <view class="scan-arrow">
+          <uni-icons type="right" size="20" color="#4caf50"></uni-icons>
+        </view>
+      </view>
     </view>
   </view>
 </template>
@@ -223,6 +235,10 @@ function goToRecommendation() {
   uni.navigateTo({
     url: '/pages/recommendation/recommendation',
   });
+}
+
+function goToScan() {
+  uni.navigateTo({ url: '/pages/scan/scan' });
 }
 </script>
 
@@ -408,6 +424,45 @@ function goToRecommendation() {
       width: 56rpx;
       height: 56rpx;
       background: rgba(255, 255, 255, 0.2);
+      border-radius: 28rpx;
+      @include flex-center;
+    }
+  }
+
+  .scan-card {
+    background: #fff;
+    border-radius: 30rpx;
+    padding: 36rpx;
+    display: flex;
+    align-items: center;
+    margin-top: 24rpx;
+
+    .scan-icon {
+      font-size: 56rpx;
+      margin-right: 24rpx;
+    }
+
+    .scan-content {
+      flex: 1;
+
+      .scan-title {
+        display: block;
+        font-size: 32rpx;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8rpx;
+      }
+
+      .scan-desc {
+        font-size: 24rpx;
+        color: #999;
+      }
+    }
+
+    .scan-arrow {
+      width: 56rpx;
+      height: 56rpx;
+      background: rgba(76, 175, 80, 0.1);
       border-radius: 28rpx;
       @include flex-center;
     }

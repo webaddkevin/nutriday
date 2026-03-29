@@ -77,6 +77,12 @@
       "style": {
         "navigationBarTitleText": "食物收藏"
       }
+    },
+    {
+      "path": "pages/scan/scan",
+      "style": {
+        "navigationBarTitleText": "扫码识别"
+      }
     }
   ],
   "subPackages": [

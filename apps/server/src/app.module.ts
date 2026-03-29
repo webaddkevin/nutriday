@@ -11,6 +11,7 @@ import { WaterLogModule } from './water-log/water-log.module';
 import { ShoppingModule } from './shopping/shopping.module';
 import { MealPlanModule } from './meal-plan/meal-plan.module';
 import { FoodFavoriteModule } from './food-favorite/food-favorite.module';
+import { BarcodeModule } from './barcode/barcode.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { FoodFavoriteModule } from './food-favorite/food-favorite.module';
     ShoppingModule,
     MealPlanModule,
     FoodFavoriteModule,
+    BarcodeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
