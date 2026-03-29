@@ -50,4 +50,19 @@ export class SaveProfileDto {
 
   /** 目标每日热量 */
   targetCalories?: number;
+
+  /** 过敏原数组 */
+  allergies?: string[];
+
+  /** 慢性疾病数组 */
+  diseases?: string[];
+
+  /** 用药情况数组 */
+  medications?: string[];
+
+  /** 饮食限制数组 */
+  dietaryRestrictions?: string[];
+
+  /** 其他健康备注 */
+  healthNotes?: string;
 }

@@ -83,6 +83,12 @@ export interface UserProfile {
   targetDate?: string;
   weeklyGoal?: number;
   targetCalories?: number;
+  // 健康档案
+  allergies: string[];
+  diseases: string[];
+  medications: string[];
+  dietaryRestrictions: string[];
+  healthNotes?: string;
 }
 
 /** 目标进度 */

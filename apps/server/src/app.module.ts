@@ -7,6 +7,7 @@ import { FoodModule } from './food/food.module';
 import { MealLogModule } from './meal-log/meal-log.module';
 import { RecommendationModule } from './recommendation/recommendation.module';
 import { WeightLogModule } from './weight-log/weight-log.module';
+import { WaterLogModule } from './water-log/water-log.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { WeightLogModule } from './weight-log/weight-log.module';
     MealLogModule,
     RecommendationModule,
     WeightLogModule,
+    WaterLogModule,
   ],
   controllers: [AppController],
   providers: [AppService],

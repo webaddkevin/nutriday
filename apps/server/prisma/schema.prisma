@@ -24,6 +24,7 @@ model User {
   shoppingItems ShoppingItem[]
   mealPlans     MealPlan[]
   weightLogs    WeightLog[]
+  waterLogs     WaterLog[]
 }
 
 // 用户画像（onboarding 信息）
@@ -44,6 +45,12 @@ model UserProfile {
   targetDate    String?
   weeklyGoal    Float?   // 每周目标变化 (kg)
   targetCalories Float?  // 目标每日热量
+  // 健康档案
+  allergies     String   @default("[]")  // 过敏原 JSON 数组
+  diseases      String   @default("[]")  // 慢性疾病 JSON 数组
+  medications   String   @default("[]")  // 用药情况 JSON 数组
+  dietaryRestrictions String @default("[]") // 饮食限制 JSON 数组
+  healthNotes   String?  // 其他健康备注
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   user          User     @relation(fields: [userId], references: [id])
@@ -133,6 +140,21 @@ model WeightLog {
   userId    Int
   date      String
   weight    Float
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date]) // 每天只能记录一次
+  @@index([userId, date])
+}
+
+// 饮水记录
+model WaterLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  date      String
+  amount    Float    // 饮水量 (ml)
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -87,11 +87,22 @@
         </view>
       </view>
 
-      <view class="menu-item shadow-glass">
+      <view class="menu-item shadow-glass" @tap="goToHealth">
         <view class="menu-icon bg-green">📋</view>
         <view class="menu-content">
           <text class="menu-title">健康档案</text>
           <text class="menu-subtitle">过敏原 / 身体情况信息</text>
+        </view>
+        <view class="menu-arrow">
+          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
+        </view>
+      </view>
+
+      <view class="menu-item shadow-glass" @tap="goToWater">
+        <view class="menu-icon bg-cyan">💧</view>
+        <view class="menu-content">
+          <text class="menu-title">饮水记录</text>
+          <text class="menu-subtitle">每日饮水量追踪</text>
         </view>
         <view class="menu-arrow">
           <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
@@ -218,6 +229,24 @@ const goToWeight = () => {
 const goToGoal = () => {
   uni.navigateTo({
     url: '/pages/goal/goal',
+  });
+};
+
+/**
+ * 跳转到健康档案页
+ */
+const goToHealth = () => {
+  uni.navigateTo({
+    url: '/pages/health/health',
+  });
+};
+
+/**
+ * 跳转到饮水记录页
+ */
+const goToWater = () => {
+  uni.navigateTo({
+    url: '/pages/water/water',
   });
 };
 
@@ -444,6 +473,10 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
     &.bg-teal {
       background: rgba(26, 188, 156, 0.1);
       color: #1abc9c;
+    }
+    &.bg-cyan {
+      background: rgba(0, 188, 212, 0.1);
+      color: #00bcd4;
     }
   }
 

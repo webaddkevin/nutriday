@@ -14,7 +14,18 @@ export class ProfileService {
    * 保存用户画像（存在则更新，不存在则创建）
    */
   async saveProfile(dto: SaveProfileDto) {
-    const { userId, tags, nickname, avatarUrl, ...rest } = dto;
+    const {
+      userId,
+      tags,
+      nickname,
+      avatarUrl,
+      allergies,
+      diseases,
+      medications,
+      dietaryRestrictions,
+      healthNotes,
+      ...rest
+    } = dto;
 
     // 确保用户记录存在，并保存昵称和头像
     await this.prisma.user.upsert({
@@ -31,7 +42,7 @@ export class ProfileService {
       },
     });
 
-    return this.prisma.userProfile.upsert({
+    const profile = await this.prisma.userProfile.upsert({
       where: { userId },
       create: {
         userId,
@@ -50,6 +61,11 @@ export class ProfileService {
         targetCalories: rest.targetCalories
           ? Number(rest.targetCalories)
           : null,
+        allergies: JSON.stringify(allergies ?? []),
+        diseases: JSON.stringify(diseases ?? []),
+        medications: JSON.stringify(medications ?? []),
+        dietaryRestrictions: JSON.stringify(dietaryRestrictions ?? []),
+        healthNotes: healthNotes || null,
       },
       update: {
         gender: rest.gender,
@@ -81,8 +97,32 @@ export class ProfileService {
               ? Number(rest.targetCalories)
               : null
             : undefined,
+        allergies:
+          allergies !== undefined ? JSON.stringify(allergies ?? []) : undefined,
+        diseases:
+          diseases !== undefined ? JSON.stringify(diseases ?? []) : undefined,
+        medications:
+          medications !== undefined
+            ? JSON.stringify(medications ?? [])
+            : undefined,
+        dietaryRestrictions:
+          dietaryRestrictions !== undefined
+            ? JSON.stringify(dietaryRestrictions ?? [])
+            : undefined,
+        healthNotes:
+          healthNotes !== undefined ? healthNotes || null : undefined,
       },
     });
+
+    // 返回解析后的数据
+    return {
+      ...profile,
+      tags: JSON.parse(profile.tags),
+      allergies: JSON.parse(profile.allergies || '[]'),
+      diseases: JSON.parse(profile.diseases || '[]'),
+      medications: JSON.parse(profile.medications || '[]'),
+      dietaryRestrictions: JSON.parse(profile.dietaryRestrictions || '[]'),
+    };
   }
 
   /**
@@ -100,6 +140,10 @@ export class ProfileService {
     return {
       ...rest,
       tags: JSON.parse(rest.tags),
+      allergies: JSON.parse(rest.allergies || '[]'),
+      diseases: JSON.parse(rest.diseases || '[]'),
+      medications: JSON.parse(rest.medications || '[]'),
+      dietaryRestrictions: JSON.parse(rest.dietaryRestrictions || '[]'),
       nickname: user?.nickname || null,
       avatarUrl: user?.avatarUrl || null,
     };

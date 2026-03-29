@@ -44,6 +44,11 @@ export interface SaveProfileParams {
   targetDate?: string;
   weeklyGoal?: number;
   targetCalories?: number;
+  allergies?: string[];
+  diseases?: string[];
+  medications?: string[];
+  dietaryRestrictions?: string[];
+  healthNotes?: string;
 }
 
 /**

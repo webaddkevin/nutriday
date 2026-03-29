@@ -59,6 +59,18 @@
       "style": {
         "navigationBarTitleText": "个人目标"
       }
+    },
+    {
+      "path": "pages/health/health",
+      "style": {
+        "navigationBarTitleText": "健康档案"
+      }
+    },
+    {
+      "path": "pages/water/water",
+      "style": {
+        "navigationBarTitleText": "饮水记录"
+      }
     }
   ],
   "subPackages": [
