@@ -54,7 +54,29 @@
 
     <!-- Menu Cards -->
     <view class="menu-list">
-      <view class="menu-item shadow-glass">
+      <view class="menu-item shadow-glass" @tap="goToStats">
+        <view class="menu-icon bg-purple">📊</view>
+        <view class="menu-content">
+          <text class="menu-title">数据统计</text>
+          <text class="menu-subtitle">热量趋势、营养分析</text>
+        </view>
+        <view class="menu-arrow">
+          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
+        </view>
+      </view>
+
+      <view class="menu-item shadow-glass" @tap="goToWeight">
+        <view class="menu-icon bg-teal">⚖️</view>
+        <view class="menu-content">
+          <text class="menu-title">体重记录</text>
+          <text class="menu-subtitle">追踪体重变化趋势</text>
+        </view>
+        <view class="menu-arrow">
+          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
+        </view>
+      </view>
+
+      <view class="menu-item shadow-glass" @tap="goToGoal">
         <view class="menu-icon bg-blue">🎯</view>
         <view class="menu-content">
           <text class="menu-title">个人目标</text>
@@ -77,7 +99,7 @@
       </view>
 
       <view class="menu-item shadow-glass">
-        <view class="menu-icon bg-orange">📊</view>
+        <view class="menu-icon bg-orange">📈</view>
         <view class="menu-content">
           <text class="menu-title">历史分析报告</text>
           <text class="menu-subtitle">饮食趋势与身体变化</text>
@@ -169,6 +191,33 @@ const onNicknameBlur = (e: any) => {
 const goToEditBasicInfo = () => {
   uni.navigateTo({
     url: '/pages/onboarding/onboarding',
+  });
+};
+
+/**
+ * 跳转到数据统计页
+ */
+const goToStats = () => {
+  uni.navigateTo({
+    url: '/pages/stats/stats',
+  });
+};
+
+/**
+ * 跳转到体重记录页
+ */
+const goToWeight = () => {
+  uni.navigateTo({
+    url: '/pages/weight/weight',
+  });
+};
+
+/**
+ * 跳转到个人目标页
+ */
+const goToGoal = () => {
+  uni.navigateTo({
+    url: '/pages/goal/goal',
   });
 };
 
@@ -387,6 +436,14 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
     &.bg-orange {
       background: rgba(230, 126, 34, 0.1);
       color: #e67e22;
+    }
+    &.bg-purple {
+      background: rgba(155, 89, 182, 0.1);
+      color: #9b59b6;
+    }
+    &.bg-teal {
+      background: rgba(26, 188, 156, 0.1);
+      color: #1abc9c;
     }
   }
 

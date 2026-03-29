@@ -3,7 +3,7 @@
  * 提供获取和保存用户画像的统一接口
  */
 import { request } from '@/utils/request';
-import type { UserProfile } from '@nutriday/shared-types';
+import type { UserProfile, GoalProgress } from '@nutriday/shared-types';
 
 /** 后端返回的用户画像数据（包含数据库字段） */
 export interface ProfileResponse extends UserProfile {
@@ -40,6 +40,10 @@ export interface SaveProfileParams {
   tdee?: number;
   nickname?: string;
   avatarUrl?: string;
+  targetWeight?: number;
+  targetDate?: string;
+  weeklyGoal?: number;
+  targetCalories?: number;
 }
 
 /**
@@ -51,6 +55,18 @@ export async function saveProfile(data: SaveProfileParams): Promise<ProfileRespo
     url: '/profile',
     method: 'POST',
     data,
+  });
+  return res.data;
+}
+
+/**
+ * 获取目标进度
+ * @param userId 用户 ID
+ */
+export async function getGoalProgress(userId: number): Promise<GoalProgress | null> {
+  const res = await request<GoalProgress | null>({
+    url: `/profile/${userId}/goal-progress`,
+    method: 'GET',
   });
   return res.data;
 }

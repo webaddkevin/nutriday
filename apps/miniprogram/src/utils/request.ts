@@ -4,7 +4,7 @@
  */
 
 /** 服务端基础地址，开发环境使用本地地址 */
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'http://localhost:3002';
 
 interface RequestOptions {
   /** 请求路径（不含 baseURL） */

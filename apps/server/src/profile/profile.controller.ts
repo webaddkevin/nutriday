@@ -36,4 +36,14 @@ export class ProfileController {
     const profile = await this.profileService.getProfile(userId);
     return { code: 0, message: 'ok', data: profile };
   }
+
+  /**
+   * 获取目标进度
+   * GET /profile/:userId/goal-progress
+   */
+  @Get(':userId/goal-progress')
+  async getGoalProgress(@Param('userId', ParseIntPipe) userId: number) {
+    const progress = await this.profileService.getGoalProgress(userId);
+    return { code: 0, message: 'ok', data: progress };
+  }
 }

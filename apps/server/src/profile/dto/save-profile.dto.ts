@@ -38,4 +38,16 @@ export class SaveProfileDto {
 
   /** 用户头像 URL */
   avatarUrl?: string;
+
+  /** 目标体重 (kg) */
+  targetWeight?: number;
+
+  /** 目标日期 (YYYY-MM-DD) */
+  targetDate?: string;
+
+  /** 每周目标变化 (kg)，正数增重，负数减重 */
+  weeklyGoal?: number;
+
+  /** 目标每日热量 */
+  targetCalories?: number;
 }

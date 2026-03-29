@@ -40,15 +40,42 @@
     <view class="meal-section">
       <view class="section-title">今日饮食</view>
       <view class="meal-list">
-        <view v-for="meal in meals" :key="meal.name" class="meal-card">
+        <view
+          v-for="meal in mealCards"
+          :key="meal.type"
+          class="meal-card"
+          @tap="goToFoodSearch(meal.type)"
+        >
           <view class="meal-icon">{{ meal.icon }}</view>
           <view class="meal-info">
             <text class="meal-name">{{ meal.name }}</text>
-            <text class="meal-status">{{
-              meal.calories > 0 ? meal.calories + ' kcal' : '尚未记录'
-            }}</text>
+            <text class="meal-status">
+              {{ meal.calories > 0 ? meal.calories + ' kcal' : '点击记录' }}
+            </text>
+            <view v-if="meal.items.length > 0" class="meal-items">
+              <text v-for="item in meal.items.slice(0, 2)" :key="item.id" class="meal-item-tag">
+                {{ item.foodName }}
+              </text>
+              <text v-if="meal.items.length > 2" class="meal-item-more">
+                +{{ meal.items.length - 2 }}
+              </text>
+            </view>
           </view>
           <view class="meal-action">+</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- AI 推荐入口 -->
+    <view class="ai-section">
+      <view class="ai-card" @tap="goToRecommendation">
+        <view class="ai-icon">🤖</view>
+        <view class="ai-content">
+          <text class="ai-title">AI 智能推荐</text>
+          <text class="ai-desc">根据你的目标和饮食习惯，为你推荐健康餐食</text>
+        </view>
+        <view class="ai-arrow">
+          <uni-icons type="right" size="20" color="#fff"></uni-icons>
         </view>
       </view>
     </view>
@@ -57,30 +84,41 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import NutritionRing from '@/components/NutritionRing/NutritionRing.vue';
 import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
-import type { UserProfile } from '@nutriday/shared-types';
+import { getDailySummary } from '@/api/meal-log-api';
+import type { UserProfile, MealType, DailySummary } from '@nutriday/shared-types';
 
 const userProfile = ref<UserProfile | null>(null);
 const today = ref(
   new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' }),
 );
 
-// 模拟今日已摄入数据
-const consumed = ref({
-  calories: 1200,
-  protein: 45,
-  carbs: 150,
-  fat: 35,
+const todayDate = new Date().toISOString().split('T')[0];
+const dailySummary = ref<DailySummary | null>(null);
+
+const mealCards = computed(() => {
+  const meals = [
+    { type: 'breakfast' as MealType, name: '早餐', icon: '🍳' },
+    { type: 'lunch' as MealType, name: '午餐', icon: '🍲' },
+    { type: 'dinner' as MealType, name: '晚餐', icon: '🥗' },
+    { type: 'snack' as MealType, name: '加餐', icon: '🍎' },
+  ];
+
+  return meals.map((meal) => ({
+    ...meal,
+    calories: dailySummary.value?.meals[meal.type]?.calories || 0,
+    items: dailySummary.value?.meals[meal.type]?.items || [],
+  }));
 });
 
-const meals = ref([
-  { name: '早餐', icon: '🍳', calories: 450 },
-  { name: '午餐', icon: '🍲', calories: 750 },
-  { name: '晚餐', icon: '🥗', calories: 0 },
-  { name: '加餐', icon: '🍎', calories: 0 },
-]);
+const consumed = computed(() => ({
+  calories: dailySummary.value?.calories || 0,
+  protein: dailySummary.value?.protein || 0,
+  carbs: dailySummary.value?.carbs || 0,
+  fat: dailySummary.value?.fat || 0,
+}));
 
 const targetCalories = computed(() => {
   if (!userProfile.value) return 2000;
@@ -101,20 +139,42 @@ const caloriePercent = computed(() =>
 );
 
 const colors = {
-  protein: '#f59e0b', // Amber 500
-  carbs: '#3b82f6', // Blue 500
-  fat: '#ef4444', // Red 500
+  protein: '#f59e0b',
+  carbs: '#3b82f6',
+  fat: '#ef4444',
 };
 
 const caloriesColor = computed(() => {
   if (caloriePercent.value > 100) return colors.fat;
-  return '#00B171'; // 使用新的品牌翠绿色
+  return '#00B171';
 });
 
+// 目标营养素（简化计算）
+const targetNutrients = computed(() => ({
+  protein: Math.round((targetCalories.value * 0.25) / 4), // 25% 热量来自蛋白质
+  carbs: Math.round((targetCalories.value * 0.5) / 4), // 50% 热量来自碳水
+  fat: Math.round((targetCalories.value * 0.25) / 9), // 25% 热量来自脂肪
+}));
+
 const nutrientStats = computed(() => [
-  { label: '蛋白质', value: consumed.value.protein, percent: 45, color: colors.protein },
-  { label: '碳水', value: consumed.value.carbs, percent: 60, color: colors.carbs },
-  { label: '脂肪', value: consumed.value.fat, percent: 30, color: colors.fat },
+  {
+    label: '蛋白质',
+    value: consumed.value.protein,
+    percent: Math.min(100, (consumed.value.protein / targetNutrients.value.protein) * 100),
+    color: colors.protein,
+  },
+  {
+    label: '碳水',
+    value: consumed.value.carbs,
+    percent: Math.min(100, (consumed.value.carbs / targetNutrients.value.carbs) * 100),
+    color: colors.carbs,
+  },
+  {
+    label: '脂肪',
+    value: consumed.value.fat,
+    percent: Math.min(100, (consumed.value.fat / targetNutrients.value.fat) * 100),
+    color: colors.fat,
+  },
 ]);
 
 onLoad(() => {
@@ -125,15 +185,52 @@ onLoad(() => {
     userProfile.value = profile;
   }
 });
+
+onShow(async () => {
+  if (userProfile.value) {
+    await loadDailySummary();
+  }
+});
+
+async function loadDailySummary() {
+  try {
+    dailySummary.value = await getDailySummary(1, todayDate);
+  } catch (e) {
+    console.warn('获取每日汇总失败，可能服务未启动', e);
+    // 使用默认空数据
+    dailySummary.value = {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      meals: {
+        breakfast: { calories: 0, items: [] },
+        lunch: { calories: 0, items: [] },
+        dinner: { calories: 0, items: [] },
+        snack: { calories: 0, items: [] },
+      },
+    };
+  }
+}
+
+function goToFoodSearch(mealType: MealType) {
+  uni.navigateTo({
+    url: `/pages/food-search/food-search?mealType=${mealType}&date=${todayDate}`,
+  });
+}
+
+function goToRecommendation() {
+  uni.navigateTo({
+    url: '/pages/recommendation/recommendation',
+  });
+}
 </script>
 
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
-  /* 使用在 uni.scss 中统一定义的明亮高级背景色 */
   background-color: $nutri-dark;
   padding: 40rpx;
-  /* 主文字变为深蓝色 */
   color: $uni-text-color;
 }
 
@@ -162,7 +259,7 @@ onLoad(() => {
 
     .ring-label {
       font-size: 26rpx;
-      color: $uni-text-color; /* 加深为最高对比度的主颜色 */
+      color: $uni-text-color;
       font-weight: 500;
     }
     .ring-value {
@@ -173,7 +270,7 @@ onLoad(() => {
     }
     .ring-unit {
       font-size: 24rpx;
-      color: $uni-text-color; /* 加深为最高对比度的主颜色 */
+      color: $uni-text-color;
       font-weight: 500;
     }
   }
@@ -245,6 +342,23 @@ onLoad(() => {
       font-size: 24rpx;
       color: $uni-text-color-placeholder;
     }
+    .meal-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8rpx;
+      margin-top: 12rpx;
+      .meal-item-tag {
+        font-size: 20rpx;
+        color: $nutri-primary;
+        background: rgba(0, 177, 113, 0.1);
+        padding: 4rpx 12rpx;
+        border-radius: 8rpx;
+      }
+      .meal-item-more {
+        font-size: 20rpx;
+        color: $uni-text-color-grey;
+      }
+    }
   }
 
   .meal-action {
@@ -255,6 +369,48 @@ onLoad(() => {
     @include flex-center;
     color: white;
     font-weight: 300;
+  }
+}
+
+.ai-section {
+  margin-top: 40rpx;
+
+  .ai-card {
+    background: linear-gradient(135deg, #00b171 0%, #009b63 100%);
+    border-radius: 30rpx;
+    padding: 36rpx;
+    display: flex;
+    align-items: center;
+
+    .ai-icon {
+      font-size: 56rpx;
+      margin-right: 24rpx;
+    }
+
+    .ai-content {
+      flex: 1;
+
+      .ai-title {
+        display: block;
+        font-size: 32rpx;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 8rpx;
+      }
+
+      .ai-desc {
+        font-size: 24rpx;
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    .ai-arrow {
+      width: 56rpx;
+      height: 56rpx;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 28rpx;
+      @include flex-center;
+    }
   }
 }
 </style>

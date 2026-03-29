@@ -44,6 +44,12 @@ export class ProfileService {
         bmr: rest.bmr ? Number(rest.bmr) : null,
         tdee: rest.tdee ? Number(rest.tdee) : null,
         tags: JSON.stringify(tags ?? []),
+        targetWeight: rest.targetWeight ? Number(rest.targetWeight) : null,
+        targetDate: rest.targetDate || null,
+        weeklyGoal: rest.weeklyGoal ? Number(rest.weeklyGoal) : null,
+        targetCalories: rest.targetCalories
+          ? Number(rest.targetCalories)
+          : null,
       },
       update: {
         gender: rest.gender,
@@ -55,6 +61,26 @@ export class ProfileService {
         bmr: rest.bmr ? Number(rest.bmr) : null,
         tdee: rest.tdee ? Number(rest.tdee) : null,
         tags: JSON.stringify(tags ?? []),
+        targetWeight:
+          rest.targetWeight !== undefined
+            ? rest.targetWeight
+              ? Number(rest.targetWeight)
+              : null
+            : undefined,
+        targetDate:
+          rest.targetDate !== undefined ? rest.targetDate || null : undefined,
+        weeklyGoal:
+          rest.weeklyGoal !== undefined
+            ? rest.weeklyGoal
+              ? Number(rest.weeklyGoal)
+              : null
+            : undefined,
+        targetCalories:
+          rest.targetCalories !== undefined
+            ? rest.targetCalories
+              ? Number(rest.targetCalories)
+              : null
+            : undefined,
       },
     });
   }
@@ -76,6 +102,68 @@ export class ProfileService {
       tags: JSON.parse(rest.tags),
       nickname: user?.nickname || null,
       avatarUrl: user?.avatarUrl || null,
+    };
+  }
+
+  /**
+   * 获取目标进度统计
+   */
+  async getGoalProgress(userId: number) {
+    const profile = await this.prisma.userProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!profile || !profile.targetWeight) {
+      return null;
+    }
+
+    // 获取最新体重
+    const latestWeight = await this.prisma.weightLog.findFirst({
+      where: { userId },
+      orderBy: { date: 'desc' },
+    });
+
+    const currentWeight = latestWeight?.weight || profile.weight;
+    const startWeight = profile.weight;
+    const targetWeight = profile.targetWeight;
+
+    // 计算进度
+    const totalToChange = Math.abs(targetWeight - startWeight);
+    const changed = Math.abs(currentWeight - startWeight);
+    const progress =
+      totalToChange > 0 ? Math.min(changed / totalToChange, 1) : 0;
+
+    // 计算剩余天数
+    let daysRemaining = null;
+    if (profile.targetDate) {
+      const targetDate = new Date(profile.targetDate);
+      const today = new Date();
+      daysRemaining = Math.max(
+        0,
+        Math.ceil(
+          (targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      );
+    }
+
+    // 计算每周需要变化
+    let weeklyRequired = null;
+    if (daysRemaining !== null && daysRemaining > 0) {
+      const weightRemaining = targetWeight - currentWeight;
+      weeklyRequired = (weightRemaining / (daysRemaining / 7)).toFixed(2);
+    }
+
+    return {
+      goal: profile.goal,
+      startWeight,
+      currentWeight,
+      targetWeight,
+      progress: Math.round(progress * 100),
+      targetDate: profile.targetDate,
+      daysRemaining,
+      weeklyGoal: profile.weeklyGoal,
+      weeklyRequired: weeklyRequired ? Number(weeklyRequired) : null,
+      targetCalories: profile.targetCalories,
     };
   }
 }
