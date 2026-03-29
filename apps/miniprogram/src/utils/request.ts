@@ -16,9 +16,10 @@ interface RequestOptions {
 }
 
 interface ApiResult<T = unknown> {
-  code: number;
-  message: string;
+  code?: number;
+  message?: string;
   data: T;
+  success?: boolean;
 }
 
 /**
@@ -37,12 +38,46 @@ export function request<T = unknown>(options: RequestOptions): Promise<ApiResult
       },
       success: (res) => {
         const result = res.data as ApiResult<T>;
+
+        // 兼容多种返回格式：
+        // 1. { code: 0, data: T } - 标准格式
+        // 2. { success: true, data: T } - barcode 等接口格式
+        // 3. 直接返回数据 T - 部分接口直接返回数组/对象
+
+        // 格式1: code 存在且为0
         if (result.code === 0) {
           resolve(result);
-        } else {
+          return;
+        }
+
+        // 格式2: success 存在
+        if (result.success !== undefined) {
+          if (result.success) {
+            resolve(result);
+          } else {
+            uni.showToast({ title: result.message || '请求失败', icon: 'none' });
+            reject(result);
+          }
+          return;
+        }
+
+        // 格式3: 直接返回数据（没有 code/success 字段）
+        // 检查是否有 code 字段，如果没有，说明是直接返回的数据
+        if (result.code === undefined && result.success === undefined) {
+          // 直接返回的数据，包装成标准格式
+          resolve({ data: result as T });
+          return;
+        }
+
+        // 格式1但 code 不为0
+        if (result.code !== undefined && result.code !== 0) {
           uni.showToast({ title: result.message || '请求失败', icon: 'none' });
           reject(result);
+          return;
         }
+
+        // 其他情况，直接返回
+        resolve(result);
       },
       fail: (err) => {
         uni.showToast({ title: '网络异常，请稍后重试', icon: 'none' });
