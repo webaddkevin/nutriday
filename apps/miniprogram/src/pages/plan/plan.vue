@@ -1,69 +1,142 @@
 <template>
-  <view class="container">
-    <!-- 顶部 Tab 切换栏 -->
-    <view class="tab-bar">
-      <view
-        class="tab-item"
-        :class="{ active: activeTab === 'shopping' }"
-        @click="activeTab = 'shopping'"
-      >
-        <text class="tab-text">🛒 购物清单</text>
+  <view class="plan-page">
+    <!-- Tab 切换 -->
+    <view class="tabs">
+      <view :class="['tab', { active: activeTab === 'shopping' }]" @click="activeTab = 'shopping'">
+        <text class="tab-text">购物清单</text>
+        <text v-if="shoppingItems.length > 0" class="tab-count">{{ shoppingItems.length }}</text>
       </view>
-      <view
-        class="tab-item"
-        :class="{ active: activeTab === 'mealprep' }"
-        @click="activeTab = 'mealprep'"
-      >
-        <text class="tab-text">🍱 备餐计划</text>
+      <view :class="['tab', { active: activeTab === 'meal' }]" @click="activeTab = 'meal'">
+        <text class="tab-text">备餐计划</text>
       </view>
-      <!-- 滑块指示器 -->
-      <view class="tab-indicator" :class="{ right: activeTab === 'mealprep' }"></view>
     </view>
 
-    <!-- 购物清单视图 -->
-    <view v-if="activeTab === 'shopping'" class="shopping-view">
-      <view v-for="group in shoppingList" :key="group.category" class="shopping-group">
-        <view class="group-header">
-          <text class="group-icon">{{ group.icon }}</text>
-          <text class="group-title">{{ group.category }}</text>
-          <text class="group-count">{{ getCheckedCount(group) }}/{{ group.items.length }}</text>
-        </view>
-        <view class="item-list">
+    <!-- 购物清单 -->
+    <view v-show="activeTab === 'shopping'" class="content">
+      <!-- 添加按钮 -->
+      <view class="add-section">
+        <input
+          v-model="newItemName"
+          placeholder="添加购物项"
+          class="add-input"
+          @confirm="addShoppingItem"
+        />
+        <picker mode="selector" :range="categories" @change="onCategoryChange">
+          <view class="category-picker">
+            <text class="category-text">{{ selectedCategory }}</text>
+            <text class="category-arrow">▼</text>
+          </view>
+        </picker>
+        <button class="add-btn" @click="addShoppingItem">添加</button>
+      </view>
+
+      <!-- 购物列表 -->
+      <view v-if="Object.keys(groupedItems).length > 0" class="shopping-list">
+        <view v-for="(items, category) in groupedItems" :key="category" class="category-group">
+          <view class="category-header">
+            <text class="category-title">{{ category }}</text>
+            <text class="category-count">{{ items.length }} 项</text>
+          </view>
           <view
-            v-for="item in group.items"
-            :key="item.name"
-            class="shopping-item"
-            :class="{ checked: item.checked }"
-            @click="toggleItem(item)"
+            v-for="item in items"
+            :key="item.id"
+            :class="['shopping-item', { checked: item.checked }]"
           >
-            <view class="checkbox" :class="{ checked: item.checked }">
-              <text v-if="item.checked" class="check-mark">✓</text>
+            <view class="item-check" @click="toggleItem(item)">
+              <text class="check-icon">{{ item.checked ? '✅' : '⬜' }}</text>
             </view>
-            <view class="item-info">
+            <view class="item-content">
               <text class="item-name">{{ item.name }}</text>
-              <text class="item-amount">{{ item.amount }}</text>
+              <text v-if="item.amount" class="item-amount">{{ item.amount }}</text>
+            </view>
+            <view class="item-actions">
+              <text class="delete-btn" @click="deleteItem(item)">删除</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 空状态 -->
+      <view v-else class="empty-state">
+        <text class="empty-icon">🛒</text>
+        <text class="empty-text">购物清单为空</text>
+        <text class="empty-hint">添加需要购买的食材吧</text>
+      </view>
+
+      <!-- 清空按钮 -->
+      <view v-if="shoppingItems.length > 0" class="clear-section">
+        <button class="clear-btn" @click="clearChecked">清空已勾选</button>
+      </view>
+    </view>
+
+    <!-- 备餐计划 -->
+    <view v-show="activeTab === 'meal'" class="content">
+      <!-- 日期选择 -->
+      <view class="date-section">
+        <view class="date-nav">
+          <text class="nav-btn" @click="prevWeek">‹</text>
+          <text class="date-range">{{ weekRange }}</text>
+          <text class="nav-btn" @click="nextWeek">›</text>
+        </view>
+        <view class="week-days">
+          <view
+            v-for="day in weekDays"
+            :key="day.date"
+            :class="['day-item', { active: selectedDate === day.date, today: day.isToday }]"
+            @click="selectedDate = day.date"
+          >
+            <text class="day-name">{{ day.dayName }}</text>
+            <text class="day-num">{{ day.dayNum }}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 当日计划 -->
+      <view class="meal-plans">
+        <view v-for="mealType in mealTypes" :key="mealType.value" class="meal-section">
+          <view class="meal-header">
+            <text class="meal-icon">{{ mealType.icon }}</text>
+            <text class="meal-name">{{ mealType.label }}</text>
+            <text class="add-meal" @click="showAddMeal(mealType.value)">+ 添加</text>
+          </view>
+          <view class="meal-items">
+            <view
+              v-for="plan in getMealPlansByType(mealType.value)"
+              :key="plan.id"
+              class="meal-item"
+            >
+              <view class="meal-info">
+                <text class="meal-dish">{{ plan.dishName }}</text>
+                <text v-if="plan.calories" class="meal-calories">{{ plan.calories }} kcal</text>
+              </view>
+              <text class="meal-delete" @click="deleteMealPlanHandler(plan)">删除</text>
+            </view>
+            <view v-if="getMealPlansByType(mealType.value).length === 0" class="no-meal">
+              <text class="no-meal-text">暂无计划</text>
             </view>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 备餐计划视图 -->
-    <view v-if="activeTab === 'mealprep'" class="mealprep-view">
-      <view v-for="day in mealPrepDays" :key="day.label" class="day-section">
-        <view class="day-header">
-          <text class="day-label">{{ day.label }}</text>
-          <text class="day-date">{{ day.date }}</text>
+    <!-- 添加菜品弹窗 -->
+    <view v-if="showAddModal" class="modal" @click="showAddModal = false">
+      <view class="modal-content" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">添加 {{ currentMealLabel }}</text>
         </view>
-        <view class="meals-grid">
-          <view v-for="meal in day.meals" :key="meal.name" class="prep-card">
-            <view class="prep-icon">{{ meal.icon }}</view>
-            <view class="prep-info">
-              <text class="prep-meal-name">{{ meal.name }}</text>
-              <text class="prep-dish">{{ meal.dish }}</text>
-              <text class="prep-cal">{{ meal.calories }} kcal</text>
-            </view>
-          </view>
+        <view class="modal-body">
+          <input v-model="newDishName" placeholder="菜品名称" class="modal-input" />
+          <input
+            v-model="newDishCalories"
+            placeholder="预估热量 (kcal，可选)"
+            type="number"
+            class="modal-input"
+          />
+        </view>
+        <view class="modal-footer">
+          <button class="cancel-btn" @click="showAddModal = false">取消</button>
+          <button class="confirm-btn" @click="addMealPlan">确认</button>
         </view>
       </view>
     </view>
@@ -71,328 +144,655 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import {
+  getShoppingItems,
+  createShoppingItem,
+  toggleShoppingItem,
+  deleteShoppingItem,
+  clearCheckedItems,
+  type ShoppingItem,
+} from '@/api/shopping-api';
+import {
+  getMealPlansByRange,
+  createMealPlan,
+  deleteMealPlan as deleteMealPlanApi,
+  type MealPlan,
+} from '@/api/meal-plan-api';
 
-const activeTab = ref<'shopping' | 'mealprep'>('shopping');
+const USER_ID = 1;
 
-// 购物清单模拟数据
-interface ShoppingItem {
-  name: string;
-  amount: string;
-  checked: boolean;
-}
-interface ShoppingGroup {
-  category: string;
-  icon: string;
-  items: ShoppingItem[];
-}
+const activeTab = ref<'shopping' | 'meal'>('shopping');
+const shoppingItems = ref<ShoppingItem[]>([]);
+const mealPlans = ref<MealPlan[]>([]);
 
-const shoppingList = reactive<ShoppingGroup[]>([
-  {
-    category: '蛋白质',
-    icon: '🥩',
-    items: [
-      { name: '鸡胸肉', amount: '500g', checked: false },
-      { name: '鸡蛋', amount: '1盒（10枚）', checked: true },
-      { name: '虾仁', amount: '300g', checked: false },
-    ],
-  },
-  {
-    category: '蔬菜',
-    icon: '🥬',
-    items: [
-      { name: '西兰花', amount: '2颗', checked: false },
-      { name: '菠菜', amount: '1把', checked: false },
-      { name: '番茄', amount: '4个', checked: true },
-    ],
-  },
-  {
-    category: '主食',
-    icon: '🍚',
-    items: [
-      { name: '糙米', amount: '1kg', checked: false },
-      { name: '全麦面包', amount: '1袋', checked: false },
-    ],
-  },
-  {
-    category: '调味 & 其他',
-    icon: '🧂',
-    items: [
-      { name: '橄榄油', amount: '1瓶', checked: true },
-      { name: '低脂酸奶', amount: '4杯', checked: false },
-    ],
-  },
-]);
+const newItemName = ref('');
+const categories = ['蔬菜', '水果', '肉类', '海鲜', '乳制品', '主食', '调味料', '零食', '其他'];
+const selectedCategory = ref('蔬菜');
 
-// 备餐计划模拟数据
-const today = new Date();
+const selectedDate = ref(new Date().toISOString().split('T')[0]);
+const weekOffset = ref(0);
 
-function formatDate(offset: number): string {
-  const d = new Date(today);
-  d.setDate(d.getDate() + offset);
-  return `${d.getMonth() + 1}月${d.getDate()}日`;
-}
+const showAddModal = ref(false);
+const currentMealType = ref('');
+const newDishName = ref('');
+const newDishCalories = ref('');
 
-const mealPrepDays = ref([
-  {
-    label: '今天',
-    date: formatDate(0),
-    meals: [
-      { name: '早餐', icon: '🍳', dish: '全麦吐司 + 煎蛋 + 牛油果', calories: 420 },
-      { name: '午餐', icon: '🍲', dish: '糙米饭 + 鸡胸肉 + 西兰花', calories: 650 },
-      { name: '晚餐', icon: '🥗', dish: '虾仁沙拉 + 番茄汤', calories: 480 },
-    ],
-  },
-  {
-    label: '明天',
-    date: formatDate(1),
-    meals: [
-      { name: '早餐', icon: '🥣', dish: '酸奶燕麦碗 + 蓝莓', calories: 380 },
-      { name: '午餐', icon: '🍜', dish: '荞麦面 + 水煮虾 + 菠菜', calories: 580 },
-      { name: '晚餐', icon: '🥘', dish: '番茄炖牛肉 + 杂粮饭', calories: 620 },
-    ],
-  },
-  {
-    label: '后天',
-    date: formatDate(2),
-    meals: [
-      { name: '早餐', icon: '🥞', dish: '全麦松饼 + 花生酱 + 香蕉', calories: 450 },
-      { name: '午餐', icon: '🍱', dish: '鸡胸拌饭 + 蒸蛋 + 凉拌菠菜', calories: 600 },
-      { name: '晚餐', icon: '🥗', dish: '三文鱼配藜麦沙拉', calories: 520 },
-    ],
-  },
-]);
+const mealTypes = [
+  { value: 'breakfast', label: '早餐', icon: '🍳' },
+  { value: 'lunch', label: '午餐', icon: '🍱' },
+  { value: 'dinner', label: '晚餐', icon: '🍲' },
+  { value: 'snack', label: '加餐', icon: '🍎' },
+];
 
-// 勾选相关方法
-function toggleItem(item: ShoppingItem) {
-  item.checked = !item.checked;
+const groupedItems = computed(() => {
+  const groups: Record<string, ShoppingItem[]> = {};
+  for (const item of shoppingItems.value) {
+    if (!groups[item.category]) {
+      groups[item.category] = [];
+    }
+    groups[item.category].push(item);
+  }
+  return groups;
+});
+
+const weekDays = computed(() => {
+  const days = [];
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay() + weekOffset.value * 7);
+
+  const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + i);
+    const dateStr = date.toISOString().split('T')[0];
+    days.push({
+      date: dateStr,
+      dayName: dayNames[date.getDay()],
+      dayNum: date.getDate(),
+      isToday: dateStr === today.toISOString().split('T')[0],
+    });
+  }
+  return days;
+});
+
+const weekRange = computed(() => {
+  if (weekDays.value.length === 0) return '';
+  const first = weekDays.value[0];
+  const last = weekDays.value[6];
+  return `${first.date.slice(5)} ~ ${last.date.slice(5)}`;
+});
+
+const currentMealLabel = computed(() => {
+  return mealTypes.find((m) => m.value === currentMealType.value)?.label || '';
+});
+
+function onCategoryChange(e: { detail: { value: number } }) {
+  selectedCategory.value = categories[e.detail.value];
 }
 
-function getCheckedCount(group: ShoppingGroup): number {
-  return group.items.filter((i) => i.checked).length;
+async function loadShoppingItems() {
+  try {
+    shoppingItems.value = await getShoppingItems(USER_ID);
+  } catch (e) {
+    console.error('加载购物清单失败', e);
+  }
 }
+
+async function addShoppingItem() {
+  const name = newItemName.value.trim();
+  if (!name) return;
+
+  try {
+    await createShoppingItem({
+      userId: USER_ID,
+      name,
+      category: selectedCategory.value,
+    });
+    newItemName.value = '';
+    await loadShoppingItems();
+    uni.showToast({ title: '添加成功', icon: 'success' });
+  } catch (e) {
+    console.error('添加失败', e);
+    uni.showToast({ title: '添加失败', icon: 'none' });
+  }
+}
+
+async function toggleItem(item: ShoppingItem) {
+  try {
+    await toggleShoppingItem(item.id, USER_ID);
+    await loadShoppingItems();
+  } catch (e) {
+    console.error('切换状态失败', e);
+  }
+}
+
+async function deleteItem(item: ShoppingItem) {
+  try {
+    await deleteShoppingItem(item.id, USER_ID);
+    await loadShoppingItems();
+    uni.showToast({ title: '已删除', icon: 'success' });
+  } catch (e) {
+    console.error('删除失败', e);
+  }
+}
+
+async function clearChecked() {
+  try {
+    await clearCheckedItems(USER_ID);
+    await loadShoppingItems();
+    uni.showToast({ title: '已清空', icon: 'success' });
+  } catch (e) {
+    console.error('清空失败', e);
+  }
+}
+
+function prevWeek() {
+  weekOffset.value--;
+}
+
+function nextWeek() {
+  weekOffset.value++;
+}
+
+async function loadMealPlans() {
+  if (weekDays.value.length === 0) return;
+  const startDate = weekDays.value[0].date;
+  const endDate = weekDays.value[6].date;
+
+  try {
+    mealPlans.value = await getMealPlansByRange(USER_ID, startDate, endDate);
+  } catch (e) {
+    console.error('加载备餐计划失败', e);
+  }
+}
+
+function getMealPlansByType(mealType: string): MealPlan[] {
+  return mealPlans.value.filter((p) => p.date === selectedDate.value && p.mealType === mealType);
+}
+
+function showAddMeal(mealType: string) {
+  currentMealType.value = mealType;
+  newDishName.value = '';
+  newDishCalories.value = '';
+  showAddModal.value = true;
+}
+
+async function addMealPlan() {
+  const dishName = newDishName.value.trim();
+  if (!dishName) {
+    uni.showToast({ title: '请输入菜品名称', icon: 'none' });
+    return;
+  }
+
+  try {
+    await createMealPlan({
+      userId: USER_ID,
+      date: selectedDate.value,
+      mealType: currentMealType.value,
+      dishName,
+      calories: newDishCalories.value ? parseInt(newDishCalories.value) : undefined,
+    });
+    showAddModal.value = false;
+    await loadMealPlans();
+    uni.showToast({ title: '添加成功', icon: 'success' });
+  } catch (e) {
+    console.error('添加失败', e);
+    uni.showToast({ title: '添加失败', icon: 'none' });
+  }
+}
+
+async function deleteMealPlanHandler(plan: MealPlan) {
+  try {
+    await deleteMealPlanApi(plan.id, USER_ID);
+    await loadMealPlans();
+    uni.showToast({ title: '已删除', icon: 'success' });
+  } catch (e) {
+    console.error('删除失败', e);
+  }
+}
+
+watch(weekOffset, loadMealPlans);
+watch(activeTab, (val) => {
+  if (val === 'meal') {
+    loadMealPlans();
+  }
+});
+
+onMounted(() => {
+  loadShoppingItems();
+});
 </script>
 
-<style lang="scss" scoped>
-.container {
+<style scoped lang="scss">
+.plan-page {
   min-height: 100vh;
-  background-color: $nutri-dark;
-  padding: 30rpx;
-  color: $uni-text-color;
+  background: #f5f5f5;
 }
 
-/* ===== 顶部 Tab 切换栏 ===== */
-.tab-bar {
-  position: relative;
+.tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.65);
-  border-radius: 24rpx;
-  padding: 8rpx;
-  margin-bottom: 40rpx;
+  background: #fff;
+  padding: 0 16px;
+  border-bottom: 1px solid #eee;
 
-  .tab-item {
+  .tab {
     flex: 1;
-    text-align: center;
-    padding: 20rpx 0;
-    z-index: 1;
-    transition: color 0.3s;
-
-    &.active .tab-text {
-      color: $uni-text-color;
-      font-weight: 600;
-    }
-  }
-
-  .tab-text {
-    font-size: 28rpx;
-    color: $uni-text-color-grey;
-  }
-
-  .tab-indicator {
-    position: absolute;
-    top: 8rpx;
-    bottom: 8rpx;
-    left: 8rpx;
-    width: calc(50% - 8rpx);
-    background: #fff;
-    border-radius: 20rpx;
-    box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &.right {
-      transform: translateX(100%);
-    }
-  }
-}
-
-/* ===== 购物清单 ===== */
-.shopping-view {
-  display: flex;
-  flex-direction: column;
-  gap: 30rpx;
-}
-
-.shopping-group {
-  .group-header {
     display: flex;
     align-items: center;
-    margin-bottom: 20rpx;
-    padding: 0 10rpx;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 0;
+    position: relative;
 
-    .group-icon {
-      font-size: 36rpx;
-      margin-right: 16rpx;
+    &.active {
+      .tab-text {
+        color: #2ecc71;
+        font-weight: 600;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 3px;
+        background: #2ecc71;
+        border-radius: 2px;
+      }
     }
 
-    .group-title {
-      flex: 1;
-      font-size: 30rpx;
-      font-weight: 600;
+    .tab-text {
+      font-size: 15px;
+      color: #666;
     }
 
-    .group-count {
-      font-size: 24rpx;
-      color: $uni-text-color-placeholder;
-    }
-  }
-}
-
-.item-list {
-  @include glass-morphism;
-  border-radius: 24rpx;
-  overflow: hidden;
-}
-
-.shopping-item {
-  display: flex;
-  align-items: center;
-  padding: 28rpx 30rpx;
-  border-bottom: 1px solid $uni-border-color;
-  transition: opacity 0.2s;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &.checked {
-    opacity: 0.5;
-
-    .item-name {
-      text-decoration: line-through;
-    }
-  }
-
-  .checkbox {
-    width: 44rpx;
-    height: 44rpx;
-    border-radius: 12rpx;
-    border: 2px solid $uni-border-color;
-    margin-right: 24rpx;
-    @include flex-center;
-    flex-shrink: 0;
-    transition: all 0.2s;
-
-    &.checked {
-      background: $nutri-primary;
-      border-color: $nutri-primary;
-    }
-
-    .check-mark {
-      font-size: 24rpx;
+    .tab-count {
+      font-size: 12px;
       color: #fff;
-      font-weight: 700;
+      background: #2ecc71;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+  }
+}
+
+.content {
+  padding: 16px;
+}
+
+.add-section {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  .add-input {
+    flex: 1;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+
+  .category-picker {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 12px;
+    height: 40px;
+    background: #f5f5f5;
+    border-radius: 8px;
+
+    .category-text {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .category-arrow {
+      font-size: 10px;
+      color: #999;
     }
   }
 
-  .item-info {
-    flex: 1;
+  .add-btn {
+    padding: 0 16px;
+    height: 40px;
+    background: #2ecc71;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+}
+
+.shopping-list {
+  .category-group {
+    margin-bottom: 16px;
+  }
+
+  .category-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
 
-    .item-name {
-      font-size: 30rpx;
+    .category-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
     }
 
-    .item-amount {
-      font-size: 24rpx;
-      color: $uni-text-color-grey;
+    .category-count {
+      font-size: 12px;
+      color: #999;
     }
   }
-}
 
-/* ===== 备餐计划 ===== */
-.mealprep-view {
-  display: flex;
-  flex-direction: column;
-  gap: 40rpx;
-}
-
-.day-section {
-  .day-header {
+  .shopping-item {
     display: flex;
-    align-items: baseline;
-    margin-bottom: 20rpx;
-    padding: 0 10rpx;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
 
-    .day-label {
-      font-size: 34rpx;
-      font-weight: 700;
-      margin-right: 16rpx;
+    &.checked {
+      .item-name {
+        color: #999;
+        text-decoration: line-through;
+      }
     }
 
-    .day-date {
-      font-size: 24rpx;
-      color: $uni-text-color-grey;
+    .item-check {
+      margin-right: 12px;
+
+      .check-icon {
+        font-size: 20px;
+      }
+    }
+
+    .item-content {
+      flex: 1;
+
+      .item-name {
+        font-size: 15px;
+        color: #333;
+      }
+
+      .item-amount {
+        font-size: 12px;
+        color: #999;
+        margin-left: 8px;
+      }
+    }
+
+    .item-actions {
+      .delete-btn {
+        font-size: 13px;
+        color: #e74c3c;
+      }
     }
   }
 }
 
-.meals-grid {
+.empty-state {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  align-items: center;
+  padding: 48px 0;
+
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .empty-text {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .empty-hint {
+    font-size: 14px;
+    color: #999;
+  }
 }
 
-.prep-card {
-  @include glass-morphism;
-  border-radius: 24rpx;
-  padding: 30rpx;
+.clear-section {
+  margin-top: 16px;
+
+  .clear-btn {
+    width: 100%;
+    height: 44px;
+    background: #f5f5f5;
+    color: #666;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+}
+
+.date-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+
+  .date-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+
+    .nav-btn {
+      font-size: 20px;
+      color: #2ecc71;
+      padding: 4px 12px;
+    }
+
+    .date-range {
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+    }
+  }
+
+  .week-days {
+    display: flex;
+    gap: 8px;
+
+    .day-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0;
+      border-radius: 8px;
+
+      &.active {
+        background: #2ecc71;
+
+        .day-name,
+        .day-num {
+          color: #fff;
+        }
+      }
+
+      &.today:not(.active) {
+        .day-num {
+          color: #2ecc71;
+          font-weight: 600;
+        }
+      }
+
+      .day-name {
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 4px;
+      }
+
+      .day-num {
+        font-size: 16px;
+        color: #333;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+.meal-plans {
+  .meal-section {
+    background: #fff;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+
+    .meal-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f8f9fa;
+
+      .meal-icon {
+        font-size: 20px;
+        margin-right: 8px;
+      }
+
+      .meal-name {
+        flex: 1;
+        font-size: 15px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .add-meal {
+        font-size: 13px;
+        color: #2ecc71;
+      }
+    }
+
+    .meal-items {
+      padding: 8px 16px;
+
+      .meal-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f5f5f5;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .meal-info {
+          .meal-dish {
+            font-size: 14px;
+            color: #333;
+          }
+
+          .meal-calories {
+            font-size: 12px;
+            color: #999;
+            margin-left: 8px;
+          }
+        }
+
+        .meal-delete {
+          font-size: 13px;
+          color: #e74c3c;
+        }
+      }
+
+      .no-meal {
+        padding: 16px 0;
+        text-align: center;
+
+        .no-meal-text {
+          font-size: 13px;
+          color: #999;
+        }
+      }
+    }
+  }
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
+  justify-content: center;
+  z-index: 1000;
 
-  .prep-icon {
-    font-size: 48rpx;
-    width: 80rpx;
-    height: 80rpx;
-    background: rgb(0 0 0 / 3%);
-    border-radius: 20rpx;
-    @include flex-center;
-    margin-right: 24rpx;
-    flex-shrink: 0;
+  .modal-content {
+    width: 80%;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
   }
 
-  .prep-info {
-    flex: 1;
+  .modal-header {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
 
-    .prep-meal-name {
-      display: block;
-      font-size: 26rpx;
-      color: $uni-text-color-grey;
-      margin-bottom: 6rpx;
-    }
-
-    .prep-dish {
-      display: block;
-      font-size: 30rpx;
-      font-weight: 500;
-      margin-bottom: 8rpx;
-    }
-
-    .prep-cal {
-      font-size: 24rpx;
-      color: $nutri-primary;
+    .modal-title {
+      font-size: 16px;
       font-weight: 600;
+      color: #333;
+    }
+  }
+
+  .modal-body {
+    padding: 16px;
+
+    .modal-input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .modal-footer {
+    display: flex;
+    border-top: 1px solid #eee;
+
+    .cancel-btn,
+    .confirm-btn {
+      flex: 1;
+      height: 48px;
+      border: none;
+      border-radius: 0;
+      font-size: 15px;
+    }
+
+    .cancel-btn {
+      background: #fff;
+      color: #666;
+      border-right: 1px solid #eee;
+    }
+
+    .confirm-btn {
+      background: #fff;
+      color: #2ecc71;
+      font-weight: 500;
     }
   }
 }

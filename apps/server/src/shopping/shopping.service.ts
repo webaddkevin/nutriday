@@ -18,7 +18,7 @@ export class ShoppingService {
         userId: dto.userId,
         name: dto.name,
         category: dto.category,
-        amount: dto.amount,
+        amount: dto.amount || '',
         checked: dto.checked || false,
       },
     });

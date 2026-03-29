@@ -8,6 +8,8 @@ import { MealLogModule } from './meal-log/meal-log.module';
 import { RecommendationModule } from './recommendation/recommendation.module';
 import { WeightLogModule } from './weight-log/weight-log.module';
 import { WaterLogModule } from './water-log/water-log.module';
+import { ShoppingModule } from './shopping/shopping.module';
+import { MealPlanModule } from './meal-plan/meal-plan.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { WaterLogModule } from './water-log/water-log.module';
     RecommendationModule,
     WeightLogModule,
     WaterLogModule,
+    ShoppingModule,
+    MealPlanModule,
   ],
   controllers: [AppController],
   providers: [AppService],
