@@ -10,6 +10,7 @@ import { WeightLogModule } from './weight-log/weight-log.module';
 import { WaterLogModule } from './water-log/water-log.module';
 import { ShoppingModule } from './shopping/shopping.module';
 import { MealPlanModule } from './meal-plan/meal-plan.module';
+import { FoodFavoriteModule } from './food-favorite/food-favorite.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { MealPlanModule } from './meal-plan/meal-plan.module';
     WaterLogModule,
     ShoppingModule,
     MealPlanModule,
+    FoodFavoriteModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -71,6 +71,12 @@
       "style": {
         "navigationBarTitleText": "饮水记录"
       }
+    },
+    {
+      "path": "pages/favorite/favorite",
+      "style": {
+        "navigationBarTitleText": "食物收藏"
+      }
     }
   ],
   "subPackages": [

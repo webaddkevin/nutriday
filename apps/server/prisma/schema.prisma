@@ -25,6 +25,7 @@ model User {
   mealPlans     MealPlan[]
   weightLogs    WeightLog[]
   waterLogs     WaterLog[]
+  foodFavorites FoodFavorite[]
 }
 
 // 用户画像（onboarding 信息）
@@ -75,6 +76,7 @@ model Food {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   mealLogs    MealLog[]
+  favorites   FoodFavorite[]
 
   @@index([name])
   @@index([category])
@@ -162,4 +164,18 @@ model WaterLog {
 
   @@unique([userId, date]) // 每天只能记录一次
   @@index([userId, date])
+}
+
+// 食物收藏
+model FoodFavorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  foodId    Int
+  note      String?  // 用户备注
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  food      Food     @relation(fields: [foodId], references: [id])
+
+  @@unique([userId, foodId]) // 每个食物只能收藏一次
+  @@index([userId])
 }

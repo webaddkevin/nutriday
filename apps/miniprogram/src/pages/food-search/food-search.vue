@@ -72,7 +72,16 @@
               <text class="nutrition-label">脂肪</text>
             </view>
           </view>
-          <view class="food-unit">每 100g</view>
+          <view class="food-footer">
+            <text class="food-unit">每 100g</text>
+            <view
+              class="favorite-btn"
+              :class="{ active: favoriteIds.includes(food.id) }"
+              @tap.stop="toggleFavorite(food)"
+            >
+              <text class="favorite-icon">{{ favoriteIds.includes(food.id) ? '⭐' : '☆' }}</text>
+            </view>
+          </view>
         </view>
       </view>
     </scroll-view>
@@ -83,6 +92,7 @@
 import { ref, onMounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { searchFood, getFoodByCategory, getFoodCategories } from '@/api/food-api';
+import { request } from '@/utils/request';
 import type { Food, MealType } from '@nutriday/shared-types';
 
 const keyword = ref('');
@@ -90,6 +100,7 @@ const foods = ref<Food[]>([]);
 const categories = ref<string[]>(['全部']);
 const selectedCategory = ref('全部');
 const loading = ref(false);
+const favoriteIds = ref<number[]>([]);
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 let mealType = ref<MealType>('breakfast' as MealType);
@@ -104,6 +115,7 @@ onMounted(async () => {
   try {
     const cats = await getFoodCategories();
     categories.value = ['全部', ...cats];
+    await loadFavorites();
   } catch (e) {
     console.error('获取分类失败', e);
   }
@@ -180,6 +192,49 @@ function selectFood(food: Food) {
   uni.navigateTo({
     url: `/pages/meal-add/meal-add?foodId=${food.id}&mealType=${mealType.value}&date=${date.value}`,
   });
+}
+
+// 加载收藏列表
+async function loadFavorites() {
+  try {
+    const userId = 1; // TODO: 从登录状态获取
+    const res = await request({
+      url: '/food-favorite',
+      data: { userId },
+    });
+    favoriteIds.value = (res.data || []).map((item: { foodId: number }) => item.foodId);
+  } catch (e) {
+    console.error('加载收藏失败', e);
+  }
+}
+
+// 切换收藏状态
+async function toggleFavorite(food: Food) {
+  const userId = 1; // TODO: 从登录状态获取
+  const isFavorite = favoriteIds.value.includes(food.id);
+
+  try {
+    if (isFavorite) {
+      await request({
+        url: '/food-favorite',
+        method: 'DELETE',
+        data: { userId, foodId: food.id },
+      });
+      favoriteIds.value = favoriteIds.value.filter((id) => id !== food.id);
+      uni.showToast({ title: '已取消收藏', icon: 'none' });
+    } else {
+      await request({
+        url: '/food-favorite',
+        method: 'POST',
+        data: { userId, foodId: food.id },
+      });
+      favoriteIds.value.push(food.id);
+      uni.showToast({ title: '已收藏', icon: 'success' });
+    }
+  } catch (e) {
+    console.error('收藏操作失败', e);
+    uni.showToast({ title: '操作失败', icon: 'none' });
+  }
 }
 </script>
 
@@ -334,8 +389,27 @@ function selectFood(food: Food) {
   .food-unit {
     font-size: 22rpx;
     color: $uni-text-color-placeholder;
-    text-align: right;
+  }
+
+  .food-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-top: 12rpx;
+  }
+
+  .favorite-btn {
+    padding: 8rpx 16rpx;
+    border-radius: 20rpx;
+    background: rgba(0, 0, 0, 0.05);
+
+    &.active {
+      background: rgba(255, 193, 7, 0.2);
+    }
+
+    .favorite-icon {
+      font-size: 28rpx;
+    }
   }
 }
 </style>

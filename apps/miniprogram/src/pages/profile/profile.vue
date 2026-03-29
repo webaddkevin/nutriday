@@ -109,6 +109,17 @@
         </view>
       </view>
 
+      <view class="menu-item shadow-glass" @tap="goToFavorite">
+        <view class="menu-icon bg-yellow">⭐</view>
+        <view class="menu-content">
+          <text class="menu-title">食物收藏</text>
+          <text class="menu-subtitle">常吃食物快速添加</text>
+        </view>
+        <view class="menu-arrow">
+          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
+        </view>
+      </view>
+
       <view class="menu-item shadow-glass">
         <view class="menu-icon bg-orange">📈</view>
         <view class="menu-content">
@@ -247,6 +258,15 @@ const goToHealth = () => {
 const goToWater = () => {
   uni.navigateTo({
     url: '/pages/water/water',
+  });
+};
+
+/**
+ * 跳转到食物收藏页
+ */
+const goToFavorite = () => {
+  uni.navigateTo({
+    url: '/pages/favorite/favorite',
   });
 };
 
@@ -477,6 +497,10 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
     &.bg-cyan {
       background: rgba(0, 188, 212, 0.1);
       color: #00bcd4;
+    }
+    &.bg-yellow {
+      background: rgba(255, 193, 7, 0.1);
+      color: #ffc107;
     }
   }
 
