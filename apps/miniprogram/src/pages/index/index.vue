@@ -61,7 +61,9 @@
               </text>
             </view>
           </view>
-          <view class="meal-action">+</view>
+          <view class="meal-action">
+            <view class="action-icon">+</view>
+          </view>
         </view>
       </view>
     </view>
@@ -92,12 +94,16 @@
       </view>
     </view>
   </view>
+
+  <!-- 自定义 Tabbar -->
+  <CustomTabbar current-path="/pages/index/index" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import NutritionRing from '@/components/NutritionRing/NutritionRing.vue';
+import CustomTabbar from '@/components/CustomTabbar/CustomTabbar.vue';
 import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
 import { getDailySummary } from '@/api/meal-log-api';
 import type { UserProfile, MealType, DailySummary } from '@nutriday/shared-types';
@@ -247,6 +253,7 @@ function goToScan() {
   min-height: 100vh;
   background-color: $nutri-dark;
   padding: 40rpx;
+  padding-bottom: 180rpx;
   color: $uni-text-color;
 }
 
@@ -378,13 +385,19 @@ function goToScan() {
   }
 
   .meal-action {
-    width: 60rpx;
-    height: 60rpx;
-    border-radius: 30rpx;
-    background: $nutri-primary;
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4caf50 0%, #2ecc71 100%);
     @include flex-center;
-    color: white;
-    font-weight: 300;
+    box-shadow: 0 4rpx 16rpx rgba(46, 204, 113, 0.3);
+
+    .action-icon {
+      color: white;
+      font-size: 40rpx;
+      font-weight: 300;
+      line-height: 1;
+    }
   }
 }
 

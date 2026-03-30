@@ -140,11 +140,15 @@
         </view>
       </view>
     </view>
+
+    <!-- 自定义 Tabbar -->
+    <CustomTabbar current-path="/pages/plan/plan" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
+import CustomTabbar from '@/components/CustomTabbar/CustomTabbar.vue';
 import {
   getShoppingItems,
   createShoppingItem,
@@ -370,6 +374,7 @@ onMounted(() => {
 .plan-page {
   min-height: 100vh;
   background: #f5f5f5;
+  padding-bottom: 180rpx;
 }
 
 .tabs {

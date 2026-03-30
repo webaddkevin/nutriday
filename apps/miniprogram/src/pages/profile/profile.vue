@@ -131,12 +131,16 @@
         </view>
       </view>
     </view>
+
+    <!-- 自定义 Tabbar -->
+    <CustomTabbar current-path="/pages/profile/profile" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
+import CustomTabbar from '@/components/CustomTabbar/CustomTabbar.vue';
 import type { UserProfile } from '@nutriday/shared-types';
 import { getProfile, saveProfile } from '@/api/profile-api';
 
@@ -313,6 +317,7 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
   min-height: 100vh;
   background-color: $nutri-dark;
   padding: 40rpx;
+  padding-bottom: 180rpx;
   color: $uni-text-color;
 }
 
