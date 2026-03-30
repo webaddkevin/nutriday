@@ -7,31 +7,40 @@
       </view>
     </view>
 
-    <!-- 核心营养概览卡片 -->
+    <!-- 核心营养概览卡片 - 紧凑版 -->
     <view class="dashboard-card shadow-glass">
-      <view class="main-stats">
-        <NutritionRing
-          :percent="caloriePercent"
-          :size="340"
-          :stroke-width="24"
-          :color="caloriesColor"
-        >
-          <view class="ring-label">剩余热量</view>
-          <view class="ring-value">{{ remainingCalories }}</view>
-          <view class="ring-unit">kcal</view>
-        </NutritionRing>
+      <!-- 热量进度 -->
+      <view class="calorie-row">
+        <view class="calorie-info">
+          <text class="calorie-value">{{ remainingCalories }}</text>
+          <text class="calorie-unit">kcal 剩余</text>
+        </view>
+        <view class="calorie-progress">
+          <view class="progress-bar">
+            <view
+              class="progress-fill"
+              :style="{ width: Math.min(100, caloriePercent) + '%', background: caloriesColor }"
+            />
+          </view>
+          <text class="progress-text"
+            >已摄入 {{ consumed.calories }} / {{ targetCalories }} kcal</text
+          >
+        </view>
       </view>
 
-      <view class="sub-stats">
-        <view v-for="item in nutrientStats" :key="item.label" class="stat-item">
-          <NutritionRing
-            :percent="item.percent"
-            :size="120"
-            :stroke-width="10"
-            :color="item.color"
-          />
-          <text class="item-label">{{ item.label }}</text>
-          <text class="item-value" :style="{ color: item.color }">{{ item.value }}g</text>
+      <!-- 营养素进度 -->
+      <view class="nutrient-row">
+        <view v-for="item in nutrientStats" :key="item.label" class="nutrient-item">
+          <view class="nutrient-header">
+            <text class="nutrient-label">{{ item.label }}</text>
+            <text class="nutrient-value" :style="{ color: item.color }">{{ item.value }}g</text>
+          </view>
+          <view class="nutrient-bar">
+            <view
+              class="nutrient-fill"
+              :style="{ width: Math.min(100, item.percent) + '%', background: item.color }"
+            />
+          </view>
         </view>
       </view>
     </view>
@@ -102,7 +111,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
-import NutritionRing from '@/components/NutritionRing/NutritionRing.vue';
 import CustomTabbar from '@/components/CustomTabbar/CustomTabbar.vue';
 import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
 import { getDailySummary } from '@/api/meal-log-api';
@@ -272,52 +280,98 @@ function goToScan() {
 
 .dashboard-card {
   @include glass-morphism;
-  border-radius: 40rpx;
-  padding: 40rpx;
-  margin-bottom: 60rpx;
+  border-radius: 30rpx;
+  padding: 28rpx 32rpx;
+  margin-bottom: 40rpx;
 
-  .main-stats {
-    @include flex-center;
-    padding: 20rpx 0;
+  .calorie-row {
+    display: flex;
+    align-items: center;
+    gap: 24rpx;
+    padding-bottom: 24rpx;
+    border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
 
-    .ring-label {
-      font-size: 26rpx;
-      color: $uni-text-color;
-      font-weight: 500;
+    .calorie-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 140rpx;
+
+      .calorie-value {
+        font-size: 52rpx;
+        font-weight: 800;
+        color: $nutri-primary;
+        line-height: 1;
+      }
+
+      .calorie-unit {
+        font-size: 22rpx;
+        color: $uni-text-color-grey;
+        margin-top: 4rpx;
+      }
     }
-    .ring-value {
-      font-size: 72rpx;
-      font-weight: 800;
-      line-height: 1;
-      margin: 12rpx 0;
-    }
-    .ring-unit {
-      font-size: 24rpx;
-      color: $uni-text-color;
-      font-weight: 500;
+
+    .calorie-progress {
+      flex: 1;
+
+      .progress-bar {
+        height: 16rpx;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 8rpx;
+        overflow: hidden;
+
+        .progress-fill {
+          height: 100%;
+          border-radius: 8rpx;
+          transition: width 0.3s ease;
+        }
+      }
+
+      .progress-text {
+        font-size: 20rpx;
+        color: $uni-text-color-grey;
+        margin-top: 8rpx;
+        display: block;
+      }
     }
   }
 
-  .sub-stats {
+  .nutrient-row {
     display: flex;
-    justify-content: space-around;
-    margin-top: 40rpx;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
-    padding-top: 40rpx;
+    gap: 24rpx;
+    padding-top: 20rpx;
 
-    .stat-item {
-      @include flex-center;
-      flex-direction: column;
+    .nutrient-item {
+      flex: 1;
 
-      .item-label {
-        font-size: 24rpx;
-        color: $uni-text-color-grey;
-        margin-top: 16rpx;
+      .nutrient-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8rpx;
+
+        .nutrient-label {
+          font-size: 22rpx;
+          color: $uni-text-color-grey;
+        }
+
+        .nutrient-value {
+          font-size: 24rpx;
+          font-weight: 600;
+        }
       }
-      .item-value {
-        font-size: 32rpx;
-        font-weight: 700;
-        margin-top: 8rpx;
+
+      .nutrient-bar {
+        height: 10rpx;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 5rpx;
+        overflow: hidden;
+
+        .nutrient-fill {
+          height: 100%;
+          border-radius: 5rpx;
+          transition: width 0.3s ease;
+        }
       }
     }
   }
