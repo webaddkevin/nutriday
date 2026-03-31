@@ -1,5 +1,4 @@
 import { request } from '../utils/request';
-import { requireUserId } from '@/utils/user';
 
 /**
  * 体重记录 API
@@ -32,11 +31,10 @@ export async function saveWeight(data: {
   weight: number;
   note?: string;
 }): Promise<WeightLog> {
-  const userId = requireUserId();
   const res = await request<WeightLog>({
     url: '/weight-log',
     method: 'POST',
-    data: { ...data, userId },
+    data,
   });
   return res.data;
 }
@@ -45,9 +43,8 @@ export async function saveWeight(data: {
  * 获取某天的体重记录
  */
 export async function getWeight(date: string): Promise<WeightLog | null> {
-  const userId = requireUserId();
   const res = await request<WeightLog | null>({
-    url: `/weight-log?userId=${userId}&date=${date}`,
+    url: `/weight-log?date=${date}`,
     method: 'GET',
   });
   return res.data;
@@ -57,9 +54,8 @@ export async function getWeight(date: string): Promise<WeightLog | null> {
  * 获取日期范围内的体重记录
  */
 export async function getWeightRange(startDate: string, endDate: string): Promise<WeightLog[]> {
-  const userId = requireUserId();
   const res = await request<WeightLog[]>({
-    url: `/weight-log/range?userId=${userId}&startDate=${startDate}&endDate=${endDate}`,
+    url: `/weight-log/range?startDate=${startDate}&endDate=${endDate}`,
     method: 'GET',
   });
   return res.data;
@@ -69,9 +65,8 @@ export async function getWeightRange(startDate: string, endDate: string): Promis
  * 获取体重趋势统计
  */
 export async function getWeightStats(): Promise<WeightStats> {
-  const userId = requireUserId();
   const res = await request<WeightStats>({
-    url: `/weight-log/stats?userId=${userId}`,
+    url: '/weight-log/stats',
     method: 'GET',
   });
   return res.data;
@@ -81,9 +76,8 @@ export async function getWeightStats(): Promise<WeightStats> {
  * 删除体重记录
  */
 export async function deleteWeight(date: string): Promise<void> {
-  const userId = requireUserId();
   await request<void>({
-    url: `/weight-log?userId=${userId}&date=${date}`,
+    url: `/weight-log?date=${date}`,
     method: 'DELETE',
   });
 }

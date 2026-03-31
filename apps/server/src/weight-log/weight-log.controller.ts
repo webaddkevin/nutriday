@@ -1,64 +1,102 @@
-import { Controller, Get, Post, Delete, Query, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Query,
+  Body,
+  Headers,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { WeightLogService } from './weight-log.service';
 import { SaveWeightDto } from './dto/weight-log.dto';
+import { AuthService } from '../auth/auth.service';
 
 /**
  * 体重记录控制器
  */
 @Controller('weight-log')
 export class WeightLogController {
-  constructor(private readonly weightLogService: WeightLogService) {}
+  constructor(
+    private readonly weightLogService: WeightLogService,
+    private readonly authService: AuthService,
+  ) {}
+
+  /**
+   * 从 header 提取用户 ID
+   */
+  private async extractUserId(authorization: string): Promise<number> {
+    if (!authorization) {
+      throw new UnauthorizedException('未提供认证信息');
+    }
+    const token = authorization.replace('Bearer ', '');
+    const userId = await this.authService.validateToken(token);
+    if (!userId) {
+      throw new UnauthorizedException('无效的认证信息');
+    }
+    return userId;
+  }
 
   /**
    * 保存体重记录
    * POST /weight-log
    */
   @Post()
-  saveWeight(@Body() dto: SaveWeightDto) {
-    return this.weightLogService.saveWeight(dto);
+  async saveWeight(
+    @Headers('authorization') authorization: string,
+    @Body() dto: SaveWeightDto,
+  ) {
+    const userId = await this.extractUserId(authorization);
+    return this.weightLogService.saveWeight({ ...dto, userId });
   }
 
   /**
    * 获取某天的体重记录
-   * GET /weight-log?userId=1&date=2026-03-29
+   * GET /weight-log?date=2026-03-29
    */
   @Get()
-  getWeight(@Query('userId') userId: string, @Query('date') date: string) {
-    return this.weightLogService.getWeight(Number(userId), date);
+  async getWeight(
+    @Headers('authorization') authorization: string,
+    @Query('date') date: string,
+  ) {
+    const userId = await this.extractUserId(authorization);
+    return this.weightLogService.getWeight(userId, date);
   }
 
   /**
    * 获取日期范围内的体重记录
-   * GET /weight-log/range?userId=1&startDate=2026-03-01&endDate=2026-03-29
+   * GET /weight-log/range?startDate=2026-03-01&endDate=2026-03-29
    */
   @Get('range')
-  getWeightRange(
-    @Query('userId') userId: string,
+  async getWeightRange(
+    @Headers('authorization') authorization: string,
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
   ) {
-    return this.weightLogService.getWeightRange(
-      Number(userId),
-      startDate,
-      endDate,
-    );
+    const userId = await this.extractUserId(authorization);
+    return this.weightLogService.getWeightRange(userId, startDate, endDate);
   }
 
   /**
    * 获取体重趋势统计
-   * GET /weight-log/stats?userId=1
+   * GET /weight-log/stats
    */
   @Get('stats')
-  getWeightStats(@Query('userId') userId: string) {
-    return this.weightLogService.getWeightStats(Number(userId));
+  async getWeightStats(@Headers('authorization') authorization: string) {
+    const userId = await this.extractUserId(authorization);
+    return this.weightLogService.getWeightStats(userId);
   }
 
   /**
    * 删除体重记录
-   * DELETE /weight-log?userId=1&date=2026-03-29
+   * DELETE /weight-log?date=2026-03-29
    */
   @Delete()
-  deleteWeight(@Query('userId') userId: string, @Query('date') date: string) {
-    return this.weightLogService.deleteWeight(Number(userId), date);
+  async deleteWeight(
+    @Headers('authorization') authorization: string,
+    @Query('date') date: string,
+  ) {
+    const userId = await this.extractUserId(authorization);
+    return this.weightLogService.deleteWeight(userId, date);
   }
 }
