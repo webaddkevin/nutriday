@@ -134,7 +134,7 @@ async function loadRecommendations() {
       targetCalories = calculateTDEE(bmr, userProfile.value.activityLevel);
     }
 
-    const result = await getMealRecommendation(1, selectedMeal.value, targetCalories);
+    const result = await getMealRecommendation(selectedMeal.value, targetCalories);
     recommendations.value = result?.recommendations || [];
     tips.value = result?.tips || [];
   } catch (e) {

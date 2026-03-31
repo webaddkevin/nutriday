@@ -1,4 +1,5 @@
 import { request } from '../utils/request';
+import { requireUserId } from '@/utils/user';
 
 export interface MealPlan {
   id: number;
@@ -12,7 +13,8 @@ export interface MealPlan {
   updatedAt: string;
 }
 
-export async function getMealPlansByDate(userId: number, date: string): Promise<MealPlan[]> {
+export async function getMealPlansByDate(date: string): Promise<MealPlan[]> {
+  const userId = requireUserId();
   const res = await request<MealPlan[]>({
     url: `/meal-plan?userId=${userId}&date=${date}`,
     method: 'GET',
@@ -20,11 +22,8 @@ export async function getMealPlansByDate(userId: number, date: string): Promise<
   return res.data;
 }
 
-export async function getMealPlansByRange(
-  userId: number,
-  startDate: string,
-  endDate: string,
-): Promise<MealPlan[]> {
+export async function getMealPlansByRange(startDate: string, endDate: string): Promise<MealPlan[]> {
+  const userId = requireUserId();
   const res = await request<MealPlan[]>({
     url: `/meal-plan/range?userId=${userId}&startDate=${startDate}&endDate=${endDate}`,
     method: 'GET',
@@ -33,24 +32,23 @@ export async function getMealPlansByRange(
 }
 
 export async function createMealPlan(data: {
-  userId: number;
   date: string;
   mealType: string;
   dishName: string;
   calories?: number;
   note?: string;
 }): Promise<MealPlan> {
+  const userId = requireUserId();
   const res = await request<MealPlan>({
     url: '/meal-plan',
     method: 'POST',
-    data,
+    data: { ...data, userId },
   });
   return res.data;
 }
 
 export async function updateMealPlan(
   id: number,
-  userId: number,
   data: Partial<{
     mealType: string;
     dishName: string;
@@ -58,6 +56,7 @@ export async function updateMealPlan(
     note: string;
   }>,
 ): Promise<MealPlan> {
+  const userId = requireUserId();
   const res = await request<MealPlan>({
     url: `/meal-plan/${id}?userId=${userId}`,
     method: 'PUT',
@@ -66,7 +65,8 @@ export async function updateMealPlan(
   return res.data;
 }
 
-export async function deleteMealPlan(id: number, userId: number): Promise<void> {
+export async function deleteMealPlan(id: number): Promise<void> {
+  const userId = requireUserId();
   await request<void>({
     url: `/meal-plan/${id}?userId=${userId}`,
     method: 'DELETE',

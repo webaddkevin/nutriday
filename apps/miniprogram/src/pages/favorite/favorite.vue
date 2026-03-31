@@ -105,6 +105,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { request } from '@/utils/request';
+import { requireUserId } from '@/utils/user';
 
 interface Food {
   id: number;
@@ -150,7 +151,7 @@ const filteredFavorites = computed(() => {
 const loadFavorites = async () => {
   loading.value = true;
   try {
-    const userId = 1; // TODO: 从登录状态获取
+    const userId = requireUserId();
     const res = await request({
       url: '/food-favorite',
       data: { userId },
@@ -195,7 +196,7 @@ const saveNote = async () => {
   if (!editingItem.value) return;
 
   try {
-    const userId = 1; // TODO: 从登录状态获取
+    const userId = requireUserId();
     await request({
       url: '/food-favorite/note',
       method: 'POST',
@@ -230,7 +231,7 @@ const removeFavorite = async (item: FoodFavorite) => {
   if (!res.confirm) return;
 
   try {
-    const userId = 1; // TODO: 从登录状态获取
+    const userId = requireUserId();
     await request({
       url: '/food-favorite',
       method: 'DELETE',

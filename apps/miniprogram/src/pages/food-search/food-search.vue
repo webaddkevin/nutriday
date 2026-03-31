@@ -93,6 +93,7 @@ import { ref, onMounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { searchFood, getFoodByCategory, getFoodCategories } from '@/api/food-api';
 import { request } from '@/utils/request';
+import { requireUserId } from '@/utils/user';
 import type { Food, MealType } from '@nutriday/shared-types';
 
 const keyword = ref('');
@@ -197,7 +198,7 @@ function selectFood(food: Food) {
 // 加载收藏列表
 async function loadFavorites() {
   try {
-    const userId = 1; // TODO: 从登录状态获取
+    const userId = requireUserId();
     const res = await request({
       url: '/food-favorite',
       data: { userId },
@@ -210,7 +211,7 @@ async function loadFavorites() {
 
 // 切换收藏状态
 async function toggleFavorite(food: Food) {
-  const userId = 1; // TODO: 从登录状态获取
+  const userId = requireUserId();
   const isFavorite = favoriteIds.value.includes(food.id);
 
   try {

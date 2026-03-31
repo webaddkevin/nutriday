@@ -289,7 +289,6 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
 
   try {
     await saveProfile({
-      userId: 1,
       gender: userProfile.value.gender,
       age: userProfile.value.age,
       height: userProfile.value.height,

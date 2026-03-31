@@ -86,6 +86,7 @@ import { ref, computed } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { getFoodById } from '@/api/food-api';
 import { createMealLog } from '@/api/meal-log-api';
+import { requireUserId } from '@/utils/user';
 import type { Food, MealType } from '@nutriday/shared-types';
 
 const food = ref<Food | null>(null);
@@ -147,7 +148,6 @@ async function submitLog() {
   submitting.value = true;
   try {
     await createMealLog({
-      userId: 1, // TODO: 从登录状态获取
       date,
       mealType,
       foodId: food.value.id,

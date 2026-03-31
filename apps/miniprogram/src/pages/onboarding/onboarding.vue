@@ -210,7 +210,6 @@ const finish = async () => {
   // 调用后端接口保存用户画像
   try {
     await saveProfile({
-      userId: 1, // TODO: 接入用户登录后替换为真实用户 ID
       gender: profile.gender,
       age: Number(profile.age),
       height: Number(profile.height),

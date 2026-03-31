@@ -3,6 +3,7 @@
  * 提供获取和保存用户画像的统一接口
  */
 import { request } from '@/utils/request';
+import { requireUserId } from '@/utils/user';
 import type { UserProfile, GoalProgress } from '@nutriday/shared-types';
 
 /** 后端返回的用户画像数据（包含数据库字段） */
@@ -14,11 +15,11 @@ export interface ProfileResponse extends UserProfile {
 }
 
 /**
- * 获取用户画像
- * @param userId 用户 ID
+ * 获取当前用户画像
  * @returns 用户画像数据，不存在时返回 null
  */
-export async function getProfile(userId: number): Promise<ProfileResponse | null> {
+export async function getProfile(): Promise<ProfileResponse | null> {
+  const userId = requireUserId();
   const res = await request<ProfileResponse | null>({
     url: `/profile/${userId}`,
     method: 'GET',
@@ -28,7 +29,6 @@ export async function getProfile(userId: number): Promise<ProfileResponse | null
 
 /** 保存画像请求参数 */
 export interface SaveProfileParams {
-  userId: number;
   gender: string;
   age: number;
   height: number;
@@ -56,19 +56,20 @@ export interface SaveProfileParams {
  * @param data 用户画像数据
  */
 export async function saveProfile(data: SaveProfileParams): Promise<ProfileResponse> {
+  const userId = requireUserId();
   const res = await request<ProfileResponse>({
     url: '/profile',
     method: 'POST',
-    data,
+    data: { ...data, userId },
   });
   return res.data;
 }
 
 /**
  * 获取目标进度
- * @param userId 用户 ID
  */
-export async function getGoalProgress(userId: number): Promise<GoalProgress | null> {
+export async function getGoalProgress(): Promise<GoalProgress | null> {
+  const userId = requireUserId();
   const res = await request<GoalProgress | null>({
     url: `/profile/${userId}/goal-progress`,
     method: 'GET',

@@ -6,6 +6,11 @@
 /** 服务端基础地址，开发环境使用本地地址 */
 const BASE_URL = 'http://localhost:3002';
 
+/** Token 存储 key */
+const TOKEN_KEY = 'nutriday_token';
+/** 用户 ID 存储 key */
+const USER_ID_KEY = 'nutriday_user_id';
+
 interface RequestOptions {
   /** 请求路径（不含 baseURL） */
   url: string;
@@ -13,6 +18,8 @@ interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   /** 请求体数据 */
   data?: Record<string, unknown> | object;
+  /** 是否需要认证 */
+  requireAuth?: boolean;
 }
 
 interface ApiResult<T = unknown> {
@@ -23,19 +30,64 @@ interface ApiResult<T = unknown> {
 }
 
 /**
+ * 获取存储的 token
+ */
+export function getToken(): string | null {
+  return uni.getStorageSync(TOKEN_KEY) || null;
+}
+
+/**
+ * 保存 token
+ */
+export function setToken(token: string): void {
+  uni.setStorageSync(TOKEN_KEY, token);
+}
+
+/**
+ * 清除 token
+ */
+export function clearToken(): void {
+  uni.removeStorageSync(TOKEN_KEY);
+  uni.removeStorageSync(USER_ID_KEY);
+}
+
+/**
+ * 获取用户 ID
+ */
+export function getUserId(): number | null {
+  const id = uni.getStorageSync(USER_ID_KEY);
+  return id ? parseInt(id, 10) : null;
+}
+
+/**
+ * 保存用户 ID
+ */
+export function setUserId(userId: number): void {
+  uni.setStorageSync(USER_ID_KEY, userId);
+}
+
+/**
  * 发起 HTTP 请求
  * @param options 请求选项
  * @returns Promise<ApiResult<T>>
  */
 export function request<T = unknown>(options: RequestOptions): Promise<ApiResult<T>> {
   return new Promise((resolve, reject) => {
+    const token = getToken();
+    const header: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // 添加认证头
+    if (token) {
+      header['Authorization'] = `Bearer ${token}`;
+    }
+
     uni.request({
       url: `${BASE_URL}${options.url}`,
       method: options.method || 'GET',
       data: options.data,
-      header: {
-        'Content-Type': 'application/json',
-      },
+      header,
       success: (res) => {
         const result = res.data as ApiResult<T>;
 

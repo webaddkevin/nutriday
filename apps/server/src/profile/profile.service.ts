@@ -27,20 +27,16 @@ export class ProfileService {
       ...rest
     } = dto;
 
-    // 确保用户记录存在，并保存昵称和头像
-    await this.prisma.user.upsert({
-      where: { id: userId },
-      create: {
-        id: userId,
-        email: `user_${userId}@nutriday.app`,
-        nickname: nickname || null,
-        avatarUrl: avatarUrl || null,
-      },
-      update: {
-        ...(nickname !== undefined && { nickname }),
-        ...(avatarUrl !== undefined && { avatarUrl }),
-      },
-    });
+    // 更新用户昵称和头像（如果用户存在）
+    if (nickname !== undefined || avatarUrl !== undefined) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...(nickname !== undefined && { nickname }),
+          ...(avatarUrl !== undefined && { avatarUrl }),
+        },
+      });
+    }
 
     const profile = await this.prisma.userProfile.upsert({
       where: { userId },
