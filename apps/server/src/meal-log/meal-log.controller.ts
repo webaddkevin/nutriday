@@ -6,21 +6,46 @@ import {
   Body,
   Query,
   Param,
+  Headers,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { MealLogService } from './meal-log.service';
 import { CreateMealLogDto } from './dto/create-meal-log.dto';
+import { AuthService } from '../auth/auth.service';
 
 @Controller('meal-log')
 export class MealLogController {
-  constructor(private readonly mealLogService: MealLogService) {}
+  constructor(
+    private readonly mealLogService: MealLogService,
+    private readonly authService: AuthService,
+  ) {}
+
+  /**
+   * 从 header 提取用户 ID
+   */
+  private async extractUserId(authorization: string): Promise<number> {
+    if (!authorization) {
+      throw new UnauthorizedException('未提供认证信息');
+    }
+    const token = authorization.replace('Bearer ', '');
+    const userId = await this.authService.validateToken(token);
+    if (!userId) {
+      throw new UnauthorizedException('无效的认证信息');
+    }
+    return userId;
+  }
 
   /**
    * 创建饮食记录
    */
   @Post()
-  async create(@Body() dto: CreateMealLogDto) {
+  async create(
+    @Headers('authorization') authorization: string,
+    @Body() dto: CreateMealLogDto,
+  ) {
     try {
-      const log = await this.mealLogService.create(dto);
+      const userId = await this.extractUserId(authorization);
+      const log = await this.mealLogService.create({ ...dto, userId });
       return { code: 0, message: '记录成功', data: log };
     } catch (error) {
       return { code: 400, message: (error as Error).message, data: null };
@@ -32,10 +57,11 @@ export class MealLogController {
    */
   @Get('daily')
   async findByDate(
-    @Query('userId') userId: string,
+    @Headers('authorization') authorization: string,
     @Query('date') date: string,
   ) {
-    const logs = await this.mealLogService.findByDate(parseInt(userId), date);
+    const userId = await this.extractUserId(authorization);
+    const logs = await this.mealLogService.findByDate(userId, date);
     return { code: 0, message: '查询成功', data: logs };
   }
 
@@ -44,13 +70,11 @@ export class MealLogController {
    */
   @Get('summary')
   async getDailySummary(
-    @Query('userId') userId: string,
+    @Headers('authorization') authorization: string,
     @Query('date') date: string,
   ) {
-    const summary = await this.mealLogService.getDailySummary(
-      parseInt(userId),
-      date,
-    );
+    const userId = await this.extractUserId(authorization);
+    const summary = await this.mealLogService.getDailySummary(userId, date);
     return { code: 0, message: '查询成功', data: summary };
   }
 
@@ -59,12 +83,13 @@ export class MealLogController {
    */
   @Get('meal')
   async findByMealType(
-    @Query('userId') userId: string,
+    @Headers('authorization') authorization: string,
     @Query('date') date: string,
     @Query('mealType') mealType: string,
   ) {
+    const userId = await this.extractUserId(authorization);
     const logs = await this.mealLogService.findByMealType(
-      parseInt(userId),
+      userId,
       date,
       mealType as any,
     );
@@ -76,12 +101,13 @@ export class MealLogController {
    */
   @Get('range')
   async findByDateRange(
-    @Query('userId') userId: string,
+    @Headers('authorization') authorization: string,
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
   ) {
+    const userId = await this.extractUserId(authorization);
     const logs = await this.mealLogService.findByDateRange(
-      parseInt(userId),
+      userId,
       startDate,
       endDate,
     );
@@ -92,9 +118,13 @@ export class MealLogController {
    * 删除饮食记录
    */
   @Delete(':id')
-  async delete(@Param('id') id: string, @Query('userId') userId: string) {
+  async delete(
+    @Headers('authorization') authorization: string,
+    @Param('id') id: string,
+  ) {
     try {
-      await this.mealLogService.delete(parseInt(id), parseInt(userId));
+      const userId = await this.extractUserId(authorization);
+      await this.mealLogService.delete(parseInt(id), userId);
       return { code: 0, message: '删除成功', data: null };
     } catch (error) {
       return { code: 400, message: (error as Error).message, data: null };
