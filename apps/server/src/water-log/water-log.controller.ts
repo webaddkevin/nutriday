@@ -1,21 +1,53 @@
-import { Controller, Get, Post, Delete, Query, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Query,
+  Body,
+  Headers,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { WaterLogService } from './water-log.service';
 import { SaveWaterDto } from './dto/water-log.dto';
+import { AuthService } from '../auth/auth.service';
 
 /**
  * 饮水记录控制器
  */
 @Controller('water-log')
 export class WaterLogController {
-  constructor(private readonly waterLogService: WaterLogService) {}
+  constructor(
+    private readonly waterLogService: WaterLogService,
+    private readonly authService: AuthService,
+  ) {}
+
+  /**
+   * 从 header 提取用户 ID
+   */
+  private async extractUserId(authorization: string): Promise<number> {
+    if (!authorization) {
+      throw new UnauthorizedException('未提供认证信息');
+    }
+    const token = authorization.replace('Bearer ', '');
+    const userId = await this.authService.validateToken(token);
+    if (!userId) {
+      throw new UnauthorizedException('无效的认证信息');
+    }
+    return userId;
+  }
 
   /**
    * 保存饮水记录
    * POST /water-log
    */
   @Post()
-  saveWater(@Body() dto: SaveWaterDto) {
-    return this.waterLogService.saveWater(dto);
+  async saveWater(
+    @Headers('authorization') authorization: string,
+    @Body() dto: SaveWaterDto,
+  ) {
+    const userId = await this.extractUserId(authorization);
+    return this.waterLogService.saveWater({ ...dto, userId });
   }
 
   /**
@@ -23,55 +55,62 @@ export class WaterLogController {
    * POST /water-log/add
    */
   @Post('add')
-  addWater(
-    @Body('userId') userId: number,
+  async addWater(
+    @Headers('authorization') authorization: string,
     @Body('date') date: string,
     @Body('amount') amount: number,
   ) {
-    return this.waterLogService.addWater(Number(userId), date, Number(amount));
+    const userId = await this.extractUserId(authorization);
+    return this.waterLogService.addWater(userId, date, Number(amount));
   }
 
   /**
    * 获取某天的饮水记录
-   * GET /water-log?userId=1&date=2026-03-29
+   * GET /water-log?date=2026-03-29
    */
   @Get()
-  getWater(@Query('userId') userId: string, @Query('date') date: string) {
-    return this.waterLogService.getWater(Number(userId), date);
+  async getWater(
+    @Headers('authorization') authorization: string,
+    @Query('date') date: string,
+  ) {
+    const userId = await this.extractUserId(authorization);
+    return this.waterLogService.getWater(userId, date);
   }
 
   /**
    * 获取日期范围内的饮水记录
-   * GET /water-log/range?userId=1&startDate=2026-03-01&endDate=2026-03-29
+   * GET /water-log/range?startDate=2026-03-01&endDate=2026-03-29
    */
   @Get('range')
-  getWaterRange(
-    @Query('userId') userId: string,
+  async getWaterRange(
+    @Headers('authorization') authorization: string,
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
   ) {
-    return this.waterLogService.getWaterRange(
-      Number(userId),
-      startDate,
-      endDate,
-    );
+    const userId = await this.extractUserId(authorization);
+    return this.waterLogService.getWaterRange(userId, startDate, endDate);
   }
 
   /**
    * 获取饮水统计
-   * GET /water-log/stats?userId=1
+   * GET /water-log/stats
    */
   @Get('stats')
-  getWaterStats(@Query('userId') userId: string) {
-    return this.waterLogService.getWaterStats(Number(userId));
+  async getWaterStats(@Headers('authorization') authorization: string) {
+    const userId = await this.extractUserId(authorization);
+    return this.waterLogService.getWaterStats(userId);
   }
 
   /**
    * 删除饮水记录
-   * DELETE /water-log?userId=1&date=2026-03-29
+   * DELETE /water-log?date=2026-03-29
    */
   @Delete()
-  deleteWater(@Query('userId') userId: string, @Query('date') date: string) {
-    return this.waterLogService.deleteWater(Number(userId), date);
+  async deleteWater(
+    @Headers('authorization') authorization: string,
+    @Query('date') date: string,
+  ) {
+    const userId = await this.extractUserId(authorization);
+    return this.waterLogService.deleteWater(userId, date);
   }
 }
