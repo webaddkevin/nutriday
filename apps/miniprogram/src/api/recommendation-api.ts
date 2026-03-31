@@ -36,16 +36,14 @@ export async function getMealRecommendation(
   mealType: string,
   targetCalories?: number,
 ): Promise<RecommendationResponse> {
-  const params = new URLSearchParams({
-    userId: String(userId),
-    mealType,
-  });
+  // 小程序环境不支持 URLSearchParams，手动拼接
+  let query = `userId=${userId}&mealType=${encodeURIComponent(mealType)}`;
   if (targetCalories) {
-    params.append('targetCalories', String(targetCalories));
+    query += `&targetCalories=${targetCalories}`;
   }
 
   const res = await request<RecommendationResponse>({
-    url: `/recommendation/meal?${params.toString()}`,
+    url: `/recommendation/meal?${query}`,
     method: 'GET',
   });
   return res.data;

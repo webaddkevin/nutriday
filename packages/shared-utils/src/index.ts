@@ -49,9 +49,9 @@ export function calculateBMR(gender: Gender, age: number, height: number, weight
 /**
  * 计算每日总能量消耗 (TDEE)
  * @param bmr - 基础代谢率
- * @param activityLevel - 活动水平系数
+ * @param activityLevel - 活动水平系数（可以是枚举或数字）
  * @returns TDEE (kcal/day)
  */
-export function calculateTDEE(bmr: number, activityLevel: ActivityLevel): number {
+export function calculateTDEE(bmr: number, activityLevel: ActivityLevel | number): number {
   return Math.round(bmr * activityLevel);
 }

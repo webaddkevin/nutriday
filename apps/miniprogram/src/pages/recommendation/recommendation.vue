@@ -135,8 +135,8 @@ async function loadRecommendations() {
     }
 
     const result = await getMealRecommendation(1, selectedMeal.value, targetCalories);
-    recommendations.value = result.recommendations;
-    tips.value = result.tips;
+    recommendations.value = result?.recommendations || [];
+    tips.value = result?.tips || [];
   } catch (e) {
     console.error('获取推荐失败', e);
     uni.showToast({ title: '获取推荐失败', icon: 'none' });
