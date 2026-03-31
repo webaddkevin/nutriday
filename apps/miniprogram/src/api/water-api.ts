@@ -1,5 +1,4 @@
 import { request } from '../utils/request';
-import { requireUserId } from '@/utils/user';
 
 /**
  * 饮水记录 API
@@ -32,11 +31,10 @@ export async function saveWater(data: {
   amount: number;
   note?: string;
 }): Promise<WaterLog> {
-  const userId = requireUserId();
   const res = await request<WaterLog>({
     url: '/water-log',
     method: 'POST',
-    data: { ...data, userId },
+    data,
   });
   return res.data;
 }
@@ -45,11 +43,10 @@ export async function saveWater(data: {
  * 增加饮水量
  */
 export async function addWater(date: string, amount: number): Promise<WaterLog> {
-  const userId = requireUserId();
   const res = await request<WaterLog>({
     url: '/water-log/add',
     method: 'POST',
-    data: { userId, date, amount },
+    data: { date, amount },
   });
   return res.data;
 }
@@ -58,9 +55,8 @@ export async function addWater(date: string, amount: number): Promise<WaterLog> 
  * 获取某天的饮水记录
  */
 export async function getWater(date: string): Promise<WaterLog | null> {
-  const userId = requireUserId();
   const res = await request<WaterLog | null>({
-    url: `/water-log?userId=${userId}&date=${date}`,
+    url: `/water-log?date=${date}`,
     method: 'GET',
   });
   return res.data;
@@ -70,9 +66,8 @@ export async function getWater(date: string): Promise<WaterLog | null> {
  * 获取饮水统计
  */
 export async function getWaterStats(): Promise<WaterStats> {
-  const userId = requireUserId();
   const res = await request<WaterStats>({
-    url: `/water-log/stats?userId=${userId}`,
+    url: '/water-log/stats',
     method: 'GET',
   });
   return res.data;
@@ -82,9 +77,8 @@ export async function getWaterStats(): Promise<WaterStats> {
  * 删除饮水记录
  */
 export async function deleteWater(date: string): Promise<void> {
-  const userId = requireUserId();
   await request<void>({
-    url: `/water-log?userId=${userId}&date=${date}`,
+    url: `/water-log?date=${date}`,
     method: 'DELETE',
   });
 }

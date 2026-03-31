@@ -2,7 +2,6 @@
  * AI 推荐 API 封装
  */
 import { request } from '@/utils/request';
-import { requireUserId } from '@/utils/user';
 
 export interface MealRecommendation {
   name: string;
@@ -36,9 +35,8 @@ export async function getMealRecommendation(
   mealType: string,
   targetCalories?: number,
 ): Promise<RecommendationResponse> {
-  const userId = requireUserId();
   // 小程序环境不支持 URLSearchParams，手动拼接
-  let query = `userId=${userId}&mealType=${encodeURIComponent(mealType)}`;
+  let query = `mealType=${encodeURIComponent(mealType)}`;
   if (targetCalories) {
     query += `&targetCalories=${targetCalories}`;
   }

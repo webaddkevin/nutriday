@@ -1,5 +1,4 @@
 import { request } from '../utils/request';
-import { requireUserId } from '@/utils/user';
 
 export interface MealPlan {
   id: number;
@@ -14,18 +13,16 @@ export interface MealPlan {
 }
 
 export async function getMealPlansByDate(date: string): Promise<MealPlan[]> {
-  const userId = requireUserId();
   const res = await request<MealPlan[]>({
-    url: `/meal-plan?userId=${userId}&date=${date}`,
+    url: `/meal-plan?date=${date}`,
     method: 'GET',
   });
   return res.data;
 }
 
 export async function getMealPlansByRange(startDate: string, endDate: string): Promise<MealPlan[]> {
-  const userId = requireUserId();
   const res = await request<MealPlan[]>({
-    url: `/meal-plan/range?userId=${userId}&startDate=${startDate}&endDate=${endDate}`,
+    url: `/meal-plan/range?startDate=${startDate}&endDate=${endDate}`,
     method: 'GET',
   });
   return res.data;
@@ -38,11 +35,10 @@ export async function createMealPlan(data: {
   calories?: number;
   note?: string;
 }): Promise<MealPlan> {
-  const userId = requireUserId();
   const res = await request<MealPlan>({
     url: '/meal-plan',
     method: 'POST',
-    data: { ...data, userId },
+    data,
   });
   return res.data;
 }
@@ -56,9 +52,8 @@ export async function updateMealPlan(
     note: string;
   }>,
 ): Promise<MealPlan> {
-  const userId = requireUserId();
   const res = await request<MealPlan>({
-    url: `/meal-plan/${id}?userId=${userId}`,
+    url: `/meal-plan/${id}`,
     method: 'PUT',
     data,
   });
@@ -66,9 +61,8 @@ export async function updateMealPlan(
 }
 
 export async function deleteMealPlan(id: number): Promise<void> {
-  const userId = requireUserId();
   await request<void>({
-    url: `/meal-plan/${id}?userId=${userId}`,
+    url: `/meal-plan/${id}`,
     method: 'DELETE',
   });
 }
