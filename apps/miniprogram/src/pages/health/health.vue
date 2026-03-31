@@ -184,8 +184,6 @@
 import { ref, onMounted } from 'vue';
 import { getProfile, saveProfile } from '@/api/profile-api';
 
-const USER_ID = 1;
-
 const saving = ref(false);
 const profile = ref<Awaited<ReturnType<typeof getProfile>> | null>(null);
 
@@ -254,7 +252,7 @@ function removeItem(list: string[], item: string) {
 
 async function loadData() {
   try {
-    profile.value = await getProfile(USER_ID);
+    profile.value = await getProfile();
     if (profile.value) {
       allergies.value = profile.value.allergies || [];
       diseases.value = profile.value.diseases || [];
@@ -276,7 +274,6 @@ async function saveHealth() {
   saving.value = true;
   try {
     await saveProfile({
-      userId: USER_ID,
       gender: profile.value.gender,
       age: profile.value.age,
       height: profile.value.height,

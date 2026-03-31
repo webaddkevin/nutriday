@@ -107,8 +107,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { getWaterStats, addWater } from '@/api/water-api';
 
-const USER_ID = 1;
-
 const loading = ref(true);
 const stats = ref<Awaited<ReturnType<typeof getWaterStats>> | null>(null);
 const targetAmount = ref(2000);
@@ -168,7 +166,7 @@ function formatDate(dateStr: string): string {
 async function loadData() {
   loading.value = true;
   try {
-    stats.value = await getWaterStats(USER_ID);
+    stats.value = await getWaterStats();
   } catch (e) {
     console.error('加载饮水数据失败', e);
   } finally {
@@ -178,7 +176,7 @@ async function loadData() {
 
 async function quickAdd(amount: number) {
   try {
-    await addWater(USER_ID, todayStr.value, amount);
+    await addWater(todayStr.value, amount);
     uni.showToast({ title: `+${amount}ml`, icon: 'success' });
     await loadData();
   } catch (e) {

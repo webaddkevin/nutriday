@@ -114,8 +114,10 @@ import { onLoad, onShow } from '@dcloudio/uni-app';
 import CustomTabbar from '@/components/CustomTabbar/CustomTabbar.vue';
 import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
 import { getDailySummary } from '@/api/meal-log-api';
+import { useUserStore } from '@/stores/user';
 import type { UserProfile, MealType, DailySummary } from '@nutriday/shared-types';
 
+const userStore = useUserStore();
 const userProfile = ref<UserProfile | null>(null);
 const today = ref(
   new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' }),
@@ -220,7 +222,7 @@ onShow(async () => {
 
 async function loadDailySummary() {
   try {
-    dailySummary.value = await getDailySummary(1, todayDate);
+    dailySummary.value = await getDailySummary(todayDate);
   } catch (e) {
     console.warn('获取每日汇总失败，可能服务未启动', e);
     // 使用默认空数据

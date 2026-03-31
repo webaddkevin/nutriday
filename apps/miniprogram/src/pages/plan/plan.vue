@@ -164,8 +164,6 @@ import {
   type MealPlan,
 } from '@/api/meal-plan-api';
 
-const USER_ID = 1;
-
 const activeTab = ref<'shopping' | 'meal'>('shopping');
 const shoppingItems = ref<ShoppingItem[]>([]);
 const mealPlans = ref<MealPlan[]>([]);
@@ -239,7 +237,7 @@ function onCategoryChange(e: { detail: { value: number } }) {
 
 async function loadShoppingItems() {
   try {
-    shoppingItems.value = await getShoppingItems(USER_ID);
+    shoppingItems.value = await getShoppingItems();
   } catch (e) {
     console.error('加载购物清单失败', e);
   }
@@ -251,7 +249,6 @@ async function addShoppingItem() {
 
   try {
     await createShoppingItem({
-      userId: USER_ID,
       name,
       category: selectedCategory.value,
     });
@@ -266,7 +263,7 @@ async function addShoppingItem() {
 
 async function toggleItem(item: ShoppingItem) {
   try {
-    await toggleShoppingItem(item.id, USER_ID);
+    await toggleShoppingItem(item.id);
     await loadShoppingItems();
   } catch (e) {
     console.error('切换状态失败', e);
@@ -275,7 +272,7 @@ async function toggleItem(item: ShoppingItem) {
 
 async function deleteItem(item: ShoppingItem) {
   try {
-    await deleteShoppingItem(item.id, USER_ID);
+    await deleteShoppingItem(item.id);
     await loadShoppingItems();
     uni.showToast({ title: '已删除', icon: 'success' });
   } catch (e) {
@@ -285,7 +282,7 @@ async function deleteItem(item: ShoppingItem) {
 
 async function clearChecked() {
   try {
-    await clearCheckedItems(USER_ID);
+    await clearCheckedItems();
     await loadShoppingItems();
     uni.showToast({ title: '已清空', icon: 'success' });
   } catch (e) {
@@ -307,7 +304,7 @@ async function loadMealPlans() {
   const endDate = weekDays.value[6].date;
 
   try {
-    mealPlans.value = await getMealPlansByRange(USER_ID, startDate, endDate);
+    mealPlans.value = await getMealPlansByRange(startDate, endDate);
   } catch (e) {
     console.error('加载备餐计划失败', e);
   }
@@ -333,7 +330,6 @@ async function addMealPlan() {
 
   try {
     await createMealPlan({
-      userId: USER_ID,
       date: selectedDate.value,
       mealType: currentMealType.value,
       dishName,
@@ -350,7 +346,7 @@ async function addMealPlan() {
 
 async function deleteMealPlanHandler(plan: MealPlan) {
   try {
-    await deleteMealPlanApi(plan.id, USER_ID);
+    await deleteMealPlanApi(plan.id);
     await loadMealPlans();
     uni.showToast({ title: '已删除', icon: 'success' });
   } catch (e) {

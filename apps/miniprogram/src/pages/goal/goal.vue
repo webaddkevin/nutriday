@@ -145,8 +145,6 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { getProfile, saveProfile } from '@/api/profile-api';
 import { getWeightStats } from '@/api/weight-api';
 
-const USER_ID = 1;
-
 const loading = ref(true);
 const saving = ref(false);
 const profile = ref<Awaited<ReturnType<typeof getProfile>> | null>(null);
@@ -281,10 +279,7 @@ function setQuickDate(days: number) {
 async function loadData() {
   loading.value = true;
   try {
-    const [profileData, weightStats] = await Promise.all([
-      getProfile(USER_ID),
-      getWeightStats(USER_ID),
-    ]);
+    const [profileData, weightStats] = await Promise.all([getProfile(), getWeightStats()]);
 
     profile.value = profileData;
     currentWeight.value = weightStats.current || profileData?.weight || null;
@@ -315,7 +310,6 @@ async function saveGoal() {
   saving.value = true;
   try {
     await saveProfile({
-      userId: USER_ID,
       gender: profile.value.gender,
       age: profile.value.age,
       height: profile.value.height,

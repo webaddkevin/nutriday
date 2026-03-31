@@ -115,8 +115,6 @@ import {
   type WeightStats,
 } from '../../api/weight-api';
 
-const USER_ID = 1;
-
 const loading = ref(true);
 const saving = ref(false);
 const weightInput = ref('');
@@ -168,7 +166,7 @@ function formatDate(dateStr: string): string {
 async function loadData() {
   loading.value = true;
   try {
-    stats.value = await getWeightStats(USER_ID);
+    stats.value = await getWeightStats();
     // 如果今天有记录，填充到输入框
     const todayLog = stats.value?.logs?.find((l) => l.date === todayStr.value);
     if (todayLog) {
@@ -192,7 +190,6 @@ async function saveWeight() {
   saving.value = true;
   try {
     await saveWeightApi({
-      userId: USER_ID,
       date: todayStr.value,
       weight,
       note: noteInput.value || undefined,
@@ -216,7 +213,7 @@ async function deleteLog(log: WeightLog) {
   if (!res.confirm) return;
 
   try {
-    await deleteWeightApi(USER_ID, log.date);
+    await deleteWeightApi(log.date);
     uni.showToast({ title: '删除成功', icon: 'success' });
     await loadData();
     drawChart();
