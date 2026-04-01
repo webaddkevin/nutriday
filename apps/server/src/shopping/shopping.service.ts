@@ -12,7 +12,7 @@ export class ShoppingService {
   /**
    * 添加购物项
    */
-  async create(dto: CreateShoppingItemDto) {
+  async create(dto: CreateShoppingItemDto & { userId: number }) {
     return this.prisma.shoppingItem.create({
       data: {
         userId: dto.userId,

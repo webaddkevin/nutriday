@@ -13,7 +13,7 @@ export class MealLogService {
   /**
    * 创建饮食记录
    */
-  async create(dto: CreateMealLogDto) {
+  async create(dto: CreateMealLogDto & { userId: number }) {
     // 获取食物信息
     const food = await this.foodService.findById(dto.foodId);
     if (!food) {

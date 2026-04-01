@@ -13,7 +13,7 @@ export class ProfileService {
   /**
    * 保存用户画像（存在则更新，不存在则创建）
    */
-  async saveProfile(dto: SaveProfileDto) {
+  async saveProfile(dto: SaveProfileDto & { userId: number }) {
     const {
       userId,
       tags,

@@ -3,8 +3,8 @@
  * 用于 POST /profile 请求体校验
  */
 export class SaveProfileDto {
-  /** 用户 ID */
-  userId: number;
+  /** 用户 ID（从 token 中获取，可选） */
+  userId?: number;
 
   /** 性别 */
   gender: string;

@@ -12,7 +12,7 @@ export class WeightLogService {
   /**
    * 保存体重记录（存在则更新）
    */
-  async saveWeight(dto: SaveWeightDto) {
+  async saveWeight(dto: SaveWeightDto & { userId: number }) {
     return this.prisma.weightLog.upsert({
       where: {
         userId_date: {

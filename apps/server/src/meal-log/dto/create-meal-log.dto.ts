@@ -9,7 +9,8 @@ export enum MealType {
 
 export class CreateMealLogDto {
   @IsNumber()
-  userId: number;
+  @IsOptional()
+  userId?: number; // 从 token 中获取，可选
 
   @IsString()
   date: string; // YYYY-MM-DD

@@ -2,7 +2,8 @@ import { IsNumber, IsString, IsBoolean, IsOptional } from 'class-validator';
 
 export class CreateShoppingItemDto {
   @IsNumber()
-  userId: number;
+  @IsOptional()
+  userId?: number; // 从 token 中获取，可选
 
   @IsString()
   name: string;

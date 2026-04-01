@@ -12,7 +12,7 @@ export class WaterLogService {
   /**
    * 保存饮水记录（存在则更新）
    */
-  async saveWater(dto: SaveWaterDto) {
+  async saveWater(dto: SaveWaterDto & { userId: number }) {
     return this.prisma.waterLog.upsert({
       where: {
         userId_date: {

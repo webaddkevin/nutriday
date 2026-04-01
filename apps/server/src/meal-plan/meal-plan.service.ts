@@ -6,7 +6,7 @@ import { CreateMealPlanDto, UpdateMealPlanDto } from './dto/meal-plan.dto';
 export class MealPlanService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateMealPlanDto) {
+  async create(dto: CreateMealPlanDto & { userId: number }) {
     return this.prisma.mealPlan.create({
       data: {
         userId: dto.userId,

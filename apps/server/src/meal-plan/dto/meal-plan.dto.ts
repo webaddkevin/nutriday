@@ -2,7 +2,8 @@ import { IsNumber, IsString, IsOptional } from 'class-validator';
 
 export class CreateMealPlanDto {
   @IsNumber()
-  userId: number;
+  @IsOptional()
+  userId?: number; // 从 token 中获取，可选
 
   @IsString()
   date: string;
