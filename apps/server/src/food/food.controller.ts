@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
 import { FoodService } from './food.service';
 import { CreateFoodDto } from './dto/create-food.dto';
+import { Public } from '../common/decorators/public.decorator';
 
 @Controller('food')
 export class FoodController {
@@ -27,6 +28,7 @@ export class FoodController {
   /**
    * 搜索食物
    */
+  @Public()
   @Get('search')
   async search(
     @Query('keyword') keyword: string,
@@ -42,6 +44,7 @@ export class FoodController {
   /**
    * 按分类获取食物
    */
+  @Public()
   @Get('category/:category')
   async findByCategory(
     @Param('category') category: string,
@@ -57,6 +60,7 @@ export class FoodController {
   /**
    * 获取所有分类
    */
+  @Public()
   @Get('categories')
   async getCategories() {
     const categories = await this.foodService.getCategories();
@@ -66,6 +70,7 @@ export class FoodController {
   /**
    * 获取食物详情
    */
+  @Public()
   @Get(':id')
   async findById(@Param('id') id: string) {
     const food = await this.foodService.findById(parseInt(id));
