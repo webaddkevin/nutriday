@@ -366,8 +366,13 @@ const prevStep = () => {
 };
 
 const finish = async () => {
+  // 转换并验证数据
+  const age = Number(profile.age);
+  const height = Number(profile.height);
+  const weight = Number(profile.weight);
+
   // 验证必填数据
-  if (!profile.age || !profile.height || !profile.weight) {
+  if (!age || isNaN(age) || !height || isNaN(height) || !weight || isNaN(weight)) {
     uni.showToast({ title: '请完善基本信息', icon: 'none' });
     return;
   }
@@ -393,6 +398,9 @@ const finish = async () => {
   // 本地持久化（兜底）
   const profileData = {
     ...profile,
+    age,
+    height,
+    weight,
     bmr: bmr.value,
     tdee: tdee.value,
     targetCalories: tdee.value,
@@ -404,9 +412,9 @@ const finish = async () => {
     uni.showLoading({ title: '保存中...' });
     await saveProfile({
       gender: profile.gender,
-      age: profile.age,
-      height: profile.height,
-      weight: profile.weight,
+      age,
+      height,
+      weight,
       goal: profile.goal,
       tags: profile.tags as string[],
       activityLevel: profile.activityLevel,
