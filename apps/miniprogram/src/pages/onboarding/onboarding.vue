@@ -262,6 +262,11 @@ import { saveProfile } from '@/api/profile-api';
 import { useUserStore } from '@/stores/user';
 import { getToken } from '@/utils/request';
 
+// 调试：打印枚举值
+console.log('Gender enum:', Gender, 'MALE:', Gender.MALE);
+console.log('HealthGoal enum:', HealthGoal, 'HEALTH_MANAGEMENT:', HealthGoal.HEALTH_MANAGEMENT);
+console.log('ActivityLevel enum:', ActivityLevel, 'SEDENTARY:', ActivityLevel.SEDENTARY);
+
 const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight || 0);
 const currentStep = ref(1);
 const totalSteps = 5;
@@ -410,7 +415,8 @@ const finish = async () => {
   // 调用后端接口保存用户画像
   try {
     uni.showLoading({ title: '保存中...' });
-    await saveProfile({
+
+    const saveData = {
       gender: profile.gender,
       age,
       height,
@@ -421,7 +427,11 @@ const finish = async () => {
       bmr: bmr.value,
       tdee: tdee.value,
       targetCalories: tdee.value,
-    });
+    };
+
+    console.log('保存用户画像数据:', JSON.stringify(saveData, null, 2));
+
+    await saveProfile(saveData);
     uni.hideLoading();
   } catch (e) {
     uni.hideLoading();
