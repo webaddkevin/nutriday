@@ -51,8 +51,30 @@
         </view>
       </view>
 
-      <!-- Step 2: Health Goal -->
+      <!-- Step 2: Activity Level -->
       <view v-if="currentStep === 2" class="step-content">
+        <text class="title">你的活动量</text>
+        <text class="subtitle">选择最符合你日常活动水平的选项</text>
+
+        <view class="activity-list">
+          <view
+            v-for="level in activityLevels"
+            :key="level.value"
+            class="activity-card"
+            :class="{ active: profile.activityLevel === level.value }"
+            @tap="profile.activityLevel = level.value"
+          >
+            <view class="activity-info">
+              <text class="activity-title">{{ level.label }}</text>
+              <text class="activity-desc">{{ level.desc }}</text>
+            </view>
+            <view class="radio-circle"></view>
+          </view>
+        </view>
+      </view>
+
+      <!-- Step 3: Health Goal -->
+      <view v-if="currentStep === 3" class="step-content">
         <text class="title">你的健康目标</text>
         <text class="subtitle">选择一个最符合你现状的目标</text>
 
@@ -73,8 +95,8 @@
         </view>
       </view>
 
-      <!-- Step 3: Special Tags -->
-      <view v-if="currentStep === 3" class="step-content">
+      <!-- Step 4: Special Tags -->
+      <view v-if="currentStep === 4" class="step-content">
         <text class="title">特殊情况</text>
         <text class="subtitle">如有特殊需求，请勾选（多选）</text>
 
@@ -91,8 +113,8 @@
         </view>
       </view>
 
-      <!-- Step 4: Result -->
-      <view v-if="currentStep === 4" class="step-content result-step">
+      <!-- Step 5: Result -->
+      <view v-if="currentStep === 5" class="step-content result-step">
         <text class="title">计算完成!</text>
         <text class="subtitle">以下是根据你的资料得出的建议值</text>
 
@@ -104,24 +126,41 @@
           <view class="divider"></view>
           <view class="result-item">
             <text class="res-val highlight">{{ tdee }}</text>
-            <text class="res-label">每日热量目标 (TDEE)</text>
+            <text class="res-label">每日热量目标</text>
           </view>
         </view>
 
-        <view class="tips">
-          <text>💡 我们建议每日摄入热量在此基础上根据目标增减 300-500 kcal。</text>
+        <view class="calorie-explain">
+          <view class="explain-item">
+            <text class="explain-label">基础代谢</text>
+            <text class="explain-value">{{ bmr }} kcal</text>
+          </view>
+          <view class="explain-item">
+            <text class="explain-label">× 活动系数</text>
+            <text class="explain-value">{{ activityCoefficient }}</text>
+          </view>
+          <view class="explain-item">
+            <text class="explain-label">+ 目标调整</text>
+            <text class="explain-value"
+              >{{ calorieAdjust > 0 ? '+' : '' }}{{ calorieAdjust }} kcal</text
+            >
+          </view>
+          <view class="explain-item highlight-row">
+            <text class="explain-label">每日热量目标</text>
+            <text class="explain-value">{{ tdee }} kcal</text>
+          </view>
         </view>
       </view>
     </view>
 
     <view class="footer">
-      <button v-if="currentStep > 1 && currentStep < 4" class="btn btn-secondary" @tap="prevStep">
+      <button v-if="currentStep > 1 && currentStep < 5" class="btn btn-secondary" @tap="prevStep">
         上一步
       </button>
-      <button v-if="currentStep < 4" class="btn btn-primary" :disabled="!canNext" @tap="nextStep">
+      <button v-if="currentStep < 5" class="btn btn-primary" :disabled="!canNext" @tap="nextStep">
         下一步
       </button>
-      <button v-if="currentStep === 4" class="btn btn-primary" @tap="finish">
+      <button v-if="currentStep === 5" class="btn btn-primary" @tap="finish">
         开启我的营养生活
       </button>
     </view>
@@ -136,22 +175,40 @@ import { saveProfile } from '@/api/profile-api';
 
 const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight || 0);
 const currentStep = ref(1);
+const totalSteps = 5;
 
 const profile = reactive({
   gender: Gender.MALE,
-  age: undefined,
-  height: undefined,
-  weight: undefined,
+  age: undefined as number | undefined,
+  height: undefined as number | undefined,
+  weight: undefined as number | undefined,
   goal: HealthGoal.HEALTH_MANAGEMENT,
   tags: [] as SpecialTag[],
   activityLevel: ActivityLevel.SEDENTARY,
 });
 
 const goals = [
-  { label: '减脂', value: HealthGoal.LOSE_FAT, desc: '合理热量差，科学瘦身' },
-  { label: '增肌', value: HealthGoal.GAIN_MUSCLE, desc: '高蛋白摄入，力量增长' },
-  { label: '健康管理', value: HealthGoal.HEALTH_MANAGEMENT, desc: '均衡饮食，优化体格' },
-  { label: '维持现状', value: HealthGoal.MAINTAIN, desc: '保持当前体重与状态' },
+  { label: '减脂', value: HealthGoal.LOSE_FAT, desc: '合理热量差，科学瘦身', calorieAdjust: -400 },
+  {
+    label: '增肌',
+    value: HealthGoal.GAIN_MUSCLE,
+    desc: '高蛋白摄入，力量增长',
+    calorieAdjust: 300,
+  },
+  {
+    label: '健康管理',
+    value: HealthGoal.HEALTH_MANAGEMENT,
+    desc: '均衡饮食，优化体格',
+    calorieAdjust: 0,
+  },
+  { label: '维持现状', value: HealthGoal.MAINTAIN, desc: '保持当前体重与状态', calorieAdjust: 0 },
+];
+
+const activityLevels = [
+  { label: '久坐', value: ActivityLevel.SEDENTARY, desc: '办公室工作，很少运动' },
+  { label: '轻度活跃', value: ActivityLevel.LIGHTLY_ACTIVE, desc: '每周运动 1-3 次' },
+  { label: '中度活跃', value: ActivityLevel.MODERATELY_ACTIVE, desc: '每周运动 3-5 次' },
+  { label: '高度活跃', value: ActivityLevel.VERY_ACTIVE, desc: '每周运动 6-7 次' },
 ];
 
 const availableTags = [
@@ -162,7 +219,7 @@ const availableTags = [
 ];
 
 const progressWidth = computed(() => {
-  return (currentStep.value / 4) * 100 + '%';
+  return (currentStep.value / totalSteps) * 100 + '%';
 });
 
 const canNext = computed(() => {
@@ -174,11 +231,21 @@ const canNext = computed(() => {
 
 const bmr = computed(() => {
   if (!profile.age || !profile.height || !profile.weight) return 0;
-  return calculateBMR(profile.gender, profile.age, profile.height, profile.weight);
+  return Math.round(calculateBMR(profile.gender, profile.age, profile.height, profile.weight));
+});
+
+const activityCoefficient = computed(() => {
+  return profile.activityLevel;
+});
+
+const calorieAdjust = computed(() => {
+  const goal = goals.find((g) => g.value === profile.goal);
+  return goal?.calorieAdjust || 0;
 });
 
 const tdee = computed(() => {
-  return calculateTDEE(bmr.value, profile.activityLevel);
+  const baseTdee = calculateTDEE(bmr.value, profile.activityLevel);
+  return Math.round(baseTdee + calorieAdjust.value);
 });
 
 const toggleTag = (tag: SpecialTag) => {
@@ -191,7 +258,7 @@ const toggleTag = (tag: SpecialTag) => {
 };
 
 const nextStep = () => {
-  if (currentStep.value < 4) currentStep.value++;
+  if (currentStep.value < totalSteps) currentStep.value++;
 };
 
 const prevStep = () => {
@@ -330,6 +397,63 @@ const finish = async () => {
   }
 }
 
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.activity-card {
+  padding: 30rpx;
+  background-color: #f7f7f7;
+  border-radius: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 2rpx solid transparent;
+
+  .activity-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8rpx;
+  }
+
+  .activity-desc {
+    font-size: 24rpx;
+    color: #999;
+  }
+
+  .radio-circle {
+    width: 40rpx;
+    height: 40rpx;
+    border: 4rpx solid #ddd;
+    border-radius: 50%;
+  }
+
+  &.active {
+    background-color: #eaffee;
+    border-color: #4cd964;
+
+    .radio-circle {
+      border-color: #4cd964;
+      background-color: #4cd964;
+      position: relative;
+      &::after {
+        content: '';
+        position: absolute;
+        width: 16rpx;
+        height: 16rpx;
+        background-color: #fff;
+        border-radius: 50%;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+    }
+  }
+}
+
 .goal-list {
   display: flex;
   flex-direction: column;
@@ -447,12 +571,45 @@ const finish = async () => {
   }
 }
 
-.tips {
-  padding: 30rpx;
-  background-color: #fdf6ec;
+.calorie-explain {
+  background-color: #f8f9fa;
   border-radius: 20rpx;
-  color: #e6a23c;
-  font-size: 24rpx;
+  padding: 30rpx;
+
+  .explain-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 16rpx 0;
+    border-bottom: 1rpx solid #eee;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .explain-label {
+      color: #666;
+      font-size: 28rpx;
+    }
+
+    .explain-value {
+      font-size: 28rpx;
+      font-weight: 500;
+    }
+
+    &.highlight-row {
+      margin-top: 16rpx;
+      padding-top: 24rpx;
+      border-top: 2rpx solid #4cd964;
+      border-bottom: none;
+
+      .explain-label,
+      .explain-value {
+        color: #4cd964;
+        font-weight: 600;
+        font-size: 32rpx;
+      }
+    }
+  }
 }
 
 .footer {

@@ -190,7 +190,7 @@ const nickname = ref('');
 onShow(async () => {
   loading.value = true;
   try {
-    const data = await getProfile(1);
+    const data = await getProfile();
     if (data) {
       userProfile.value = data;
       avatarUrl.value = data.avatarUrl || '';
