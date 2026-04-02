@@ -14,6 +14,9 @@ export class ProfileService {
    * 保存用户画像（存在则更新，不存在则创建）
    */
   async saveProfile(dto: SaveProfileDto & { userId: number }) {
+    // 调试：打印接收到的数据
+    console.log('收到保存画像请求:', JSON.stringify(dto, null, 2));
+
     const {
       userId,
       tags,
@@ -27,9 +30,13 @@ export class ProfileService {
       ...rest
     } = dto;
 
+    console.log('rest 对象:', JSON.stringify(rest, null, 2));
+
     // 验证必填字段
     if (!rest.gender || !rest.goal) {
-      throw new Error('性别和健康目标是必填项');
+      throw new Error(
+        `性别和健康目标是必填项: gender=${rest.gender}, goal=${rest.goal}`,
+      );
     }
 
     if (
@@ -40,11 +47,15 @@ export class ProfileService {
       !rest.weight ||
       isNaN(rest.weight)
     ) {
-      throw new Error('年龄、身高、体重必须是有效数字');
+      throw new Error(
+        `年龄、身高、体重必须是有效数字: age=${rest.age}, height=${rest.height}, weight=${rest.weight}`,
+      );
     }
 
     if (!rest.activityLevel || isNaN(rest.activityLevel)) {
-      throw new Error('活动水平必须是有效数字');
+      throw new Error(
+        `活动水平必须是有效数字: activityLevel=${rest.activityLevel}`,
+      );
     }
 
     // 更新用户昵称和头像（如果用户存在）
