@@ -1,52 +1,21 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Query,
-  Body,
-  Headers,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Controller, Get, Post, Delete, Query, Body } from '@nestjs/common';
 import { WeightLogService } from './weight-log.service';
 import { SaveWeightDto } from './dto/weight-log.dto';
-import { AuthService } from '../auth/auth.service';
+import { UserId } from '../common/decorators/user.decorator';
 
 /**
  * 体重记录控制器
  */
 @Controller('weight-log')
 export class WeightLogController {
-  constructor(
-    private readonly weightLogService: WeightLogService,
-    private readonly authService: AuthService,
-  ) {}
-
-  /**
-   * 从 header 提取用户 ID
-   */
-  private async extractUserId(authorization: string): Promise<number> {
-    if (!authorization) {
-      throw new UnauthorizedException('未提供认证信息');
-    }
-    const token = authorization.replace('Bearer ', '');
-    const userId = await this.authService.validateToken(token);
-    if (!userId) {
-      throw new UnauthorizedException('无效的认证信息');
-    }
-    return userId;
-  }
+  constructor(private readonly weightLogService: WeightLogService) {}
 
   /**
    * 保存体重记录
    * POST /weight-log
    */
   @Post()
-  async saveWeight(
-    @Headers('authorization') authorization: string,
-    @Body() dto: SaveWeightDto,
-  ) {
-    const userId = await this.extractUserId(authorization);
+  async saveWeight(@UserId() userId: number, @Body() dto: SaveWeightDto) {
     return this.weightLogService.saveWeight({ ...dto, userId });
   }
 
@@ -55,11 +24,7 @@ export class WeightLogController {
    * GET /weight-log?date=2026-03-29
    */
   @Get()
-  async getWeight(
-    @Headers('authorization') authorization: string,
-    @Query('date') date: string,
-  ) {
-    const userId = await this.extractUserId(authorization);
+  async getWeight(@UserId() userId: number, @Query('date') date: string) {
     return this.weightLogService.getWeight(userId, date);
   }
 
@@ -69,11 +34,10 @@ export class WeightLogController {
    */
   @Get('range')
   async getWeightRange(
-    @Headers('authorization') authorization: string,
+    @UserId() userId: number,
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
   ) {
-    const userId = await this.extractUserId(authorization);
     return this.weightLogService.getWeightRange(userId, startDate, endDate);
   }
 
@@ -82,8 +46,7 @@ export class WeightLogController {
    * GET /weight-log/stats
    */
   @Get('stats')
-  async getWeightStats(@Headers('authorization') authorization: string) {
-    const userId = await this.extractUserId(authorization);
+  async getWeightStats(@UserId() userId: number) {
     return this.weightLogService.getWeightStats(userId);
   }
 
@@ -92,11 +55,7 @@ export class WeightLogController {
    * DELETE /weight-log?date=2026-03-29
    */
   @Delete()
-  async deleteWeight(
-    @Headers('authorization') authorization: string,
-    @Query('date') date: string,
-  ) {
-    const userId = await this.extractUserId(authorization);
+  async deleteWeight(@UserId() userId: number, @Query('date') date: string) {
     return this.weightLogService.deleteWeight(userId, date);
   }
 }

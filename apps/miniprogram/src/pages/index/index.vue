@@ -1,30 +1,47 @@
 <template>
   <view class="container">
+    <!-- 顶部装饰背景 -->
+    <view class="bg-decoration">
+      <view class="bg-circle bg-circle-1"></view>
+      <view class="bg-circle bg-circle-2"></view>
+    </view>
+
     <view class="header">
       <view class="user-info">
-        <text class="greeting">你好，{{ userProfile?.gender === 'male' ? '先生' : '女士' }}</text>
+        <text class="greeting"
+          >{{ greeting }}，{{ userProfile?.gender === 'male' ? '先生' : '女士' }}</text
+        >
         <text class="date">{{ today }}</text>
+      </view>
+      <view class="header-actions">
+        <view class="action-btn" @tap="goToScan">
+          <NutriIcon name="scan" size="sm" color="#64748b" />
+        </view>
       </view>
     </view>
 
-    <!-- 核心营养概览卡片 - 紧凑版 -->
-    <view class="dashboard-card shadow-glass">
-      <!-- 热量进度 -->
-      <view class="calorie-row">
-        <view class="calorie-info">
-          <text class="calorie-value">{{ remainingCalories }}</text>
-          <text class="calorie-unit">kcal 剩余</text>
-        </view>
-        <view class="calorie-progress">
-          <view class="progress-bar">
-            <view
-              class="progress-fill"
-              :style="{ width: Math.min(100, caloriePercent) + '%', background: caloriesColor }"
-            />
+    <!-- 核心营养概览卡片 -->
+    <view class="dashboard-card">
+      <!-- 热量进度环 -->
+      <view class="calorie-ring-container">
+        <view class="calorie-ring">
+          <view class="ring-bg"></view>
+          <view class="ring-progress" :style="{ '--progress': caloriePercent }"></view>
+          <view class="ring-center">
+            <text class="ring-value">{{ remainingCalories }}</text>
+            <text class="ring-label">剩余 kcal</text>
           </view>
-          <text class="progress-text"
-            >已摄入 {{ consumed.calories }} / {{ targetCalories }} kcal</text
-          >
+        </view>
+        <view class="calorie-detail">
+          <view class="detail-item">
+            <text class="detail-label">已摄入</text>
+            <text class="detail-value">{{ consumed.calories }}</text>
+          </view>
+          <view class="detail-divider"></view>
+          <view class="detail-item">
+            <text class="detail-label">目标</text>
+            <text class="detail-value target">{{ targetCalories }}</text>
+          </view>
         </view>
       </view>
 
@@ -32,8 +49,9 @@
       <view class="nutrient-row">
         <view v-for="item in nutrientStats" :key="item.label" class="nutrient-item">
           <view class="nutrient-header">
+            <view class="nutrient-dot" :style="{ background: item.color }"></view>
             <text class="nutrient-label">{{ item.label }}</text>
-            <text class="nutrient-value" :style="{ color: item.color }">{{ item.value }}g</text>
+            <text class="nutrient-value">{{ item.value }}g</text>
           </view>
           <view class="nutrient-bar">
             <view
@@ -45,33 +63,55 @@
       </view>
     </view>
 
+    <!-- 饮水提醒 -->
+    <view class="water-card" @tap="goToWater">
+      <view class="water-icon">
+        <NutriIcon name="water" size="lg" color="#00bcd4" />
+      </view>
+      <view class="water-info">
+        <text class="water-title">今日饮水</text>
+        <text class="water-value">{{ waterAmount }} / 2000 ml</text>
+      </view>
+      <view class="water-progress">
+        <view class="water-bar">
+          <view class="water-fill" :style="{ width: Math.min(100, waterPercent) + '%' }"></view>
+        </view>
+      </view>
+      <view class="water-arrow">
+        <uni-icons type="right" size="18" color="#00bcd4"></uni-icons>
+      </view>
+    </view>
+
     <!-- 饮食时段卡片 -->
     <view class="meal-section">
-      <view class="section-title">今日饮食</view>
-      <view class="meal-list">
+      <view class="section-header">
+        <text class="section-title">今日饮食</text>
+        <text class="section-total">{{ totalMealCalories }} kcal</text>
+      </view>
+      <view class="meal-grid">
         <view
           v-for="meal in mealCards"
           :key="meal.type"
           class="meal-card"
+          :class="{ 'has-items': meal.items.length > 0 }"
           @tap="goToFoodSearch(meal.type)"
         >
-          <view class="meal-icon">{{ meal.icon }}</view>
+          <view class="meal-icon-wrap">
+            <text class="meal-emoji">{{ meal.icon }}</text>
+          </view>
           <view class="meal-info">
             <text class="meal-name">{{ meal.name }}</text>
-            <text class="meal-status">
-              {{ meal.calories > 0 ? meal.calories + ' kcal' : '点击记录' }}
-            </text>
-            <view v-if="meal.items.length > 0" class="meal-items">
-              <text v-for="item in meal.items.slice(0, 2)" :key="item.id" class="meal-item-tag">
-                {{ item.foodName }}
-              </text>
-              <text v-if="meal.items.length > 2" class="meal-item-more">
-                +{{ meal.items.length - 2 }}
-              </text>
-            </view>
+            <text class="meal-cal">{{
+              meal.calories > 0 ? meal.calories + ' kcal' : '未记录'
+            }}</text>
           </view>
-          <view class="meal-action">
-            <view class="action-icon">+</view>
+          <view v-if="meal.items.length > 0" class="meal-tags">
+            <text v-for="item in meal.items.slice(0, 2)" :key="item.id" class="meal-tag">
+              {{ item.foodName }}
+            </text>
+          </view>
+          <view class="meal-add">
+            <text class="add-icon">+</text>
           </view>
         </view>
       </view>
@@ -80,25 +120,16 @@
     <!-- AI 推荐入口 -->
     <view class="ai-section">
       <view class="ai-card" @tap="goToRecommendation">
-        <view class="ai-icon">🤖</view>
+        <view class="ai-glow"></view>
+        <view class="ai-icon-wrap">
+          <NutriIcon name="ai" size="xl" color="#fff" />
+        </view>
         <view class="ai-content">
           <text class="ai-title">AI 智能推荐</text>
-          <text class="ai-desc">根据你的目标和饮食习惯，为你推荐健康餐食</text>
+          <text class="ai-desc">根据你的目标推荐健康餐食</text>
         </view>
         <view class="ai-arrow">
-          <uni-icons type="right" size="20" color="#fff"></uni-icons>
-        </view>
-      </view>
-
-      <!-- 扫码入口 -->
-      <view class="scan-card" @tap="goToScan">
-        <view class="scan-icon">📷</view>
-        <view class="scan-content">
-          <text class="scan-title">扫码识别</text>
-          <text class="scan-desc">扫描食品条码，快速获取营养信息</text>
-        </view>
-        <view class="scan-arrow">
-          <uni-icons type="right" size="20" color="#4caf50"></uni-icons>
+          <uni-icons type="right" size="20" color="rgba(255,255,255,0.8)"></uni-icons>
         </view>
       </view>
     </view>
@@ -112,19 +143,33 @@
 import { ref, computed } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import CustomTabbar from '@/components/CustomTabbar/CustomTabbar.vue';
+import NutriIcon from '@/components/NutriIcon/NutriIcon.vue';
 import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
 import { getDailySummary } from '@/api/meal-log-api';
 import { useUserStore } from '@/stores/user';
 import type { UserProfile, MealType, DailySummary } from '@nutriday/shared-types';
 
-const userStore = useUserStore();
+const _userStore = useUserStore();
 const userProfile = ref<UserProfile | null>(null);
+
+const greeting = computed(() => {
+  const hour = new Date().getHours();
+  if (hour < 6) return '夜深了';
+  if (hour < 9) return '早上好';
+  if (hour < 12) return '上午好';
+  if (hour < 14) return '中午好';
+  if (hour < 18) return '下午好';
+  if (hour < 22) return '晚上好';
+  return '夜深了';
+});
+
 const today = ref(
   new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' }),
 );
 
 const todayDate = new Date().toISOString().split('T')[0];
 const dailySummary = ref<DailySummary | null>(null);
+const waterAmount = ref(0);
 
 const mealCards = computed(() => {
   const meals = [
@@ -141,11 +186,13 @@ const mealCards = computed(() => {
   }));
 });
 
+const totalMealCalories = computed(() => mealCards.value.reduce((sum, m) => sum + m.calories, 0));
+
 const consumed = computed(() => ({
-  calories: dailySummary.value?.calories || 0,
-  protein: dailySummary.value?.protein || 0,
-  carbs: dailySummary.value?.carbs || 0,
-  fat: dailySummary.value?.fat || 0,
+  calories: Math.round(dailySummary.value?.calories || 0),
+  protein: Math.round((dailySummary.value?.protein || 0) * 10) / 10,
+  carbs: Math.round((dailySummary.value?.carbs || 0) * 10) / 10,
+  fat: Math.round((dailySummary.value?.fat || 0) * 10) / 10,
 }));
 
 const targetCalories = computed(() => {
@@ -156,15 +203,18 @@ const targetCalories = computed(() => {
     userProfile.value.height,
     userProfile.value.weight,
   );
-  return calculateTDEE(bmr, userProfile.value.activityLevel);
+  return Math.round(calculateTDEE(bmr, userProfile.value.activityLevel));
 });
 
 const remainingCalories = computed(() =>
   Math.max(0, targetCalories.value - consumed.value.calories),
 );
+
 const caloriePercent = computed(() =>
   Math.min(100, (consumed.value.calories / targetCalories.value) * 100),
 );
+
+const waterPercent = computed(() => (waterAmount.value / 2000) * 100);
 
 const colors = {
   protein: '#f59e0b',
@@ -172,16 +222,10 @@ const colors = {
   fat: '#ef4444',
 };
 
-const caloriesColor = computed(() => {
-  if (caloriePercent.value > 100) return colors.fat;
-  return '#00B171';
-});
-
-// 目标营养素（简化计算）
 const targetNutrients = computed(() => ({
-  protein: Math.round((targetCalories.value * 0.25) / 4), // 25% 热量来自蛋白质
-  carbs: Math.round((targetCalories.value * 0.5) / 4), // 50% 热量来自碳水
-  fat: Math.round((targetCalories.value * 0.25) / 9), // 25% 热量来自脂肪
+  protein: Math.round((targetCalories.value * 0.25) / 4),
+  carbs: Math.round((targetCalories.value * 0.5) / 4),
+  fat: Math.round((targetCalories.value * 0.25) / 9),
 }));
 
 const nutrientStats = computed(() => [
@@ -224,8 +268,7 @@ async function loadDailySummary() {
   try {
     dailySummary.value = await getDailySummary(todayDate);
   } catch (e) {
-    console.warn('获取每日汇总失败，可能服务未启动', e);
-    // 使用默认空数据
+    console.warn('获取每日汇总失败', e);
     dailySummary.value = {
       calories: 0,
       protein: 0,
@@ -256,219 +299,445 @@ function goToRecommendation() {
 function goToScan() {
   uni.navigateTo({ url: '/pages/scan/scan' });
 }
+
+function goToWater() {
+  uni.navigateTo({ url: '/pages/water/water' });
+}
 </script>
 
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
-  background-color: $nutri-dark;
+  background: linear-gradient(180deg, #f0f4f8 0%, #e8f0e8 100%);
   padding: 40rpx;
   padding-bottom: 180rpx;
   color: $uni-text-color;
+  position: relative;
+  overflow: hidden;
+}
+
+// 背景装饰
+.bg-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 600rpx;
+  pointer-events: none;
+
+  .bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.5;
+
+    &.bg-circle-1 {
+      width: 400rpx;
+      height: 400rpx;
+      background: radial-gradient(circle, rgba(0, 177, 113, 0.15) 0%, transparent 70%);
+      top: -100rpx;
+      right: -100rpx;
+    }
+
+    &.bg-circle-2 {
+      width: 300rpx;
+      height: 300rpx;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+      top: 200rpx;
+      left: -80rpx;
+    }
+  }
 }
 
 .header {
-  margin-bottom: 40rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32rpx;
+  position: relative;
+  z-index: 1;
+
   .greeting {
-    font-size: 48rpx;
-    font-weight: 600;
+    font-size: 44rpx;
+    font-weight: 700;
+    display: block;
+    color: #1e293b;
+  }
+
+  .date {
+    font-size: 26rpx;
+    color: #64748b;
+    margin-top: 8rpx;
     display: block;
   }
-  .date {
-    font-size: 28rpx;
-    color: $uni-text-color-grey;
+
+  .header-actions {
+    .action-btn {
+      width: 72rpx;
+      height: 72rpx;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 20rpx;
+      @include flex-center;
+      box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+    }
   }
 }
 
+// 仪表盘卡片
 .dashboard-card {
-  @include glass-morphism;
-  border-radius: 30rpx;
-  padding: 28rpx 32rpx;
-  margin-bottom: 40rpx;
-
-  .calorie-row {
-    display: flex;
-    align-items: center;
-    gap: 24rpx;
-    padding-bottom: 24rpx;
-    border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
-
-    .calorie-info {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      min-width: 140rpx;
-
-      .calorie-value {
-        font-size: 52rpx;
-        font-weight: 800;
-        color: $nutri-primary;
-        line-height: 1;
-      }
-
-      .calorie-unit {
-        font-size: 22rpx;
-        color: $uni-text-color-grey;
-        margin-top: 4rpx;
-      }
-    }
-
-    .calorie-progress {
-      flex: 1;
-
-      .progress-bar {
-        height: 16rpx;
-        background: rgba(0, 0, 0, 0.05);
-        border-radius: 8rpx;
-        overflow: hidden;
-
-        .progress-fill {
-          height: 100%;
-          border-radius: 8rpx;
-          transition: width 0.3s ease;
-        }
-      }
-
-      .progress-text {
-        font-size: 20rpx;
-        color: $uni-text-color-grey;
-        margin-top: 8rpx;
-        display: block;
-      }
-    }
-  }
-
-  .nutrient-row {
-    display: flex;
-    gap: 24rpx;
-    padding-top: 20rpx;
-
-    .nutrient-item {
-      flex: 1;
-
-      .nutrient-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8rpx;
-
-        .nutrient-label {
-          font-size: 22rpx;
-          color: $uni-text-color-grey;
-        }
-
-        .nutrient-value {
-          font-size: 24rpx;
-          font-weight: 600;
-        }
-      }
-
-      .nutrient-bar {
-        height: 10rpx;
-        background: rgba(0, 0, 0, 0.05);
-        border-radius: 5rpx;
-        overflow: hidden;
-
-        .nutrient-fill {
-          height: 100%;
-          border-radius: 5rpx;
-          transition: width 0.3s ease;
-        }
-      }
-    }
-  }
+  background: #fff;
+  border-radius: 32rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 1;
 }
 
-.meal-section {
-  .section-title {
-    font-size: 36rpx;
-    font-weight: 600;
-    margin-bottom: 30rpx;
-  }
-}
-
-.meal-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-}
-
-.meal-card {
-  @include glass-morphism;
-  border-radius: 30rpx;
-  padding: 30rpx;
+// 热量环形进度
+.calorie-ring-container {
   display: flex;
   align-items: center;
+  gap: 32rpx;
+  padding-bottom: 28rpx;
+  border-bottom: 1rpx solid #f1f5f9;
+  margin-bottom: 24rpx;
+}
 
-  .meal-icon {
-    font-size: 48rpx;
-    margin-right: 30rpx;
+.calorie-ring {
+  width: 180rpx;
+  height: 180rpx;
+  position: relative;
+  flex-shrink: 0;
+
+  .ring-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(#f1f5f9 0deg, #f1f5f9 360deg);
+  }
+
+  .ring-progress {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      #00b171 0deg,
+      #00b171 calc(var(--progress, 0) * 3.6deg),
+      transparent calc(var(--progress, 0) * 3.6deg)
+    );
+    transition: background 0.5s ease;
+  }
+
+  .ring-bg,
+  .ring-progress {
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 16rpx;
+      background: #fff;
+      border-radius: 50%;
+    }
+  }
+
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    @include flex-center;
+    flex-direction: column;
+    z-index: 1;
+
+    .ring-value {
+      font-size: 48rpx;
+      font-weight: 800;
+      color: #00b171;
+      line-height: 1;
+    }
+
+    .ring-label {
+      font-size: 20rpx;
+      color: #94a3b8;
+      margin-top: 4rpx;
+    }
+  }
+}
+
+.calorie-detail {
+  flex: 1;
+  display: flex;
+  gap: 24rpx;
+
+  .detail-item {
+    flex: 1;
+    text-align: center;
+
+    .detail-label {
+      font-size: 22rpx;
+      color: #94a3b8;
+      display: block;
+    }
+
+    .detail-value {
+      font-size: 36rpx;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 4rpx;
+
+      &.target {
+        color: #00b171;
+      }
+    }
+  }
+
+  .detail-divider {
+    width: 1rpx;
+    background: #e2e8f0;
+    margin: 8rpx 0;
+  }
+}
+
+// 营养素进度
+.nutrient-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+
+  .nutrient-item {
+    .nutrient-header {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      margin-bottom: 8rpx;
+
+      .nutrient-dot {
+        width: 12rpx;
+        height: 12rpx;
+        border-radius: 50%;
+      }
+
+      .nutrient-label {
+        font-size: 24rpx;
+        color: #64748b;
+        flex: 1;
+      }
+
+      .nutrient-value {
+        font-size: 24rpx;
+        font-weight: 600;
+        color: #1e293b;
+      }
+    }
+
+    .nutrient-bar {
+      height: 8rpx;
+      background: #f1f5f9;
+      border-radius: 4rpx;
+      overflow: hidden;
+
+      .nutrient-fill {
+        height: 100%;
+        border-radius: 4rpx;
+        transition: width 0.3s ease;
+      }
+    }
+  }
+}
+
+// 饮水卡片
+.water-card {
+  background: linear-gradient(135deg, rgba(0, 188, 212, 0.08) 0%, rgba(0, 188, 212, 0.02) 100%);
+  border: 1rpx solid rgba(0, 188, 212, 0.15);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  position: relative;
+  z-index: 1;
+
+  .water-icon {
     width: 80rpx;
     height: 80rpx;
-    background: rgba(0, 0, 0, 0.03);
+    background: rgba(0, 188, 212, 0.1);
     border-radius: 20rpx;
     @include flex-center;
   }
 
-  .meal-info {
+  .water-info {
     flex: 1;
-    .meal-name {
+
+    .water-title {
+      font-size: 26rpx;
+      color: #64748b;
       display: block;
+    }
+
+    .water-value {
       font-size: 32rpx;
-      font-weight: 500;
-    }
-    .meal-status {
-      font-size: 24rpx;
-      color: $uni-text-color-placeholder;
-    }
-    .meal-items {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8rpx;
-      margin-top: 12rpx;
-      .meal-item-tag {
-        font-size: 20rpx;
-        color: $nutri-primary;
-        background: rgba(0, 177, 113, 0.1);
-        padding: 4rpx 12rpx;
-        border-radius: 8rpx;
-      }
-      .meal-item-more {
-        font-size: 20rpx;
-        color: $uni-text-color-grey;
-      }
+      font-weight: 600;
+      color: #00838f;
+      margin-top: 4rpx;
     }
   }
 
-  .meal-action {
-    width: 72rpx;
-    height: 72rpx;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #4caf50 0%, #2ecc71 100%);
-    @include flex-center;
-    box-shadow: 0 4rpx 16rpx rgba(46, 204, 113, 0.3);
+  .water-progress {
+    width: 100rpx;
 
-    .action-icon {
-      color: white;
-      font-size: 40rpx;
-      font-weight: 300;
-      line-height: 1;
+    .water-bar {
+      height: 8rpx;
+      background: rgba(0, 188, 212, 0.2);
+      border-radius: 4rpx;
+      overflow: hidden;
+
+      .water-fill {
+        height: 100%;
+        background: #00bcd4;
+        border-radius: 4rpx;
+        transition: width 0.3s ease;
+      }
     }
   }
 }
 
+// 饮食区块
+.meal-section {
+  margin-bottom: 24rpx;
+  position: relative;
+  z-index: 1;
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+
+    .section-title {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .section-total {
+      font-size: 26rpx;
+      color: #00b171;
+      font-weight: 600;
+    }
+  }
+}
+
+.meal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+}
+
+.meal-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  position: relative;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &.has-items {
+    background: linear-gradient(135deg, #fff 0%, rgba(0, 177, 113, 0.03) 100%);
+  }
+
+  .meal-icon-wrap {
+    width: 64rpx;
+    height: 64rpx;
+    background: #f8fafc;
+    border-radius: 16rpx;
+    @include flex-center;
+    margin-bottom: 12rpx;
+
+    .meal-emoji {
+      font-size: 36rpx;
+    }
+  }
+
+  .meal-info {
+    .meal-name {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #1e293b;
+      display: block;
+    }
+
+    .meal-cal {
+      font-size: 22rpx;
+      color: #94a3b8;
+      margin-top: 4rpx;
+    }
+  }
+
+  .meal-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8rpx;
+    margin-top: 12rpx;
+
+    .meal-tag {
+      font-size: 18rpx;
+      color: #00b171;
+      background: rgba(0, 177, 113, 0.08);
+      padding: 4rpx 12rpx;
+      border-radius: 8rpx;
+    }
+  }
+
+  .meal-add {
+    position: absolute;
+    top: 20rpx;
+    right: 20rpx;
+    width: 48rpx;
+    height: 48rpx;
+    background: linear-gradient(135deg, #00b171 0%, #00d387 100%);
+    border-radius: 50%;
+    @include flex-center;
+    box-shadow: 0 4rpx 12rpx rgba(0, 177, 113, 0.25);
+
+    .add-icon {
+      color: #fff;
+      font-size: 32rpx;
+      font-weight: 300;
+    }
+  }
+}
+
+// AI 推荐卡片
 .ai-section {
-  margin-top: 40rpx;
+  position: relative;
+  z-index: 1;
 
   .ai-card {
     background: linear-gradient(135deg, #00b171 0%, #009b63 100%);
-    border-radius: 30rpx;
-    padding: 36rpx;
+    border-radius: 28rpx;
+    padding: 32rpx;
     display: flex;
     align-items: center;
+    position: relative;
+    overflow: hidden;
 
-    .ai-icon {
-      font-size: 56rpx;
+    .ai-glow {
+      position: absolute;
+      width: 200rpx;
+      height: 200rpx;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      top: -50rpx;
+      right: -50rpx;
+    }
+
+    .ai-icon-wrap {
+      width: 88rpx;
+      height: 88rpx;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 24rpx;
+      @include flex-center;
       margin-right: 24rpx;
     }
 
@@ -480,7 +749,7 @@ function goToScan() {
         font-size: 32rpx;
         font-weight: 600;
         color: #fff;
-        margin-bottom: 8rpx;
+        margin-bottom: 6rpx;
       }
 
       .ai-desc {
@@ -492,47 +761,8 @@ function goToScan() {
     .ai-arrow {
       width: 56rpx;
       height: 56rpx;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 28rpx;
-      @include flex-center;
-    }
-  }
-
-  .scan-card {
-    background: #fff;
-    border-radius: 30rpx;
-    padding: 36rpx;
-    display: flex;
-    align-items: center;
-    margin-top: 24rpx;
-
-    .scan-icon {
-      font-size: 56rpx;
-      margin-right: 24rpx;
-    }
-
-    .scan-content {
-      flex: 1;
-
-      .scan-title {
-        display: block;
-        font-size: 32rpx;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 8rpx;
-      }
-
-      .scan-desc {
-        font-size: 24rpx;
-        color: #999;
-      }
-    }
-
-    .scan-arrow {
-      width: 56rpx;
-      height: 56rpx;
-      background: rgba(76, 175, 80, 0.1);
-      border-radius: 28rpx;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
       @include flex-center;
     }
   }

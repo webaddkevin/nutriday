@@ -1,23 +1,43 @@
 <template>
   <view class="water-page">
+    <!-- 背景装饰 -->
+    <view class="bg-decoration">
+      <view class="bg-wave"></view>
+    </view>
+
     <!-- 今日饮水卡片 -->
-    <view class="card today-card">
+    <view class="today-card">
       <view class="card-header">
-        <text class="title">今日饮水</text>
+        <view class="header-left">
+          <NutriIcon name="water" size="md" color="#00bcd4" />
+          <text class="title">今日饮水</text>
+        </view>
         <text class="date">{{ todayFormatted }}</text>
       </view>
-      <view class="water-display">
-        <view class="water-circle" :style="{ background: progressGradient }">
-          <view class="water-inner">
-            <text class="water-amount">{{ todayAmount }}</text>
-            <text class="water-unit">ml</text>
+
+      <!-- 进度环 -->
+      <view class="progress-section">
+        <view class="progress-ring">
+          <view class="ring-bg"></view>
+          <view class="ring-progress" :style="{ '--progress': progress }"></view>
+          <view class="ring-center">
+            <text class="amount-value">{{ todayAmount }}</text>
+            <text class="amount-unit">ml</text>
           </view>
         </view>
-        <view class="water-target">
-          <text class="target-text">目标 {{ targetAmount }} ml</text>
-          <text class="progress-text">已完成 {{ progress }}%</text>
+        <view class="progress-info">
+          <view class="target-row">
+            <text class="target-label">目标</text>
+            <text class="target-value">{{ targetAmount }} ml</text>
+          </view>
+          <view class="progress-bar">
+            <view class="progress-fill" :style="{ width: Math.min(progress, 100) + '%' }"></view>
+          </view>
+          <text class="progress-percent" :class="progressClass">{{ progress }}%</text>
         </view>
       </view>
+
+      <!-- 快捷添加 -->
       <view class="quick-add">
         <view
           v-for="option in quickOptions"
@@ -26,34 +46,39 @@
           @click="quickAdd(option.value)"
         >
           <text class="quick-icon">{{ option.icon }}</text>
-          <text class="quick-text">{{ option.label }}</text>
+          <text class="quick-label">{{ option.label }}</text>
         </view>
       </view>
     </view>
 
     <!-- 统计卡片 -->
-    <view v-if="stats" class="card stats-card">
-      <view class="card-header">
-        <text class="title">饮水统计</text>
+    <view v-if="stats" class="stats-card">
+      <view class="stats-header">
+        <text class="stats-title">饮水统计</text>
       </view>
       <view class="stats-grid">
         <view class="stat-item">
           <text class="stat-value">{{ stats.average7d }}</text>
-          <text class="stat-label">7天平均 (ml)</text>
+          <text class="stat-label">7天平均</text>
+          <text class="stat-unit">ml/天</text>
         </view>
-        <view class="stat-item">
-          <text class="stat-value">{{ stats.average30d }}</text>
-          <text class="stat-label">30天平均 (ml)</text>
-        </view>
+        <view class="stat-divider"></view>
         <view class="stat-item">
           <text class="stat-value">{{ stats.total7d }}</text>
-          <text class="stat-label">7天总量 (ml)</text>
+          <text class="stat-label">7天总量</text>
+          <text class="stat-unit">ml</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">{{ stats.average30d }}</text>
+          <text class="stat-label">30天平均</text>
+          <text class="stat-unit">ml/天</text>
         </view>
       </view>
     </view>
 
     <!-- 目标设置 -->
-    <view class="card target-card">
+    <view class="target-card">
       <view class="card-header">
         <text class="title">每日目标</text>
       </view>
@@ -62,26 +87,26 @@
           v-for="option in targetOptions"
           :key="option.value"
           :class="['target-option', { active: targetAmount === option.value }]"
-          @click="targetAmount = option.value"
+          @click="setTarget(option.value)"
         >
-          <text class="target-value">{{ option.label }}</text>
+          <text class="option-value">{{ option.label }}</text>
         </view>
       </view>
-      <view class="custom-target">
+      <view class="custom-section">
         <input
           v-model="customTarget"
           type="number"
           placeholder="自定义目标 (ml)"
-          class="target-input"
+          class="custom-input"
         />
-        <button class="set-btn" @click="setCustomTarget">设置</button>
+        <button class="custom-btn" @click="setCustomTarget">设置</button>
       </view>
     </view>
 
     <!-- 历史记录 -->
-    <view v-if="stats?.logs?.length > 0" class="card history-card">
+    <view v-if="stats?.logs?.length > 0" class="history-card">
       <view class="card-header">
-        <text class="title">历史记录</text>
+        <text class="title">最近记录</text>
       </view>
       <view class="history-list">
         <view v-for="log in stats.logs.slice(-7).reverse()" :key="log.id" class="history-item">
@@ -100,11 +125,21 @@
         </view>
       </view>
     </view>
+
+    <!-- 提示卡片 -->
+    <view class="tip-card">
+      <view class="tip-icon">💡</view>
+      <view class="tip-content">
+        <text class="tip-title">健康小贴士</text>
+        <text class="tip-text">建议每天饮水 2000-2500ml，分多次饮用效果更佳</text>
+      </view>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import NutriIcon from '@/components/NutriIcon/NutriIcon.vue';
 import { getWaterStats, addWater } from '@/api/water-api';
 
 const loading = ref(true);
@@ -144,15 +179,10 @@ const progress = computed(() => {
   return Math.min(Math.round((todayAmount.value / targetAmount.value) * 100), 100);
 });
 
-const progressGradient = computed(() => {
-  const percent = Math.min(progress.value, 100);
-  if (percent < 30) {
-    return `conic-gradient(#e74c3c 0% ${percent}%, #f5f5f5 ${percent}% 100%)`;
-  } else if (percent < 70) {
-    return `conic-gradient(#f39c12 0% ${percent}%, #f5f5f5 ${percent}% 100%)`;
-  } else {
-    return `conic-gradient(#2ecc71 0% ${percent}%, #f5f5f5 ${percent}% 100%)`;
-  }
+const progressClass = computed(() => {
+  if (progress.value >= 100) return 'complete';
+  if (progress.value >= 70) return 'good';
+  return 'low';
 });
 
 function formatDate(dateStr: string): string {
@@ -185,6 +215,11 @@ async function quickAdd(amount: number) {
   }
 }
 
+function setTarget(value: number) {
+  targetAmount.value = value;
+  uni.showToast({ title: '设置成功', icon: 'success' });
+}
+
 function setCustomTarget() {
   const value = parseInt(customTarget.value);
   if (value && value >= 500 && value <= 5000) {
@@ -199,256 +234,415 @@ function setCustomTarget() {
 onMounted(loadData);
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .water-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 16px;
-  box-sizing: border-box;
+  background: #f5f7fa;
+  padding: 24rpx;
+  padding-bottom: 60rpx;
+  position: relative;
 }
 
-.card {
+// 背景装饰
+.bg-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400rpx;
+  pointer-events: none;
+  overflow: hidden;
+
+  .bg-wave {
+    position: absolute;
+    top: -100rpx;
+    left: -50rpx;
+    right: -50rpx;
+    height: 300rpx;
+    background: linear-gradient(180deg, rgba(0, 188, 212, 0.1) 0%, transparent 100%);
+    border-radius: 0 0 50% 50%;
+  }
+}
+
+// 卡片通用样式
+.today-card,
+.stats-card,
+.target-card,
+.history-card,
+.tip-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 28rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 1;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24rpx;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+  }
 
   .title {
-    font-size: 16px;
+    font-size: 32rpx;
     font-weight: 600;
-    color: #333;
+    color: #1e293b;
   }
 
   .date {
-    font-size: 14px;
-    color: #999;
+    font-size: 26rpx;
+    color: #94a3b8;
   }
 }
 
-.today-card {
-  .water-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-    margin-bottom: 20px;
+// 今日饮水
+.progress-section {
+  display: flex;
+  align-items: center;
+  gap: 32rpx;
+  margin-bottom: 28rpx;
+}
+
+.progress-ring {
+  width: 180rpx;
+  height: 180rpx;
+  position: relative;
+  flex-shrink: 0;
+
+  .ring-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #f1f5f9;
   }
 
-  .water-circle {
-    width: 120px;
-    height: 120px;
-    border-radius: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .ring-progress {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      #00bcd4 0deg,
+      #00bcd4 calc(var(--progress, 0) * 3.6deg),
+      #f1f5f9 calc(var(--progress, 0) * 3.6deg)
+    );
+    transition: background 0.5s ease;
   }
 
-  .water-inner {
-    width: 100px;
-    height: 100px;
-    border-radius: 50px;
-    background: #fff;
-    display: flex;
+  .ring-bg,
+  .ring-progress {
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 16rpx;
+      background: #fff;
+      border-radius: 50%;
+    }
+  }
+
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    @include flex-center;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
+    z-index: 1;
 
-  .water-amount {
-    font-size: 28px;
-    font-weight: 600;
-    color: #333;
-  }
+    .amount-value {
+      font-size: 48rpx;
+      font-weight: 800;
+      color: #00bcd4;
+      line-height: 1;
+    }
 
-  .water-unit {
-    font-size: 12px;
-    color: #999;
+    .amount-unit {
+      font-size: 22rpx;
+      color: #94a3b8;
+      margin-top: 4rpx;
+    }
   }
+}
 
-  .water-target {
+.progress-info {
+  flex: 1;
+
+  .target-row {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    justify-content: space-between;
+    margin-bottom: 12rpx;
+
+    .target-label {
+      font-size: 24rpx;
+      color: #94a3b8;
+    }
+
+    .target-value {
+      font-size: 24rpx;
+      color: #1e293b;
+      font-weight: 600;
+    }
   }
 
-  .target-text {
-    font-size: 14px;
-    color: #666;
+  .progress-bar {
+    height: 12rpx;
+    background: #f1f5f9;
+    border-radius: 6rpx;
+    overflow: hidden;
+    margin-bottom: 12rpx;
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00bcd4 0%, #26c6da 100%);
+      border-radius: 6rpx;
+      transition: width 0.3s ease;
+    }
   }
 
-  .progress-text {
-    font-size: 18px;
-    font-weight: 600;
-    color: #2ecc71;
-  }
+  .progress-percent {
+    font-size: 32rpx;
+    font-weight: 700;
+    color: #00bcd4;
 
-  .quick-add {
-    display: flex;
-    justify-content: space-around;
-    gap: 12px;
+    &.complete {
+      color: #00b171;
+    }
+
+    &.good {
+      color: #00bcd4;
+    }
+
+    &.low {
+      color: #f59e0b;
+    }
   }
+}
+
+// 快捷添加
+.quick-add {
+  display: flex;
+  gap: 16rpx;
 
   .quick-btn {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 12px 8px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    transition: all 0.2s;
+    padding: 20rpx 12rpx;
+    background: #f8fafc;
+    border-radius: 20rpx;
+    transition: all 0.2s ease;
 
     &:active {
-      background: #e8f5e9;
+      background: rgba(0, 188, 212, 0.1);
+      transform: scale(0.98);
     }
 
     .quick-icon {
-      font-size: 24px;
-      margin-bottom: 4px;
+      font-size: 36rpx;
+      margin-bottom: 8rpx;
     }
 
-    .quick-text {
-      font-size: 12px;
-      color: #666;
+    .quick-label {
+      font-size: 24rpx;
+      color: #64748b;
     }
   }
 }
 
+// 统计卡片
 .stats-card {
+  .stats-header {
+    margin-bottom: 20rpx;
+
+    .stats-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: #1e293b;
+    }
+  }
+
   .stats-grid {
     display: flex;
-    justify-content: space-around;
-  }
+    align-items: center;
 
-  .stat-item {
-    text-align: center;
-  }
+    .stat-item {
+      flex: 1;
+      text-align: center;
 
-  .stat-value {
-    display: block;
-    font-size: 24px;
-    font-weight: 600;
-    color: #333;
-  }
+      .stat-value {
+        display: block;
+        font-size: 40rpx;
+        font-weight: 700;
+        color: #1e293b;
+      }
 
-  .stat-label {
-    display: block;
-    font-size: 12px;
-    color: #999;
-    margin-top: 4px;
+      .stat-label {
+        display: block;
+        font-size: 22rpx;
+        color: #94a3b8;
+        margin-top: 4rpx;
+      }
+
+      .stat-unit {
+        display: block;
+        font-size: 20rpx;
+        color: #cbd5e1;
+      }
+    }
+
+    .stat-divider {
+      width: 1rpx;
+      height: 80rpx;
+      background: #f1f5f9;
+    }
   }
 }
 
-.target-card {
-  .target-options {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
+// 目标设置
+.target-options {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
 
   .target-option {
     flex: 1;
     text-align: center;
-    padding: 10px;
-    border: 1px solid #eee;
-    border-radius: 8px;
+    padding: 20rpx 0;
+    border: 2rpx solid #e2e8f0;
+    border-radius: 16rpx;
+    transition: all 0.2s ease;
 
     &.active {
-      border-color: #2ecc71;
-      background: rgba(46, 204, 113, 0.1);
+      border-color: #00bcd4;
+      background: rgba(0, 188, 212, 0.08);
 
-      .target-value {
-        color: #2ecc71;
+      .option-value {
+        color: #00bcd4;
+        font-weight: 600;
       }
     }
 
-    .target-value {
-      font-size: 14px;
-      color: #666;
-    }
-  }
-
-  .custom-target {
-    display: flex;
-    gap: 8px;
-
-    .target-input {
-      flex: 1;
-      height: 40px;
-      padding: 0 12px;
-      border: 1px solid #eee;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    .set-btn {
-      padding: 0 16px;
-      height: 40px;
-      background: #2ecc71;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
+    .option-value {
+      font-size: 26rpx;
+      color: #64748b;
     }
   }
 }
 
-.history-card {
-  .history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.custom-section {
+  display: flex;
+  gap: 16rpx;
+
+  .custom-input {
+    flex: 1;
+    height: 80rpx;
+    padding: 0 24rpx;
+    border: 2rpx solid #e2e8f0;
+    border-radius: 16rpx;
+    font-size: 28rpx;
+    background: #f8fafc;
   }
 
+  .custom-btn {
+    padding: 0 32rpx;
+    height: 80rpx;
+    background: linear-gradient(135deg, #00bcd4 0%, #26c6da 100%);
+    color: #fff;
+    border: none;
+    border-radius: 16rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+  }
+}
+
+// 历史记录
+.history-list {
   .history-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16rpx;
+    padding: 16rpx 0;
+    border-bottom: 1rpx solid #f8fafc;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .history-left {
+      width: 140rpx;
+
+      .history-date {
+        font-size: 26rpx;
+        color: #64748b;
+      }
+    }
+
+    .history-right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 16rpx;
+
+      .history-bar {
+        flex: 1;
+        height: 10rpx;
+        background: #f1f5f9;
+        border-radius: 5rpx;
+        overflow: hidden;
+
+        .history-fill {
+          height: 100%;
+          background: #00bcd4;
+          border-radius: 5rpx;
+        }
+      }
+
+      .history-amount {
+        font-size: 26rpx;
+        color: #1e293b;
+        font-weight: 500;
+        width: 120rpx;
+        text-align: right;
+      }
+    }
+  }
+}
+
+// 提示卡片
+.tip-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+  background: linear-gradient(135deg, rgba(0, 188, 212, 0.08) 0%, rgba(0, 188, 212, 0.02) 100%);
+  border: 1rpx solid rgba(0, 188, 212, 0.15);
+
+  .tip-icon {
+    font-size: 40rpx;
+    line-height: 1;
   }
 
-  .history-left {
-    width: 80px;
-  }
-
-  .history-date {
-    font-size: 13px;
-    color: #666;
-  }
-
-  .history-right {
+  .tip-content {
     flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
 
-  .history-bar {
-    flex: 1;
-    height: 8px;
-    background: #f0f0f0;
-    border-radius: 4px;
-    overflow: hidden;
-  }
+    .tip-title {
+      display: block;
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 8rpx;
+    }
 
-  .history-fill {
-    height: 100%;
-    background: #2ecc71;
-    border-radius: 4px;
-  }
-
-  .history-amount {
-    font-size: 13px;
-    color: #333;
-    width: 70px;
-    text-align: right;
+    .tip-text {
+      font-size: 24rpx;
+      color: #64748b;
+      line-height: 1.5;
+    }
   }
 }
 </style>

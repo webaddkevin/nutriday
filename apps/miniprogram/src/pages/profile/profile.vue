@@ -1,39 +1,40 @@
 <template>
   <view class="container">
+    <!-- 顶部装饰背景 -->
+    <view class="bg-decoration">
+      <view class="bg-gradient"></view>
+      <view class="bg-pattern"></view>
+    </view>
+
     <!-- User Info Header -->
-    <view class="header shadow-glass">
-      <!-- 头像：使用 chooseAvatar 按钮获取微信头像 -->
+    <view class="header">
       <button class="avatar-btn" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
         <view class="avatar-wrapper">
           <image v-if="avatarUrl" class="avatar-img" :src="avatarUrl" mode="aspectFill" />
           <view v-else class="avatar-placeholder">
-            <uni-icons type="contact" size="50" color="rgba(0,0,0,0.15)"></uni-icons>
+            <NutriIcon name="user" size="xl" color="#cbd5e1" />
           </view>
-          <!-- 底部悬浮相机角标 -->
           <view class="avatar-edit-badge">
-            <uni-icons type="camera-filled" size="18" color="#666"></uni-icons>
+            <uni-icons type="camera-filled" size="16" color="#fff"></uni-icons>
           </view>
         </view>
       </button>
 
       <view class="user-details">
-        <!-- 昵称：展示模式 -->
         <view v-if="!isEditingNickname" class="nickname-display">
           <text class="user-title">{{ nickname || '微信用户' }}</text>
           <view class="edit-btn" @tap="isEditingNickname = true">
-            <uni-icons type="compose" size="14" color="#666"></uni-icons>
-            <text class="edit-text">更换昵称</text>
+            <uni-icons type="compose" size="14" color="#fff"></uni-icons>
           </view>
         </view>
 
-        <!-- 昵称：编辑模式 -->
         <view v-else class="nickname-edit">
           <input
             type="nickname"
             class="nickname-input"
             :value="nickname"
             :focus="isEditingNickname"
-            placeholder="获取微信昵称"
+            placeholder="输入昵称"
             placeholder-class="nickname-placeholder"
             @change="onNicknameChange"
             @blur="onNicknameBlur"
@@ -41,95 +42,131 @@
           />
         </view>
 
-        <!-- 基础信息展示：点击跳转编辑 -->
-        <view class="user-desc-wrapper" @tap="goToEditBasicInfo">
-          <text class="user-desc"
-            >{{ userProfile?.age || '--' }}岁 | {{ userProfile?.height || '--' }}cm |
-            {{ userProfile?.weight || '--' }}kg</text
-          >
-          <uni-icons type="right" size="12" color="#999"></uni-icons>
+        <view class="user-stats" @tap="goToEditBasicInfo">
+          <view class="stat-item">
+            <text class="stat-value">{{ userProfile?.age || '--' }}</text>
+            <text class="stat-label">岁</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-value">{{ userProfile?.height || '--' }}</text>
+            <text class="stat-label">cm</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-value">{{ userProfile?.weight || '--' }}</text>
+            <text class="stat-label">kg</text>
+          </view>
+          <view class="edit-hint">
+            <uni-icons type="right" size="14" color="rgba(255,255,255,0.6)"></uni-icons>
+          </view>
         </view>
       </view>
     </view>
 
+    <!-- 快捷统计卡片 -->
+    <view class="quick-stats">
+      <view class="quick-stat-card" @tap="goToStats">
+        <view class="stat-icon-wrap bg-purple">
+          <NutriIcon name="stats" size="md" color="#9b59b6" />
+        </view>
+        <view class="stat-info">
+          <text class="stat-title">数据统计</text>
+          <text class="stat-desc">查看详细报告</text>
+        </view>
+        <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
+      </view>
+    </view>
+
     <!-- Menu Cards -->
-    <view class="menu-list">
-      <view class="menu-item shadow-glass" @tap="goToStats">
-        <view class="menu-icon bg-purple">📊</view>
-        <view class="menu-content">
-          <text class="menu-title">数据统计</text>
-          <text class="menu-subtitle">热量趋势、营养分析</text>
+    <view class="menu-section">
+      <view class="menu-group">
+        <view class="menu-item" @tap="goToWeight">
+          <view class="menu-icon-wrap bg-teal">
+            <NutriIcon name="weight" size="md" color="#1abc9c" />
+          </view>
+          <view class="menu-content">
+            <text class="menu-title">体重记录</text>
+            <text class="menu-subtitle">追踪体重变化趋势</text>
+          </view>
+          <view class="menu-arrow">
+            <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
+          </view>
         </view>
-        <view class="menu-arrow">
-          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
+
+        <view class="menu-item" @tap="goToGoal">
+          <view class="menu-icon-wrap bg-blue">
+            <NutriIcon name="target" size="md" color="#3498db" />
+          </view>
+          <view class="menu-content">
+            <text class="menu-title">个人目标</text>
+            <text class="menu-subtitle">减脂 / 增肌 / 保持健康</text>
+          </view>
+          <view class="menu-arrow">
+            <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
+          </view>
+        </view>
+
+        <view class="menu-item" @tap="goToHealth">
+          <view class="menu-icon-wrap bg-red">
+            <NutriIcon name="health" size="md" color="#ef4444" />
+          </view>
+          <view class="menu-content">
+            <text class="menu-title">健康档案</text>
+            <text class="menu-subtitle">过敏原 / 身体情况</text>
+          </view>
+          <view class="menu-arrow">
+            <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
+          </view>
         </view>
       </view>
 
-      <view class="menu-item shadow-glass" @tap="goToWeight">
-        <view class="menu-icon bg-teal">⚖️</view>
-        <view class="menu-content">
-          <text class="menu-title">体重记录</text>
-          <text class="menu-subtitle">追踪体重变化趋势</text>
+      <view class="menu-group">
+        <view class="menu-item" @tap="goToWater">
+          <view class="menu-icon-wrap bg-cyan">
+            <NutriIcon name="water" size="md" color="#00bcd4" />
+          </view>
+          <view class="menu-content">
+            <text class="menu-title">饮水记录</text>
+            <text class="menu-subtitle">每日饮水量追踪</text>
+          </view>
+          <view class="menu-arrow">
+            <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
+          </view>
         </view>
-        <view class="menu-arrow">
-          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
-        </view>
-      </view>
 
-      <view class="menu-item shadow-glass" @tap="goToGoal">
-        <view class="menu-icon bg-blue">🎯</view>
-        <view class="menu-content">
-          <text class="menu-title">个人目标</text>
-          <text class="menu-subtitle">减脂 / 增肌 / 保持健康</text>
+        <view class="menu-item" @tap="goToFavorite">
+          <view class="menu-icon-wrap bg-yellow">
+            <NutriIcon name="star" size="md" color="#f59e0b" />
+          </view>
+          <view class="menu-content">
+            <text class="menu-title">食物收藏</text>
+            <text class="menu-subtitle">常吃食物快速添加</text>
+          </view>
+          <view class="menu-arrow">
+            <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
+          </view>
         </view>
-        <view class="menu-arrow">
-          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
-        </view>
-      </view>
 
-      <view class="menu-item shadow-glass" @tap="goToHealth">
-        <view class="menu-icon bg-green">📋</view>
-        <view class="menu-content">
-          <text class="menu-title">健康档案</text>
-          <text class="menu-subtitle">过敏原 / 身体情况信息</text>
-        </view>
-        <view class="menu-arrow">
-          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
+        <view class="menu-item" @tap="goToStats">
+          <view class="menu-icon-wrap bg-orange">
+            <NutriIcon name="trend" size="md" color="#e67e22" />
+          </view>
+          <view class="menu-content">
+            <text class="menu-title">历史分析报告</text>
+            <text class="menu-subtitle">饮食趋势与身体变化</text>
+          </view>
+          <view class="menu-arrow">
+            <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
+          </view>
         </view>
       </view>
+    </view>
 
-      <view class="menu-item shadow-glass" @tap="goToWater">
-        <view class="menu-icon bg-cyan">💧</view>
-        <view class="menu-content">
-          <text class="menu-title">饮水记录</text>
-          <text class="menu-subtitle">每日饮水量追踪</text>
-        </view>
-        <view class="menu-arrow">
-          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
-        </view>
-      </view>
-
-      <view class="menu-item shadow-glass" @tap="goToFavorite">
-        <view class="menu-icon bg-yellow">⭐</view>
-        <view class="menu-content">
-          <text class="menu-title">食物收藏</text>
-          <text class="menu-subtitle">常吃食物快速添加</text>
-        </view>
-        <view class="menu-arrow">
-          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
-        </view>
-      </view>
-
-      <view class="menu-item shadow-glass">
-        <view class="menu-icon bg-orange">📈</view>
-        <view class="menu-content">
-          <text class="menu-title">历史分析报告</text>
-          <text class="menu-subtitle">饮食趋势与身体变化</text>
-        </view>
-        <view class="menu-arrow">
-          <uni-icons type="right" size="16" color="rgba(0, 0, 0, 0.2)"></uni-icons>
-        </view>
-      </view>
+    <!-- App Info -->
+    <view class="app-info">
+      <text class="app-version">Nutriday v1.0.0</text>
+      <text class="app-slogan">让健康饮食成为习惯</text>
     </view>
 
     <!-- 自定义 Tabbar -->
@@ -141,6 +178,7 @@
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import CustomTabbar from '@/components/CustomTabbar/CustomTabbar.vue';
+import NutriIcon from '@/components/NutriIcon/NutriIcon.vue';
 import type { UserProfile } from '@nutriday/shared-types';
 import { getProfile, saveProfile } from '@/api/profile-api';
 
@@ -172,120 +210,79 @@ onShow(async () => {
   }
 });
 
-/**
- * 选择头像回调（微信 chooseAvatar 事件）
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onChooseAvatar = (e: any) => {
   const url = e.detail.avatarUrl;
-  console.log('获取头像：', url);
   avatarUrl.value = url;
   saveUserInfo({ avatarUrl: url });
 };
 
 const isEditingNickname = ref(false);
 
-/**
- * 昵称变更回调（支持微信自动填充和手动输入）
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onNicknameChange = (e: any) => {
   const value = e.detail.value;
-  console.log('昵称事件触发：', value);
   if (value && value !== nickname.value) {
-    console.log('设置昵称：', value);
     nickname.value = value;
     saveUserInfo({ nickname: value });
   }
 };
 
-/**
- * 昵称输入失焦回调
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onNicknameBlur = (e: any) => {
   onNicknameChange(e);
-  // 延迟关闭编辑态，避免点击完成按钮引发事件冲突
   setTimeout(() => {
     isEditingNickname.value = false;
   }, 100);
 };
 
-/**
- * 跳转到基本信息编辑页（使用 onboarding 页面）
- */
 const goToEditBasicInfo = () => {
   uni.navigateTo({
     url: '/pages/onboarding/onboarding',
   });
 };
 
-/**
- * 跳转到数据统计页
- */
 const goToStats = () => {
   uni.navigateTo({
     url: '/pages/stats/stats',
   });
 };
 
-/**
- * 跳转到体重记录页
- */
 const goToWeight = () => {
   uni.navigateTo({
     url: '/pages/weight/weight',
   });
 };
 
-/**
- * 跳转到个人目标页
- */
 const goToGoal = () => {
   uni.navigateTo({
     url: '/pages/goal/goal',
   });
 };
 
-/**
- * 跳转到健康档案页
- */
 const goToHealth = () => {
   uni.navigateTo({
     url: '/pages/health/health',
   });
 };
 
-/**
- * 跳转到饮水记录页
- */
 const goToWater = () => {
   uni.navigateTo({
     url: '/pages/water/water',
   });
 };
 
-/**
- * 跳转到食物收藏页
- */
 const goToFavorite = () => {
   uni.navigateTo({
     url: '/pages/favorite/favorite',
   });
 };
 
-/**
- * 保存用户信息到后端
- */
 const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) => {
-  // 先更新本地缓存
   const cached = uni.getStorageSync('user_profile') || {};
   uni.setStorageSync('user_profile', { ...cached, ...updates });
 
-  if (!userProfile.value) {
-    console.log('用户画像未加载，仅保存到本地');
-    return;
-  }
+  if (!userProfile.value) return;
 
   try {
     await saveProfile({
@@ -314,27 +311,46 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
-  background-color: $nutri-dark;
-  padding: 40rpx;
+  background: #f5f7fa;
   padding-bottom: 180rpx;
   color: $uni-text-color;
 }
 
-.shadow-glass {
-  @include glass-morphism;
+// 背景装饰
+.bg-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400rpx;
+  pointer-events: none;
+
+  .bg-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #00b171 0%, #009b63 100%);
+    border-radius: 0 0 60rpx 60rpx;
+  }
+
+  .bg-pattern {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
+  }
 }
 
 .header {
-  border-radius: 40rpx;
-  padding: 40rpx;
+  position: relative;
+  z-index: 1;
+  padding: 60rpx 40rpx 40rpx;
   display: flex;
   align-items: center;
-  margin-bottom: 60rpx;
 
-  // 重置 button 默认样式
   .avatar-btn {
     padding: 0;
-    margin: 0 30rpx 0 0;
+    margin: 0 32rpx 0 0;
     background: none;
     border: none;
     line-height: normal;
@@ -347,42 +363,39 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
 
   .avatar-wrapper {
     position: relative;
-    width: 156rpx;
-    height: 156rpx;
-    border-radius: 44rpx; // 方圆形圆角
-    background: #f8f9fa;
-    border: 4rpx solid #fff;
-    // 关键！因为有外部溢出的相机会标角标，所以不能 hidden
+    width: 140rpx;
+    height: 140rpx;
+    border-radius: 40rpx;
+    background: rgba(255, 255, 255, 0.2);
+    border: 4rpx solid rgba(255, 255, 255, 0.3);
     overflow: visible;
-    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
 
     .avatar-img {
       width: 100%;
       height: 100%;
-      border-radius: 40rpx; // 内部图片也要保持同轮廓
-      display: block; // 去除底部间隙
+      border-radius: 36rpx;
+      display: block;
     }
 
     .avatar-placeholder {
       width: 100%;
       height: 100%;
-      border-radius: 40rpx;
+      border-radius: 36rpx;
       @include flex-center;
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .avatar-edit-badge {
       position: absolute;
-      bottom: -16rpx;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60rpx;
-      height: 40rpx;
-      background: #fff;
-      border-radius: 20rpx;
+      bottom: -8rpx;
+      right: -8rpx;
+      width: 48rpx;
+      height: 48rpx;
+      background: linear-gradient(135deg, #00b171 0%, #00d387 100%);
+      border-radius: 50%;
       @include flex-center;
-      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-      border: 2rpx solid #f0f0f0;
-      z-index: 2;
+      box-shadow: 0 4rpx 12rpx rgba(0, 177, 113, 0.3);
+      border: 3rpx solid #fff;
     }
   }
 
@@ -393,140 +406,228 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
     .nickname-display {
       display: flex;
       align-items: center;
-      margin-bottom: 12rpx;
+      gap: 12rpx;
+      margin-bottom: 16rpx;
 
       .user-title {
-        font-size: 38rpx;
-        font-weight: 600;
-        color: $uni-text-color;
-        margin-right: 16rpx;
-        max-width: 280rpx;
+        font-size: 40rpx;
+        font-weight: 700;
+        color: #fff;
+        max-width: 320rpx;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
 
       .edit-btn {
-        display: flex;
-        align-items: center;
-        background: rgba(0, 0, 0, 0.04);
-        padding: 6rpx 16rpx;
-        border-radius: 30rpx;
-
-        .edit-text {
-          font-size: 22rpx;
-          color: #666;
-          margin-left: 6rpx;
-        }
+        width: 48rpx;
+        height: 48rpx;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        @include flex-center;
       }
     }
 
     .nickname-edit {
-      display: flex;
-      align-items: center;
-      margin-bottom: 12rpx;
+      margin-bottom: 16rpx;
 
       .nickname-input {
-        flex: 1;
-        font-size: 34rpx;
-        font-weight: 600;
+        font-size: 36rpx;
+        font-weight: 700;
         height: 60rpx;
         line-height: 60rpx;
-        color: $uni-text-color;
-        border-bottom: 2rpx solid $nutri-primary;
+        color: #fff;
+        border-bottom: 2rpx solid rgba(255, 255, 255, 0.5);
         padding: 0 10rpx;
+        background: transparent;
       }
 
       .nickname-placeholder {
-        color: rgba(0, 0, 0, 0.25);
+        color: rgba(255, 255, 255, 0.5);
         font-weight: 400;
       }
     }
 
-    .user-desc-wrapper {
-      display: inline-flex;
+    .user-stats {
+      display: flex;
       align-items: center;
-      padding: 6rpx 16rpx 6rpx 0;
-      margin-top: 4rpx;
+      gap: 8rpx;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 12rpx 20rpx;
+      border-radius: 20rpx;
+      width: fit-content;
 
-      .user-desc {
-        font-size: 24rpx;
-        color: $uni-text-color-grey;
-        margin-right: 8rpx;
+      .stat-item {
+        display: flex;
+        align-items: baseline;
+        gap: 4rpx;
+
+        .stat-value {
+          font-size: 32rpx;
+          font-weight: 600;
+          color: #fff;
+        }
+
+        .stat-label {
+          font-size: 22rpx;
+          color: rgba(255, 255, 255, 0.7);
+        }
+      }
+
+      .stat-divider {
+        width: 1rpx;
+        height: 28rpx;
+        background: rgba(255, 255, 255, 0.3);
+        margin: 0 16rpx;
+      }
+
+      .edit-hint {
+        margin-left: 8rpx;
       }
     }
   }
 }
 
-.menu-list {
-  display: flex;
-  flex-direction: column;
-  gap: 30rpx;
+// 快捷统计
+.quick-stats {
+  padding: 0 32rpx;
+  margin-bottom: 24rpx;
+  position: relative;
+  z-index: 1;
+
+  .quick-stat-card {
+    background: #fff;
+    border-radius: 24rpx;
+    padding: 28rpx;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+
+    .stat-icon-wrap {
+      width: 72rpx;
+      height: 72rpx;
+      border-radius: 20rpx;
+      @include flex-center;
+      margin-right: 24rpx;
+
+      &.bg-purple {
+        background: rgba(155, 89, 182, 0.1);
+      }
+    }
+
+    .stat-info {
+      flex: 1;
+
+      .stat-title {
+        font-size: 30rpx;
+        font-weight: 600;
+        color: #1e293b;
+        display: block;
+      }
+
+      .stat-desc {
+        font-size: 24rpx;
+        color: #94a3b8;
+        margin-top: 4rpx;
+      }
+    }
+  }
 }
 
-.menu-item {
-  border-radius: 30rpx;
-  padding: 30rpx;
-  display: flex;
-  align-items: center;
+// 菜单区块
+.menu-section {
+  padding: 0 32rpx;
+  position: relative;
+  z-index: 1;
 
-  .menu-icon {
-    width: 90rpx;
-    height: 90rpx;
-    border-radius: 25rpx;
-    @include flex-center;
-    font-size: 40rpx;
-    margin-right: 30rpx;
+  .menu-group {
+    background: #fff;
+    border-radius: 24rpx;
+    overflow: hidden;
+    margin-bottom: 24rpx;
+    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
 
-    &.bg-blue {
-      background: rgba(52, 152, 219, 0.1);
-      color: #3498db;
-    }
-    &.bg-green {
-      background: rgba(46, 204, 113, 0.1);
-      color: #2ecc71;
-    }
-    &.bg-orange {
-      background: rgba(230, 126, 34, 0.1);
-      color: #e67e22;
-    }
-    &.bg-purple {
-      background: rgba(155, 89, 182, 0.1);
-      color: #9b59b6;
-    }
-    &.bg-teal {
-      background: rgba(26, 188, 156, 0.1);
-      color: #1abc9c;
-    }
-    &.bg-cyan {
-      background: rgba(0, 188, 212, 0.1);
-      color: #00bcd4;
-    }
-    &.bg-yellow {
-      background: rgba(255, 193, 7, 0.1);
-      color: #ffc107;
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 28rpx;
+      border-bottom: 1rpx solid #f1f5f9;
+      transition: background 0.2s ease;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:active {
+        background: #f8fafc;
+      }
+
+      .menu-icon-wrap {
+        width: 72rpx;
+        height: 72rpx;
+        border-radius: 20rpx;
+        @include flex-center;
+        margin-right: 24rpx;
+
+        &.bg-blue {
+          background: rgba(52, 152, 219, 0.1);
+        }
+        &.bg-teal {
+          background: rgba(26, 188, 156, 0.1);
+        }
+        &.bg-red {
+          background: rgba(239, 68, 68, 0.1);
+        }
+        &.bg-cyan {
+          background: rgba(0, 188, 212, 0.1);
+        }
+        &.bg-yellow {
+          background: rgba(245, 158, 11, 0.1);
+        }
+        &.bg-orange {
+          background: rgba(230, 126, 34, 0.1);
+        }
+      }
+
+      .menu-content {
+        flex: 1;
+
+        .menu-title {
+          display: block;
+          font-size: 30rpx;
+          font-weight: 500;
+          color: #1e293b;
+          margin-bottom: 4rpx;
+        }
+
+        .menu-subtitle {
+          font-size: 24rpx;
+          color: #94a3b8;
+        }
+      }
+
+      .menu-arrow {
+        opacity: 0.6;
+      }
     }
   }
+}
 
-  .menu-content {
-    flex: 1;
+// App 信息
+.app-info {
+  text-align: center;
+  padding: 40rpx;
 
-    .menu-title {
-      display: block;
-      font-size: 32rpx;
-      font-weight: 500;
-      margin-bottom: 8rpx;
-    }
-
-    .menu-subtitle {
-      font-size: 24rpx;
-      color: $uni-text-color-placeholder;
-    }
+  .app-version {
+    font-size: 24rpx;
+    color: #94a3b8;
+    display: block;
   }
 
-  .menu-arrow {
-    font-size: 32rpx;
-    color: rgba(0, 0, 0, 0.2);
+  .app-slogan {
+    font-size: 22rpx;
+    color: #cbd5e1;
+    margin-top: 8rpx;
   }
 }
 </style>

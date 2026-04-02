@@ -1,131 +1,179 @@
 <template>
   <view class="weight-page">
-    <!-- 体重输入卡片 -->
-    <view class="card input-card">
+    <!-- 背景装饰 -->
+    <view class="bg-decoration">
+      <view class="bg-circle"></view>
+    </view>
+
+    <!-- 今日体重卡片 -->
+    <view class="today-card">
       <view class="card-header">
-        <text class="title">记录体重</text>
+        <view class="header-left">
+          <NutriIcon name="weight" size="md" color="#1abc9c" />
+          <text class="title">今日体重</text>
+        </view>
         <text class="date">{{ todayFormatted }}</text>
       </view>
-      <view class="weight-input">
-        <input
-          v-model="weightInput"
-          type="digit"
-          placeholder="输入今日体重"
-          class="input"
-          @confirm="saveWeight"
-        />
-        <text class="unit">kg</text>
-      </view>
-      <textarea v-model="noteInput" placeholder="备注（可选）" class="note-input" maxlength="100" />
-      <button class="save-btn" :disabled="saving" @click="saveWeight">
-        {{ saving ? '保存中...' : '保存' }}
-      </button>
-    </view>
 
-    <!-- 统计卡片 -->
-    <view v-if="stats" class="card stats-card">
-      <view class="card-header">
-        <text class="title">体重趋势</text>
-      </view>
-      <view class="stats-grid">
-        <view class="stat-item">
-          <text class="stat-value">{{ stats.current?.toFixed(1) || '--' }}</text>
-          <text class="stat-label">当前体重</text>
+      <view class="weight-display">
+        <view class="weight-value-wrap">
+          <text class="weight-value">{{ todayWeight || '--' }}</text>
+          <text class="weight-unit">kg</text>
         </view>
-        <view class="stat-item">
-          <text class="stat-value">{{ stats.lowest?.toFixed(1) || '--' }}</text>
-          <text class="stat-label">最低体重</text>
-        </view>
-        <view class="stat-item">
-          <text class="stat-value">{{ stats.highest?.toFixed(1) || '--' }}</text>
-          <text class="stat-label">最高体重</text>
+        <view v-if="weightChange !== null" class="weight-change" :class="changeClass">
+          <text class="change-icon">{{ weightChange >= 0 ? '↑' : '↓' }}</text>
+          <text class="change-value">{{ Math.abs(weightChange).toFixed(1) }} kg</text>
         </view>
       </view>
-      <view class="change-row">
-        <view class="change-item">
-          <text :class="['change-value', getChangeClass(stats.change7d)]">
-            {{ formatChange(stats.change7d) }}
-          </text>
-          <text class="change-label">7天变化</text>
+
+      <view class="weight-input-section">
+        <view class="input-row">
+          <input v-model="newWeight" type="digit" placeholder="输入今日体重" class="weight-input" />
+          <text class="input-unit">kg</text>
         </view>
-        <view class="change-item">
-          <text :class="['change-value', getChangeClass(stats.change30d)]">
-            {{ formatChange(stats.change30d) }}
-          </text>
-          <text class="change-label">30天变化</text>
-        </view>
+        <button class="save-btn" @click="saveWeight">
+          <text class="btn-text">记录体重</text>
+        </button>
       </view>
     </view>
 
-    <!-- 趋势图表 -->
-    <view v-if="stats?.logs?.length > 0" class="card chart-card">
-      <view class="card-header">
-        <text class="title">体重曲线</text>
-        <view class="period-tabs">
-          <text
-            v-for="p in periods"
-            :key="p.value"
-            :class="['tab', { active: period === p.value }]"
-            @click="period = p.value"
+    <!-- 目标卡片 -->
+    <view v-if="userProfile" class="goal-card">
+      <view class="goal-header">
+        <NutriIcon name="target" size="md" color="#3498db" />
+        <text class="goal-title">目标体重</text>
+      </view>
+      <view class="goal-content">
+        <view class="goal-item">
+          <text class="goal-label">当前</text>
+          <text class="goal-value">{{ todayWeight || userProfile.weight }} kg</text>
+        </view>
+        <view class="goal-arrow">
+          <text class="arrow-text">→</text>
+        </view>
+        <view class="goal-item">
+          <text class="goal-label">目标</text>
+          <text class="goal-value target">{{ targetWeight }} kg</text>
+        </view>
+      </view>
+      <view class="goal-progress">
+        <view class="progress-bar">
+          <view class="progress-fill" :style="{ width: goalProgress + '%' }"></view>
+        </view>
+        <text class="progress-text">距离目标还差 {{ remainingWeight }} kg</text>
+      </view>
+    </view>
+
+    <!-- 趋势图 -->
+    <view class="chart-card">
+      <view class="chart-header">
+        <text class="chart-title">体重趋势</text>
+        <view class="chart-tabs">
+          <view
+            v-for="tab in chartTabs"
+            :key="tab.value"
+            :class="['chart-tab', { active: selectedTab === tab.value }]"
+            @click="selectedTab = tab.value"
           >
-            {{ p.label }}
-          </text>
+            {{ tab.label }}
+          </view>
         </view>
       </view>
       <view class="chart-container">
-        <canvas id="weightChart" canvas-id="weightChart" class="chart" @touchstart="onChartTouch" />
+        <view v-if="weightLogs.length > 0" class="weight-chart">
+          <view class="chart-line">
+            <view
+              v-for="(log, index) in chartData"
+              :key="log.date"
+              class="chart-point"
+              :style="{
+                left: (index / (chartData.length - 1)) * 100 + '%',
+                bottom: getPointBottom(log.weight) + '%',
+              }"
+            >
+              <view class="point-dot"></view>
+              <text class="point-value">{{ log.weight }}</text>
+            </view>
+          </view>
+          <view class="chart-x-axis">
+            <text
+              v-for="log in chartData.filter((_, i) => i % 7 === 0)"
+              :key="log.date"
+              class="x-label"
+            >
+              {{ formatDateShort(log.date) }}
+            </text>
+          </view>
+        </view>
+        <view v-else class="empty-chart">
+          <text class="empty-text">暂无数据</text>
+          <text class="empty-hint">开始记录体重吧</text>
+        </view>
       </view>
     </view>
 
     <!-- 历史记录 -->
-    <view v-if="stats?.logs?.length > 0" class="card history-card">
+    <view v-if="weightLogs.length > 0" class="history-card">
       <view class="card-header">
         <text class="title">历史记录</text>
       </view>
       <view class="history-list">
-        <view v-for="log in displayLogs" :key="log.id" class="history-item" @click="editLog(log)">
+        <view v-for="log in weightLogs.slice(-10).reverse()" :key="log.id" class="history-item">
           <view class="history-left">
             <text class="history-date">{{ formatDate(log.date) }}</text>
-            <text v-if="log.note" class="history-note">{{ log.note }}</text>
           </view>
           <view class="history-right">
-            <text class="history-weight">{{ log.weight.toFixed(1) }} kg</text>
-            <text class="delete-btn" @click.stop="deleteLog(log)">删除</text>
+            <text class="history-weight">{{ log.weight }} kg</text>
+            <view v-if="log.bmi" class="bmi-badge" :class="getBmiClass(log.bmi)">
+              BMI {{ log.bmi }}
+            </view>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 空状态 -->
-    <view v-if="!stats?.logs?.length && !loading" class="empty-state">
-      <text class="empty-icon">📊</text>
-      <text class="empty-text">还没有体重记录</text>
-      <text class="empty-hint">开始记录你的体重变化吧</text>
+    <!-- BMI 说明 -->
+    <view class="bmi-card">
+      <view class="bmi-header">
+        <text class="bmi-title">BMI 参考范围</text>
+      </view>
+      <view class="bmi-ranges">
+        <view class="bmi-range underweight">
+          <text class="range-label">偏瘦</text>
+          <text class="range-value">&lt; 18.5</text>
+        </view>
+        <view class="bmi-range normal">
+          <text class="range-label">正常</text>
+          <text class="range-value">18.5 - 24</text>
+        </view>
+        <view class="bmi-range overweight">
+          <text class="range-label">超重</text>
+          <text class="range-value">24 - 28</text>
+        </view>
+        <view class="bmi-range obese">
+          <text class="range-label">肥胖</text>
+          <text class="range-value">&gt; 28</text>
+        </view>
+      </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import {
-  getWeightStats,
-  saveWeight as saveWeightApi,
-  deleteWeight as deleteWeightApi,
-  type WeightLog,
-  type WeightStats,
-} from '../../api/weight-api';
+import { ref, computed, onMounted } from 'vue';
+import NutriIcon from '@/components/NutriIcon/NutriIcon.vue';
+import { getWeightLogs, saveWeightLog, type WeightLog } from '@/api/weight-api';
+import type { UserProfile } from '@nutriday/shared-types';
 
-const loading = ref(true);
-const saving = ref(false);
-const weightInput = ref('');
-const noteInput = ref('');
-const stats = ref<WeightStats | null>(null);
-const period = ref(7);
+const userProfile = ref<UserProfile | null>(null);
+const weightLogs = ref<WeightLog[]>([]);
+const newWeight = ref('');
+const selectedTab = ref(30);
 
-const periods = [
+const chartTabs = [
   { label: '7天', value: 7 },
-  { label: '14天', value: 14 },
   { label: '30天', value: 30 },
+  { label: '90天', value: 90 },
 ];
 
 const today = new Date();
@@ -133,27 +181,68 @@ const todayFormatted = computed(() => {
   return `${today.getMonth() + 1}月${today.getDate()}日`;
 });
 
-const todayStr = computed(() => {
-  return today.toISOString().split('T')[0];
+const todayStr = computed(() => today.toISOString().split('T')[0]);
+
+const todayWeight = computed(() => {
+  const todayLog = weightLogs.value.find((log) => log.date === todayStr.value);
+  return todayLog?.weight || null;
 });
 
-const displayLogs = computed(() => {
-  if (!stats.value?.logs) return [];
-  return stats.value.logs.slice(-period.value).reverse();
+const weightChange = computed(() => {
+  if (weightLogs.value.length < 2) return null;
+  const sorted = [...weightLogs.value].sort((a, b) => b.date.localeCompare(a.date));
+  return sorted[0].weight - sorted[1].weight;
 });
 
-function formatChange(change: number | null): string {
-  if (change === null) return '--';
-  const sign = change > 0 ? '+' : '';
-  return `${sign}${change.toFixed(1)} kg`;
-}
+const changeClass = computed(() => {
+  if (weightChange.value === null) return '';
+  return weightChange.value >= 0 ? 'increase' : 'decrease';
+});
 
-function getChangeClass(change: number | null): string {
-  if (change === null) return 'neutral';
-  if (change < 0) return 'down';
-  if (change > 0) return 'up';
-  return 'neutral';
-}
+const targetWeight = computed(() => {
+  if (!userProfile.value) return 60;
+  // 根据目标计算目标体重
+  const currentWeight = userProfile.value.weight;
+  const goal = userProfile.value.goal;
+
+  if (goal === 'lose') return Math.max(currentWeight - 5, 45);
+  if (goal === 'gain') return currentWeight + 5;
+  return currentWeight;
+});
+
+const goalProgress = computed(() => {
+  if (!userProfile.value || !todayWeight.value) return 0;
+  const startWeight = userProfile.value.weight;
+  const target = targetWeight.value;
+  const current = todayWeight.value;
+
+  if (startWeight === target) return 100;
+  const progress = Math.abs((current - startWeight) / (target - startWeight)) * 100;
+  return Math.min(100, Math.max(0, progress));
+});
+
+const remainingWeight = computed(() => {
+  if (!todayWeight.value) return Math.abs(targetWeight.value - (userProfile.value?.weight || 0));
+  return Math.abs(targetWeight.value - todayWeight.value);
+});
+
+const chartData = computed(() => {
+  const days = selectedTab.value;
+  const result: { date: string; weight: number }[] = [];
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+    const log = weightLogs.value.find((l) => l.date === dateStr);
+
+    if (log) {
+      result.push({ date: dateStr, weight: log.weight });
+    }
+  }
+
+  return result;
+});
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -163,385 +252,538 @@ function formatDate(dateStr: string): string {
   return `${month}月${day}日 ${weekdays[date.getDay()]}`;
 }
 
+function formatDateShort(dateStr: string): string {
+  const date = new Date(dateStr);
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function getPointBottom(weight: number): number {
+  if (chartData.value.length === 0) return 0;
+  const weights = chartData.value.map((d) => d.weight);
+  const min = Math.min(...weights) - 1;
+  const max = Math.max(...weights) + 1;
+  return ((weight - min) / (max - min)) * 80 + 10;
+}
+
+function getBmiClass(bmi: number): string {
+  if (bmi < 18.5) return 'underweight';
+  if (bmi < 24) return 'normal';
+  if (bmi < 28) return 'overweight';
+  return 'obese';
+}
+
 async function loadData() {
-  loading.value = true;
   try {
-    stats.value = await getWeightStats();
-    // 如果今天有记录，填充到输入框
-    const todayLog = stats.value?.logs?.find((l) => l.date === todayStr.value);
-    if (todayLog) {
-      weightInput.value = todayLog.weight.toString();
-      noteInput.value = todayLog.note || '';
-    }
+    weightLogs.value = await getWeightLogs();
   } catch (e) {
     console.error('加载体重数据失败', e);
-  } finally {
-    loading.value = false;
   }
 }
 
 async function saveWeight() {
-  const weight = parseFloat(weightInput.value);
-  if (!weight || weight < 20 || weight > 300) {
+  const weight = parseFloat(newWeight.value);
+  if (!weight || weight < 30 || weight > 200) {
     uni.showToast({ title: '请输入有效体重', icon: 'none' });
     return;
   }
 
-  saving.value = true;
   try {
-    await saveWeightApi({
+    await saveWeightLog({
       date: todayStr.value,
       weight,
-      note: noteInput.value || undefined,
     });
-    uni.showToast({ title: '保存成功', icon: 'success' });
+    newWeight.value = '';
+    uni.showToast({ title: '记录成功', icon: 'success' });
     await loadData();
-    drawChart();
   } catch (e) {
-    console.error('保存体重失败', e);
+    console.error('保存失败', e);
     uni.showToast({ title: '保存失败', icon: 'none' });
-  } finally {
-    saving.value = false;
   }
 }
 
-async function deleteLog(log: WeightLog) {
-  const res = await uni.showModal({
-    title: '确认删除',
-    content: `确定删除 ${formatDate(log.date)} 的记录吗？`,
-  });
-  if (!res.confirm) return;
-
-  try {
-    await deleteWeightApi(log.date);
-    uni.showToast({ title: '删除成功', icon: 'success' });
-    await loadData();
-    drawChart();
-  } catch (e) {
-    console.error('删除失败', e);
-    uni.showToast({ title: '删除失败', icon: 'none' });
+onMounted(() => {
+  const profile = uni.getStorageSync('user_profile');
+  if (profile) {
+    userProfile.value = profile;
   }
-}
-
-function editLog(_log: WeightLog) {
-  // TODO: 跳转到编辑页面或弹出编辑框
-  uni.showToast({ title: '长按可删除', icon: 'none' });
-}
-
-function onChartTouch(_e: unknown) {
-  // TODO: 实现触摸显示具体数值
-}
-
-function drawChart() {
-  if (!stats.value?.logs?.length) return;
-
-  const logs = stats.value.logs.slice(-period.value);
-  if (logs.length < 2) return;
-
-  const ctx = uni.createCanvasContext('weightChart');
-  const width = uni.getSystemInfoSync().windowWidth - 64;
-  const height = 200;
-  const padding = 20;
-
-  // 计算数据范围
-  const weights = logs.map((l) => l.weight);
-  const minWeight = Math.floor(Math.min(...weights) - 1);
-  const maxWeight = Math.ceil(Math.max(...weights) + 1);
-  const weightRange = maxWeight - minWeight;
-
-  // 绘制背景网格
-  ctx.setStrokeStyle('#f0f0f0');
-  ctx.setLineWidth(1);
-  for (let i = 0; i <= 4; i++) {
-    const y = padding + (height - padding * 2) * (i / 4);
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-  }
-  ctx.stroke();
-
-  // 绘制折线
-  ctx.setStrokeStyle('#2ECC71');
-  ctx.setLineWidth(2);
-  ctx.beginPath();
-
-  logs.forEach((log, i) => {
-    const x = padding + (width - padding * 2) * (i / (logs.length - 1));
-    const y = padding + (height - padding * 2) * (1 - (log.weight - minWeight) / weightRange);
-    if (i === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
-    }
-  });
-  ctx.stroke();
-
-  // 绘制数据点
-  ctx.setFillStyle('#2ECC71');
-  logs.forEach((log, i) => {
-    const x = padding + (width - padding * 2) * (i / (logs.length - 1));
-    const y = padding + (height - padding * 2) * (1 - (log.weight - minWeight) / weightRange);
-    ctx.beginPath();
-    ctx.arc(x, y, 4, 0, 2 * Math.PI);
-    ctx.fill();
-  });
-
-  ctx.draw();
-}
-
-watch(period, () => {
-  drawChart();
-});
-
-onMounted(async () => {
-  await loadData();
-  setTimeout(drawChart, 100);
+  loadData();
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .weight-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 16px;
-  box-sizing: border-box;
+  background: #f5f7fa;
+  padding: 24rpx;
+  padding-bottom: 60rpx;
+  position: relative;
 }
 
-.card {
+// 背景装饰
+.bg-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400rpx;
+  pointer-events: none;
+
+  .bg-circle {
+    position: absolute;
+    width: 300rpx;
+    height: 300rpx;
+    background: radial-gradient(circle, rgba(26, 188, 156, 0.1) 0%, transparent 70%);
+    top: -50rpx;
+    right: -50rpx;
+  }
+}
+
+// 卡片通用样式
+.today-card,
+.goal-card,
+.chart-card,
+.history-card,
+.bmi-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 28rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 1;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24rpx;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+  }
 
   .title {
-    font-size: 16px;
+    font-size: 32rpx;
     font-weight: 600;
-    color: #333;
+    color: #1e293b;
   }
 
   .date {
-    font-size: 14px;
-    color: #999;
+    font-size: 26rpx;
+    color: #94a3b8;
   }
 }
 
-.input-card {
-  .weight-input {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
+// 今日体重
+.weight-display {
+  display: flex;
+  align-items: baseline;
+  gap: 24rpx;
+  margin-bottom: 28rpx;
 
-    .input {
-      flex: 1;
-      font-size: 32px;
-      font-weight: 600;
-      color: #333;
-      text-align: center;
+  .weight-value-wrap {
+    display: flex;
+    align-items: baseline;
+
+    .weight-value {
+      font-size: 80rpx;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1;
     }
 
-    .unit {
-      font-size: 16px;
-      color: #999;
-      margin-left: 8px;
+    .weight-unit {
+      font-size: 28rpx;
+      color: #64748b;
+      margin-left: 8rpx;
     }
   }
 
-  .note-input {
-    width: 100%;
-    height: 60px;
-    padding: 12px;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    font-size: 14px;
-    box-sizing: border-box;
-    margin-bottom: 12px;
+  .weight-change {
+    display: flex;
+    align-items: center;
+    gap: 4rpx;
+    padding: 8rpx 16rpx;
+    border-radius: 16rpx;
+
+    &.increase {
+      background: rgba(239, 68, 68, 0.1);
+
+      .change-icon,
+      .change-value {
+        color: #ef4444;
+      }
+    }
+
+    &.decrease {
+      background: rgba(0, 177, 113, 0.1);
+
+      .change-icon,
+      .change-value {
+        color: #00b171;
+      }
+    }
+
+    .change-icon {
+      font-size: 24rpx;
+    }
+
+    .change-value {
+      font-size: 24rpx;
+      font-weight: 600;
+    }
+  }
+}
+
+.weight-input-section {
+  .input-row {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 20rpx;
+    padding: 0 24rpx;
+    margin-bottom: 20rpx;
+
+    .weight-input {
+      flex: 1;
+      height: 88rpx;
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .input-unit {
+      font-size: 28rpx;
+      color: #94a3b8;
+    }
   }
 
   .save-btn {
     width: 100%;
-    height: 44px;
-    background: #2ecc71;
-    color: #fff;
+    height: 88rpx;
+    background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
     border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
+    border-radius: 20rpx;
 
-    &[disabled] {
-      background: #ccc;
+    .btn-text {
+      color: #fff;
+      font-size: 30rpx;
+      font-weight: 600;
     }
   }
 }
 
-.stats-card {
-  .stats-grid {
+// 目标卡片
+.goal-card {
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.08) 0%, rgba(52, 152, 219, 0.02) 100%);
+  border: 1rpx solid rgba(52, 152, 219, 0.15);
+
+  .goal-header {
     display: flex;
-    justify-content: space-around;
-    margin-bottom: 16px;
+    align-items: center;
+    gap: 12rpx;
+    margin-bottom: 20rpx;
+
+    .goal-title {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #1e293b;
+    }
   }
 
-  .stat-item {
-    text-align: center;
-  }
-
-  .stat-value {
-    display: block;
-    font-size: 24px;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .stat-label {
-    display: block;
-    font-size: 12px;
-    color: #999;
-    margin-top: 4px;
-  }
-
-  .change-row {
+  .goal-content {
     display: flex;
-    justify-content: space-around;
-    padding-top: 16px;
-    border-top: 1px solid #f0f0f0;
+    align-items: center;
+    justify-content: center;
+    gap: 32rpx;
+    margin-bottom: 24rpx;
+
+    .goal-item {
+      text-align: center;
+
+      .goal-label {
+        display: block;
+        font-size: 24rpx;
+        color: #94a3b8;
+        margin-bottom: 8rpx;
+      }
+
+      .goal-value {
+        font-size: 36rpx;
+        font-weight: 700;
+        color: #1e293b;
+
+        &.target {
+          color: #3498db;
+        }
+      }
+    }
+
+    .goal-arrow {
+      .arrow-text {
+        font-size: 32rpx;
+        color: #cbd5e1;
+      }
+    }
   }
 
-  .change-item {
-    text-align: center;
-  }
+  .goal-progress {
+    .progress-bar {
+      height: 12rpx;
+      background: #e2e8f0;
+      border-radius: 6rpx;
+      overflow: hidden;
+      margin-bottom: 12rpx;
 
-  .change-value {
-    display: block;
-    font-size: 18px;
-    font-weight: 600;
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);
+        border-radius: 6rpx;
+        transition: width 0.3s ease;
+      }
+    }
 
-    &.down {
-      color: #2ecc71;
+    .progress-text {
+      font-size: 24rpx;
+      color: #64748b;
+      text-align: center;
+      display: block;
     }
-    &.up {
-      color: #e74c3c;
-    }
-    &.neutral {
-      color: #999;
-    }
-  }
-
-  .change-label {
-    display: block;
-    font-size: 12px;
-    color: #999;
-    margin-top: 4px;
   }
 }
 
+// 趋势图
 .chart-card {
-  .period-tabs {
+  .chart-header {
     display: flex;
-    gap: 8px;
-  }
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24rpx;
 
-  .tab {
-    font-size: 12px;
-    color: #999;
-    padding: 4px 8px;
-    border-radius: 4px;
+    .chart-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: #1e293b;
+    }
 
-    &.active {
-      color: #2ecc71;
-      background: rgba(46, 204, 113, 0.1);
+    .chart-tabs {
+      display: flex;
+      gap: 8rpx;
+
+      .chart-tab {
+        padding: 8rpx 20rpx;
+        font-size: 24rpx;
+        color: #94a3b8;
+        border-radius: 16rpx;
+        transition: all 0.2s ease;
+
+        &.active {
+          background: #1abc9c;
+          color: #fff;
+        }
+      }
     }
   }
 
   .chart-container {
-    width: 100%;
-    height: 200px;
+    height: 300rpx;
+    position: relative;
   }
 
-  .chart {
-    width: 100%;
-    height: 200px;
+  .weight-chart {
+    height: 100%;
+    position: relative;
+
+    .chart-line {
+      position: absolute;
+      inset: 0;
+    }
+
+    .chart-point {
+      position: absolute;
+      transform: translateX(-50%);
+
+      .point-dot {
+        width: 16rpx;
+        height: 16rpx;
+        background: #1abc9c;
+        border-radius: 50%;
+        border: 4rpx solid #fff;
+        box-shadow: 0 2rpx 8rpx rgba(26, 188, 156, 0.3);
+      }
+
+      .point-value {
+        position: absolute;
+        top: -32rpx;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 20rpx;
+        color: #64748b;
+        white-space: nowrap;
+      }
+    }
+
+    .chart-x-axis {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+
+      .x-label {
+        font-size: 20rpx;
+        color: #94a3b8;
+      }
+    }
+  }
+
+  .empty-chart {
+    height: 100%;
+    @include flex-center;
+    flex-direction: column;
+
+    .empty-text {
+      font-size: 28rpx;
+      color: #94a3b8;
+    }
+
+    .empty-hint {
+      font-size: 24rpx;
+      color: #cbd5e1;
+      margin-top: 8rpx;
+    }
   }
 }
 
-.history-card {
-  .history-list {
-    max-height: 300px;
-    overflow-y: auto;
-  }
-
+// 历史记录
+.history-list {
   .history-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 20rpx 0;
+    border-bottom: 1rpx solid #f8fafc;
 
     &:last-child {
       border-bottom: none;
     }
-  }
 
-  .history-left {
-    display: flex;
-    flex-direction: column;
-  }
+    .history-left {
+      .history-date {
+        font-size: 26rpx;
+        color: #64748b;
+      }
+    }
 
-  .history-date {
-    font-size: 14px;
-    color: #333;
-  }
+    .history-right {
+      display: flex;
+      align-items: center;
+      gap: 16rpx;
 
-  .history-note {
-    font-size: 12px;
-    color: #999;
-    margin-top: 4px;
-  }
+      .history-weight {
+        font-size: 30rpx;
+        font-weight: 600;
+        color: #1e293b;
+      }
 
-  .history-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+      .bmi-badge {
+        font-size: 22rpx;
+        padding: 4rpx 12rpx;
+        border-radius: 12rpx;
 
-  .history-weight {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-  }
+        &.underweight {
+          background: rgba(245, 158, 11, 0.1);
+          color: #f59e0b;
+        }
 
-  .delete-btn {
-    font-size: 12px;
-    color: #e74c3c;
-    padding: 4px 8px;
+        &.normal {
+          background: rgba(0, 177, 113, 0.1);
+          color: #00b171;
+        }
+
+        &.overweight {
+          background: rgba(239, 68, 68, 0.1);
+          color: #ef4444;
+        }
+
+        &.obese {
+          background: rgba(220, 38, 38, 0.1);
+          color: #dc2626;
+        }
+      }
+    }
   }
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 48px 0;
+// BMI 说明
+.bmi-card {
+  .bmi-header {
+    margin-bottom: 20rpx;
 
-  .empty-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
+    .bmi-title {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #1e293b;
+    }
   }
 
-  .empty-text {
-    font-size: 16px;
-    color: #333;
-    margin-bottom: 8px;
-  }
+  .bmi-ranges {
+    display: flex;
+    gap: 12rpx;
 
-  .empty-hint {
-    font-size: 14px;
-    color: #999;
+    .bmi-range {
+      flex: 1;
+      text-align: center;
+      padding: 16rpx 8rpx;
+      border-radius: 12rpx;
+
+      .range-label {
+        display: block;
+        font-size: 22rpx;
+        margin-bottom: 4rpx;
+      }
+
+      .range-value {
+        display: block;
+        font-size: 20rpx;
+      }
+
+      &.underweight {
+        background: rgba(245, 158, 11, 0.1);
+        .range-label,
+        .range-value {
+          color: #f59e0b;
+        }
+      }
+
+      &.normal {
+        background: rgba(0, 177, 113, 0.1);
+        .range-label,
+        .range-value {
+          color: #00b171;
+        }
+      }
+
+      &.overweight {
+        background: rgba(239, 68, 68, 0.1);
+        .range-label,
+        .range-value {
+          color: #ef4444;
+        }
+      }
+
+      &.obese {
+        background: rgba(220, 38, 38, 0.1);
+        .range-label,
+        .range-value {
+          color: #dc2626;
+        }
+      }
+    }
   }
 }
 </style>

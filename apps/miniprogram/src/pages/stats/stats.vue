@@ -1,52 +1,65 @@
 <template>
-  <view class="container">
+  <view class="stats-page">
     <!-- 时间范围选择 -->
     <view class="time-selector">
       <view
         v-for="range in timeRanges"
         :key="range.value"
-        class="time-chip"
-        :class="{ active: selectedRange === range.value }"
+        :class="['time-chip', { active: selectedRange === range.value }]"
         @tap="selectRange(range.value)"
       >
         {{ range.label }}
       </view>
     </view>
 
-    <!-- 核心指标卡片 -->
-    <view class="stats-cards">
-      <view class="stat-card main">
-        <view class="stat-header">
-          <text class="stat-title">平均热量</text>
-          <text class="stat-trend" :class="trendClass">{{ trendText }}</text>
+    <!-- 核心指标 -->
+    <view class="main-stats">
+      <view class="calorie-card">
+        <view class="calorie-header">
+          <view class="calorie-info">
+            <text class="calorie-label">平均热量</text>
+            <text class="calorie-value">{{ avgCalories }}</text>
+            <text class="calorie-unit">kcal/天</text>
+          </view>
+          <view class="calorie-ring">
+            <view class="ring-bg"></view>
+            <view class="ring-fill" :style="{ '--percent': targetPercent }"></view>
+            <text class="ring-text">{{ targetPercent }}%</text>
+          </view>
         </view>
-        <view class="stat-value">{{ avgCalories }}</view>
-        <view class="stat-unit">kcal/天</view>
-        <view class="stat-target">
-          目标: {{ targetCalories }} kcal
-          <text class="target-percent">({{ targetPercent }}%)</text>
+        <view class="target-info">
+          <text class="target-label">目标: {{ targetCalories }} kcal</text>
+          <text :class="['trend-badge', trendClass]">{{ trendText }}</text>
         </view>
       </view>
 
-      <view class="stat-row">
-        <view class="stat-card small">
-          <text class="stat-title">蛋白质</text>
-          <view class="stat-value">{{ avgProtein }}<text class="unit">g</text></view>
+      <view class="nutrient-row">
+        <view class="nutrient-card protein">
+          <text class="nutrient-label">蛋白质</text>
+          <text class="nutrient-value">{{ avgProtein }}<text class="unit">g</text></text>
         </view>
-        <view class="stat-card small">
-          <text class="stat-title">碳水</text>
-          <view class="stat-value">{{ avgCarbs }}<text class="unit">g</text></view>
+        <view class="nutrient-card carbs">
+          <text class="nutrient-label">碳水</text>
+          <text class="nutrient-value">{{ avgCarbs }}<text class="unit">g</text></text>
         </view>
-        <view class="stat-card small">
-          <text class="stat-title">脂肪</text>
-          <view class="stat-value">{{ avgFat }}<text class="unit">g</text></view>
+        <view class="nutrient-card fat">
+          <text class="nutrient-label">脂肪</text>
+          <text class="nutrient-value">{{ avgFat }}<text class="unit">g</text></text>
         </view>
       </view>
     </view>
 
     <!-- 热量趋势图 -->
     <view class="chart-card">
-      <view class="chart-title">热量趋势</view>
+      <view class="chart-header">
+        <text class="chart-title">热量趋势</text>
+        <view class="chart-legend">
+          <view class="legend-item">
+            <view class="legend-dot target"></view>
+            <text class="legend-text">目标</text>
+          </view>
+        </view>
+      </view>
       <view class="chart-container">
         <view class="chart-y-axis">
           <text v-for="tick in yTicks" :key="tick" class="y-tick">{{ tick }}</text>
@@ -61,7 +74,7 @@
                   background: getBarColor(day.calories),
                 }"
               >
-                <view class="bar-value">{{ day.calories }}</view>
+                <text class="bar-value">{{ day.calories || '' }}</text>
               </view>
               <text class="bar-label">{{ day.label }}</text>
             </view>
@@ -75,39 +88,53 @@
 
     <!-- 营养素分布 -->
     <view class="chart-card">
-      <view class="chart-title">营养素分布</view>
-      <view class="nutrient-bars">
-        <view class="nutrient-item">
+      <view class="chart-header">
+        <text class="chart-title">营养素分布</text>
+      </view>
+      <view class="nutrient-chart">
+        <view class="nutrient-bar-item">
           <view class="nutrient-header">
+            <view class="nutrient-dot protein"></view>
             <text class="nutrient-name">蛋白质</text>
-            <text class="nutrient-value">{{ proteinPercent }}%</text>
+            <text class="nutrient-percent">{{ proteinPercent }}%</text>
           </view>
           <view class="nutrient-bar">
             <view class="nutrient-fill protein" :style="{ width: proteinPercent + '%' }"></view>
           </view>
+          <text class="nutrient-gram"
+            >{{ avgProtein }}g / {{ Math.round((targetCalories * 0.25) / 4) }}g</text
+          >
         </view>
-        <view class="nutrient-item">
+        <view class="nutrient-bar-item">
           <view class="nutrient-header">
+            <view class="nutrient-dot carbs"></view>
             <text class="nutrient-name">碳水化合物</text>
-            <text class="nutrient-value">{{ carbsPercent }}%</text>
+            <text class="nutrient-percent">{{ carbsPercent }}%</text>
           </view>
           <view class="nutrient-bar">
             <view class="nutrient-fill carbs" :style="{ width: carbsPercent + '%' }"></view>
           </view>
+          <text class="nutrient-gram"
+            >{{ avgCarbs }}g / {{ Math.round((targetCalories * 0.5) / 4) }}g</text
+          >
         </view>
-        <view class="nutrient-item">
+        <view class="nutrient-bar-item">
           <view class="nutrient-header">
+            <view class="nutrient-dot fat"></view>
             <text class="nutrient-name">脂肪</text>
-            <text class="nutrient-value">{{ fatPercent }}%</text>
+            <text class="nutrient-percent">{{ fatPercent }}%</text>
           </view>
           <view class="nutrient-bar">
             <view class="nutrient-fill fat" :style="{ width: fatPercent + '%' }"></view>
           </view>
+          <text class="nutrient-gram"
+            >{{ avgFat }}g / {{ Math.round((targetCalories * 0.25) / 9) }}g</text
+          >
         </view>
       </view>
     </view>
 
-    <!-- 记录天数 -->
+    <!-- 统计摘要 -->
     <view class="summary-card">
       <view class="summary-item">
         <text class="summary-value">{{ recordDays }}</text>
@@ -124,12 +151,38 @@
         <text class="summary-label">连续打卡</text>
       </view>
     </view>
+
+    <!-- 周报卡片 -->
+    <view class="weekly-card">
+      <view class="weekly-header">
+        <NutriIcon name="stats" size="md" color="#9b59b6" />
+        <text class="weekly-title">本周概览</text>
+      </view>
+      <view class="weekly-stats">
+        <view class="weekly-stat">
+          <text class="weekly-label">总热量</text>
+          <text class="weekly-value">{{ weeklyTotalCalories }}</text>
+          <text class="weekly-unit">kcal</text>
+        </view>
+        <view class="weekly-stat">
+          <text class="weekly-label">日均热量</text>
+          <text class="weekly-value">{{ weeklyAvgCalories }}</text>
+          <text class="weekly-unit">kcal</text>
+        </view>
+        <view class="weekly-stat">
+          <text class="weekly-label">达标天数</text>
+          <text class="weekly-value">{{ weeklyGoalDays }}</text>
+          <text class="weekly-unit">天</text>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
+import NutriIcon from '@/components/NutriIcon/NutriIcon.vue';
 import { getMealLogsByRange } from '@/api/meal-log-api';
 import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
 import type { MealLog, UserProfile } from '@nutriday/shared-types';
@@ -161,7 +214,7 @@ async function loadData() {
     .split('T')[0];
 
   try {
-    mealLogs.value = await getMealLogsByRange(1, startDate, endDate);
+    mealLogs.value = await getMealLogsByRange(startDate, endDate);
   } catch (e) {
     console.warn('获取数据失败', e);
     mealLogs.value = [];
@@ -244,12 +297,12 @@ const targetCalories = computed(() => {
     userProfile.value.height,
     userProfile.value.weight,
   );
-  return calculateTDEE(bmr, userProfile.value.activityLevel);
+  return Math.round(calculateTDEE(bmr, userProfile.value.activityLevel));
 });
 
 const targetPercent = computed(() => {
   if (targetCalories.value === 0) return 0;
-  return Math.round((avgCalories.value / targetCalories.value) * 100);
+  return Math.min(100, Math.round((avgCalories.value / targetCalories.value) * 100));
 });
 
 // 趋势分析
@@ -306,6 +359,46 @@ const streakDays = computed(() => {
   return streak;
 });
 
+// 本周统计
+const weeklyTotalCalories = computed(() => {
+  const today = new Date();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay());
+
+  let total = 0;
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + i);
+    const dateStr = date.toISOString().split('T')[0];
+    total += dailyStats.value.get(dateStr)?.calories || 0;
+  }
+  return total;
+});
+
+const weeklyAvgCalories = computed(() => {
+  const daysWithData = Math.min(recordDays.value, 7);
+  return daysWithData > 0 ? Math.round(weeklyTotalCalories.value / daysWithData) : 0;
+});
+
+const weeklyGoalDays = computed(() => {
+  const today = new Date();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay());
+
+  let count = 0;
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + i);
+    const dateStr = date.toISOString().split('T')[0];
+    const stats = dailyStats.value.get(dateStr);
+    if (stats && stats.calories > 0) {
+      const ratio = stats.calories / targetCalories.value;
+      if (ratio >= 0.9 && ratio <= 1.1) count++;
+    }
+  }
+  return count;
+});
+
 // 图表辅助函数
 function getBarHeight(calories: number): number {
   const maxCal = 2500;
@@ -314,155 +407,256 @@ function getBarHeight(calories: number): number {
 
 function getBarColor(calories: number): string {
   const ratio = calories / targetCalories.value;
-  if (ratio >= 0.9 && ratio <= 1.1) return '#00B171';
+  if (ratio >= 0.9 && ratio <= 1.1) return '#00b171';
   if (ratio < 0.9) return '#f59e0b';
   return '#ef4444';
 }
 </script>
 
 <style lang="scss" scoped>
-.container {
+.stats-page {
   min-height: 100vh;
-  background-color: $nutri-dark;
-  padding: 30rpx;
+  background: #f5f7fa;
+  padding: 24rpx;
   padding-bottom: 60rpx;
 }
 
+// 时间选择器
 .time-selector {
   display: flex;
-  gap: 20rpx;
-  margin-bottom: 30rpx;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
 
   .time-chip {
     padding: 16rpx 32rpx;
-    border-radius: 30rpx;
-    background: rgba(255, 255, 255, 0.6);
+    border-radius: 24rpx;
+    background: #fff;
     font-size: 26rpx;
-    color: $uni-text-color-grey;
+    color: #64748b;
+    font-weight: 500;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
 
     &.active {
-      background: $nutri-primary;
+      background: linear-gradient(135deg, #00b171 0%, #00d387 100%);
       color: #fff;
+      box-shadow: 0 4rpx 16rpx rgba(0, 177, 113, 0.3);
     }
   }
 }
 
-.stats-cards {
-  margin-bottom: 30rpx;
+// 主要统计
+.main-stats {
+  margin-bottom: 24rpx;
+}
 
-  .stat-card {
-    @include glass-morphism;
-    border-radius: 24rpx;
-    padding: 30rpx;
+.calorie-card {
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
 
-    &.main {
-      margin-bottom: 20rpx;
-
-      .stat-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16rpx;
-
-        .stat-title {
-          font-size: 28rpx;
-          color: $uni-text-color-grey;
-        }
-
-        .stat-trend {
-          font-size: 24rpx;
-          padding: 6rpx 16rpx;
-          border-radius: 20rpx;
-
-          &.good {
-            background: rgba(0, 177, 113, 0.1);
-            color: #00b171;
-          }
-
-          &.low {
-            background: rgba(245, 158, 11, 0.1);
-            color: #f59e0b;
-          }
-
-          &.high {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-          }
-        }
-      }
-
-      .stat-value {
-        font-size: 72rpx;
-        font-weight: 800;
-        color: $uni-text-color;
-        line-height: 1;
-      }
-
-      .stat-unit {
-        font-size: 28rpx;
-        color: $uni-text-color-grey;
-        margin-top: 8rpx;
-      }
-
-      .stat-target {
-        font-size: 24rpx;
-        color: $uni-text-color-grey;
-        margin-top: 16rpx;
-
-        .target-percent {
-          color: $nutri-primary;
-          margin-left: 8rpx;
-        }
-      }
-    }
-
-    &.small {
-      flex: 1;
-      text-align: center;
-
-      .stat-title {
-        font-size: 24rpx;
-        color: $uni-text-color-grey;
-        margin-bottom: 12rpx;
-      }
-
-      .stat-value {
-        font-size: 40rpx;
-        font-weight: 700;
-        color: $uni-text-color;
-
-        .unit {
-          font-size: 24rpx;
-          font-weight: 400;
-          color: $uni-text-color-grey;
-        }
-      }
-    }
-  }
-
-  .stat-row {
+  .calorie-header {
     display: flex;
-    gap: 20rpx;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+  }
+
+  .calorie-info {
+    .calorie-label {
+      display: block;
+      font-size: 26rpx;
+      color: #94a3b8;
+      margin-bottom: 8rpx;
+    }
+
+    .calorie-value {
+      font-size: 72rpx;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1;
+    }
+
+    .calorie-unit {
+      font-size: 26rpx;
+      color: #64748b;
+      margin-left: 8rpx;
+    }
+  }
+
+  .calorie-ring {
+    width: 120rpx;
+    height: 120rpx;
+    position: relative;
+
+    .ring-bg {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: #f1f5f9;
+    }
+
+    .ring-fill {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(
+        #00b171 0deg,
+        #00b171 calc(var(--percent, 0) * 3.6deg),
+        #f1f5f9 calc(var(--percent, 0) * 3.6deg)
+      );
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 20rpx;
+        background: #fff;
+        border-radius: 50%;
+      }
+    }
+
+    .ring-text {
+      position: absolute;
+      inset: 0;
+      @include flex-center;
+      font-size: 28rpx;
+      font-weight: 700;
+      color: #00b171;
+      z-index: 1;
+    }
+  }
+
+  .target-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .target-label {
+      font-size: 24rpx;
+      color: #64748b;
+    }
+
+    .trend-badge {
+      font-size: 24rpx;
+      padding: 8rpx 20rpx;
+      border-radius: 20rpx;
+
+      &.good {
+        background: rgba(0, 177, 113, 0.1);
+        color: #00b171;
+      }
+
+      &.low {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+      }
+
+      &.high {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+    }
   }
 }
 
-.chart-card {
-  @include glass-morphism;
-  border-radius: 24rpx;
-  padding: 30rpx;
-  margin-bottom: 30rpx;
+.nutrient-row {
+  display: flex;
+  gap: 16rpx;
 
-  .chart-title {
-    font-size: 30rpx;
-    font-weight: 600;
-    color: $uni-text-color;
-    margin-bottom: 30rpx;
+  .nutrient-card {
+    flex: 1;
+    background: #fff;
+    border-radius: 20rpx;
+    padding: 24rpx;
+    text-align: center;
+    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+
+    .nutrient-label {
+      display: block;
+      font-size: 24rpx;
+      color: #94a3b8;
+      margin-bottom: 8rpx;
+    }
+
+    .nutrient-value {
+      font-size: 40rpx;
+      font-weight: 700;
+      color: #1e293b;
+
+      .unit {
+        font-size: 22rpx;
+        font-weight: 400;
+        color: #94a3b8;
+      }
+    }
+
+    &.protein {
+      border-left: 6rpx solid #f59e0b;
+    }
+
+    &.carbs {
+      border-left: 6rpx solid #3b82f6;
+    }
+
+    &.fat {
+      border-left: 6rpx solid #ef4444;
+    }
+  }
+}
+
+// 图表卡片
+.chart-card {
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24rpx;
+
+    .chart-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 16rpx;
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8rpx;
+
+        .legend-dot {
+          width: 12rpx;
+          height: 12rpx;
+          border-radius: 50%;
+
+          &.target {
+            background: #00b171;
+          }
+        }
+
+        .legend-text {
+          font-size: 22rpx;
+          color: #94a3b8;
+        }
+      }
+    }
   }
 }
 
 .chart-container {
   display: flex;
-  height: 300rpx;
+  height: 320rpx;
 
   .chart-y-axis {
     width: 80rpx;
@@ -473,7 +667,7 @@ function getBarColor(calories: number): string {
 
     .y-tick {
       font-size: 20rpx;
-      color: $uni-text-color-grey;
+      color: #94a3b8;
       text-align: right;
     }
   }
@@ -487,7 +681,7 @@ function getBarColor(calories: number): string {
       justify-content: space-between;
       align-items: flex-end;
       height: 100%;
-      padding-bottom: 40rpx;
+      padding-bottom: 48rpx;
 
       .bar-wrapper {
         flex: 1;
@@ -497,7 +691,7 @@ function getBarColor(calories: number): string {
         max-width: 60rpx;
 
         .bar {
-          width: 36rpx;
+          width: 32rpx;
           min-height: 8rpx;
           border-radius: 8rpx 8rpx 0 0;
           position: relative;
@@ -509,14 +703,14 @@ function getBarColor(calories: number): string {
             left: 50%;
             transform: translateX(-50%);
             font-size: 18rpx;
-            color: $uni-text-color-grey;
+            color: #94a3b8;
             white-space: nowrap;
           }
         }
 
         .bar-label {
           font-size: 20rpx;
-          color: $uni-text-color-grey;
+          color: #94a3b8;
           margin-top: 8rpx;
         }
       }
@@ -527,7 +721,7 @@ function getBarColor(calories: number): string {
       left: 0;
       right: 0;
       height: 2rpx;
-      background: $nutri-primary;
+      background: #00b171;
       opacity: 0.5;
 
       .target-label {
@@ -535,14 +729,15 @@ function getBarColor(calories: number): string {
         right: 0;
         top: -24rpx;
         font-size: 18rpx;
-        color: $nutri-primary;
+        color: #00b171;
       }
     }
   }
 }
 
-.nutrient-bars {
-  .nutrient-item {
+// 营养素分布
+.nutrient-chart {
+  .nutrient-bar-item {
     margin-bottom: 24rpx;
 
     &:last-child {
@@ -551,54 +746,79 @@ function getBarColor(calories: number): string {
 
     .nutrient-header {
       display: flex;
-      justify-content: space-between;
+      align-items: center;
+      gap: 12rpx;
       margin-bottom: 12rpx;
 
-      .nutrient-name {
-        font-size: 26rpx;
-        color: $uni-text-color;
+      .nutrient-dot {
+        width: 12rpx;
+        height: 12rpx;
+        border-radius: 50%;
+
+        &.protein {
+          background: #f59e0b;
+        }
+        &.carbs {
+          background: #3b82f6;
+        }
+        &.fat {
+          background: #ef4444;
+        }
       }
 
-      .nutrient-value {
+      .nutrient-name {
+        flex: 1;
+        font-size: 26rpx;
+        color: #1e293b;
+      }
+
+      .nutrient-percent {
         font-size: 26rpx;
         font-weight: 600;
-        color: $uni-text-color-grey;
+        color: #64748b;
       }
     }
 
     .nutrient-bar {
-      height: 16rpx;
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 8rpx;
+      height: 12rpx;
+      background: #f1f5f9;
+      border-radius: 6rpx;
       overflow: hidden;
+      margin-bottom: 8rpx;
 
       .nutrient-fill {
         height: 100%;
-        border-radius: 8rpx;
+        border-radius: 6rpx;
         transition: width 0.3s;
 
         &.protein {
           background: #f59e0b;
         }
-
         &.carbs {
           background: #3b82f6;
         }
-
         &.fat {
           background: #ef4444;
         }
       }
     }
+
+    .nutrient-gram {
+      font-size: 22rpx;
+      color: #94a3b8;
+    }
   }
 }
 
+// 统计摘要
 .summary-card {
-  @include glass-morphism;
-  border-radius: 24rpx;
-  padding: 30rpx;
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 28rpx;
   display: flex;
   align-items: center;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
 
   .summary-item {
     flex: 1;
@@ -608,12 +828,12 @@ function getBarColor(calories: number): string {
       display: block;
       font-size: 48rpx;
       font-weight: 700;
-      color: $nutri-primary;
+      color: #00b171;
     }
 
     .summary-label {
       font-size: 24rpx;
-      color: $uni-text-color-grey;
+      color: #94a3b8;
       margin-top: 8rpx;
     }
   }
@@ -621,7 +841,56 @@ function getBarColor(calories: number): string {
   .summary-divider {
     width: 1rpx;
     height: 60rpx;
-    background: rgba(0, 0, 0, 0.05);
+    background: #f1f5f9;
+  }
+}
+
+// 周报卡片
+.weekly-card {
+  background: linear-gradient(135deg, rgba(155, 89, 182, 0.08) 0%, rgba(155, 89, 182, 0.02) 100%);
+  border: 1rpx solid rgba(155, 89, 182, 0.15);
+  border-radius: 28rpx;
+  padding: 28rpx;
+
+  .weekly-header {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin-bottom: 24rpx;
+
+    .weekly-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: #1e293b;
+    }
+  }
+
+  .weekly-stats {
+    display: flex;
+
+    .weekly-stat {
+      flex: 1;
+      text-align: center;
+
+      .weekly-label {
+        display: block;
+        font-size: 22rpx;
+        color: #94a3b8;
+        margin-bottom: 8rpx;
+      }
+
+      .weekly-value {
+        font-size: 36rpx;
+        font-weight: 700;
+        color: #1e293b;
+      }
+
+      .weekly-unit {
+        font-size: 20rpx;
+        color: #94a3b8;
+        margin-left: 4rpx;
+      }
+    }
   }
 }
 </style>

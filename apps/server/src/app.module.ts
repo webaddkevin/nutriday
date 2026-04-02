@@ -13,6 +13,7 @@ import { ShoppingModule } from './shopping/shopping.module';
 import { MealPlanModule } from './meal-plan/meal-plan.module';
 import { FoodFavoriteModule } from './food-favorite/food-favorite.module';
 import { BarcodeModule } from './barcode/barcode.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { BarcodeModule } from './barcode/barcode.module';
     MealPlanModule,
     FoodFavoriteModule,
     BarcodeModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

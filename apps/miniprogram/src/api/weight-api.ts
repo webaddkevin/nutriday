@@ -9,6 +9,7 @@ export interface WeightLog {
   userId: number;
   date: string;
   weight: number;
+  bmi?: number;
   note: string | null;
   createdAt: string;
   updatedAt: string;
@@ -26,7 +27,7 @@ export interface WeightStats {
 /**
  * 保存体重记录
  */
-export async function saveWeight(data: {
+export async function saveWeightLog(data: {
   date: string;
   weight: number;
   note?: string;
@@ -38,6 +39,9 @@ export async function saveWeight(data: {
   });
   return res.data;
 }
+
+// 别名
+export const saveWeight = saveWeightLog;
 
 /**
  * 获取某天的体重记录
@@ -59,6 +63,15 @@ export async function getWeightRange(startDate: string, endDate: string): Promis
     method: 'GET',
   });
   return res.data;
+}
+
+/**
+ * 获取所有体重记录（最近90天）
+ */
+export async function getWeightLogs(): Promise<WeightLog[]> {
+  const endDate = new Date().toISOString().split('T')[0];
+  const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  return getWeightRange(startDate, endDate);
 }
 
 /**
