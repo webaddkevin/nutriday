@@ -27,6 +27,26 @@ export class ProfileService {
       ...rest
     } = dto;
 
+    // 验证必填字段
+    if (!rest.gender || !rest.goal) {
+      throw new Error('性别和健康目标是必填项');
+    }
+
+    if (
+      !rest.age ||
+      isNaN(rest.age) ||
+      !rest.height ||
+      isNaN(rest.height) ||
+      !rest.weight ||
+      isNaN(rest.weight)
+    ) {
+      throw new Error('年龄、身高、体重必须是有效数字');
+    }
+
+    if (!rest.activityLevel || isNaN(rest.activityLevel)) {
+      throw new Error('活动水平必须是有效数字');
+    }
+
     // 更新用户昵称和头像（如果用户存在）
     if (nickname !== undefined || avatarUrl !== undefined) {
       await this.prisma.user.update({
@@ -43,20 +63,18 @@ export class ProfileService {
       create: {
         userId,
         gender: rest.gender,
-        age: Number(rest.age),
-        height: Number(rest.height),
-        weight: Number(rest.weight),
+        age: rest.age,
+        height: rest.height,
+        weight: rest.weight,
         goal: rest.goal,
-        activityLevel: Number(rest.activityLevel),
-        bmr: rest.bmr ? Number(rest.bmr) : null,
-        tdee: rest.tdee ? Number(rest.tdee) : null,
+        activityLevel: rest.activityLevel,
+        bmr: rest.bmr ?? null,
+        tdee: rest.tdee ?? null,
         tags: JSON.stringify(tags ?? []),
-        targetWeight: rest.targetWeight ? Number(rest.targetWeight) : null,
+        targetWeight: rest.targetWeight ?? null,
         targetDate: rest.targetDate || null,
-        weeklyGoal: rest.weeklyGoal ? Number(rest.weeklyGoal) : null,
-        targetCalories: rest.targetCalories
-          ? Number(rest.targetCalories)
-          : null,
+        weeklyGoal: rest.weeklyGoal ?? null,
+        targetCalories: rest.targetCalories ?? null,
         allergies: JSON.stringify(allergies ?? []),
         diseases: JSON.stringify(diseases ?? []),
         medications: JSON.stringify(medications ?? []),
@@ -65,48 +83,23 @@ export class ProfileService {
       },
       update: {
         gender: rest.gender,
-        age: Number(rest.age),
-        height: Number(rest.height),
-        weight: Number(rest.weight),
+        age: rest.age,
+        height: rest.height,
+        weight: rest.weight,
         goal: rest.goal,
-        activityLevel: Number(rest.activityLevel),
-        bmr: rest.bmr ? Number(rest.bmr) : null,
-        tdee: rest.tdee ? Number(rest.tdee) : null,
+        activityLevel: rest.activityLevel,
+        bmr: rest.bmr ?? null,
+        tdee: rest.tdee ?? null,
         tags: JSON.stringify(tags ?? []),
-        targetWeight:
-          rest.targetWeight !== undefined
-            ? rest.targetWeight
-              ? Number(rest.targetWeight)
-              : null
-            : undefined,
-        targetDate:
-          rest.targetDate !== undefined ? rest.targetDate || null : undefined,
-        weeklyGoal:
-          rest.weeklyGoal !== undefined
-            ? rest.weeklyGoal
-              ? Number(rest.weeklyGoal)
-              : null
-            : undefined,
-        targetCalories:
-          rest.targetCalories !== undefined
-            ? rest.targetCalories
-              ? Number(rest.targetCalories)
-              : null
-            : undefined,
-        allergies:
-          allergies !== undefined ? JSON.stringify(allergies ?? []) : undefined,
-        diseases:
-          diseases !== undefined ? JSON.stringify(diseases ?? []) : undefined,
-        medications:
-          medications !== undefined
-            ? JSON.stringify(medications ?? [])
-            : undefined,
-        dietaryRestrictions:
-          dietaryRestrictions !== undefined
-            ? JSON.stringify(dietaryRestrictions ?? [])
-            : undefined,
-        healthNotes:
-          healthNotes !== undefined ? healthNotes || null : undefined,
+        targetWeight: rest.targetWeight ?? null,
+        targetDate: rest.targetDate || null,
+        weeklyGoal: rest.weeklyGoal ?? null,
+        targetCalories: rest.targetCalories ?? null,
+        allergies: JSON.stringify(allergies ?? []),
+        diseases: JSON.stringify(diseases ?? []),
+        medications: JSON.stringify(medications ?? []),
+        dietaryRestrictions: JSON.stringify(dietaryRestrictions ?? []),
+        healthNotes: healthNotes || null,
       },
     });
 

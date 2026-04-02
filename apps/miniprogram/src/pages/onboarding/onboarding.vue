@@ -364,6 +364,12 @@ const prevStep = () => {
 };
 
 const finish = async () => {
+  // 验证必填数据
+  if (!profile.age || !profile.height || !profile.weight) {
+    uni.showToast({ title: '请完善基本信息', icon: 'none' });
+    return;
+  }
+
   // 本地持久化（兜底）
   const profileData = {
     ...profile,
@@ -377,11 +383,11 @@ const finish = async () => {
   try {
     await saveProfile({
       gender: profile.gender,
-      age: Number(profile.age),
-      height: Number(profile.height),
-      weight: Number(profile.weight),
+      age: profile.age,
+      height: profile.height,
+      weight: profile.weight,
       goal: profile.goal,
-      tags: profile.tags,
+      tags: profile.tags as string[],
       activityLevel: profile.activityLevel,
       bmr: bmr.value,
       tdee: tdee.value,
