@@ -118,59 +118,119 @@
         <text class="title">计算完成!</text>
         <text class="subtitle">以下是根据你的资料得出的建议值</text>
 
-        <view class="result-card">
-          <view class="result-item">
-            <text class="res-val">{{ bmr }}</text>
-            <text class="res-label">基础代谢 (BMR)</text>
+        <!-- 主要结果卡片 -->
+        <view class="main-result-card">
+          <view class="result-header">
+            <text class="result-icon">🎯</text>
+            <text class="result-title">每日热量目标</text>
           </view>
-          <view class="divider"></view>
-          <view class="result-item">
-            <text class="res-val highlight">{{ tdee }}</text>
-            <text class="res-label">每日热量目标</text>
+          <view class="result-body">
+            <text class="big-number">{{ tdee }}</text>
+            <text class="unit">kcal</text>
+          </view>
+          <view class="result-footer">
+            <text class="goal-tag">{{ goalLabel }}</text>
           </view>
         </view>
 
-        <view class="calorie-explain">
-          <view class="explain-item">
-            <text class="explain-label">基础代谢</text>
-            <text class="explain-value">{{ bmr }} kcal</text>
-          </view>
-          <view class="explain-item">
-            <text class="explain-label">× 活动系数</text>
-            <text class="explain-value">{{ activityCoefficient }}</text>
-          </view>
-          <view class="explain-item">
-            <text class="explain-label">+ 目标调整</text>
-            <text class="explain-value"
-              >{{ calorieAdjust > 0 ? '+' : '' }}{{ calorieAdjust }} kcal</text
-            >
-          </view>
-          <view class="explain-item highlight-row">
-            <text class="explain-label">每日热量目标</text>
-            <text class="explain-value">{{ tdee }} kcal</text>
+        <!-- 计算过程 -->
+        <view class="calc-process">
+          <text class="process-title">计算过程</text>
+          <view class="process-steps">
+            <view class="process-step">
+              <view class="step-left">
+                <text class="step-num">1</text>
+              </view>
+              <view class="step-right">
+                <text class="step-name">基础代谢 (BMR)</text>
+                <text class="step-formula">Mifflin-St Jeor 公式</text>
+              </view>
+              <text class="step-value">{{ bmr }} kcal</text>
+            </view>
+            <view class="process-step">
+              <view class="step-left">
+                <text class="step-num">2</text>
+              </view>
+              <view class="step-right">
+                <text class="step-name">× 活动系数</text>
+                <text class="step-formula">{{ activityLabel }}</text>
+              </view>
+              <text class="step-value">{{ activityCoefficient }}</text>
+            </view>
+            <view class="process-step">
+              <view class="step-left">
+                <text class="step-num">3</text>
+              </view>
+              <view class="step-right">
+                <text class="step-name">+ 目标调整</text>
+                <text class="step-formula">{{
+                  calorieAdjust > 0 ? '热量盈余' : calorieAdjust < 0 ? '热量缺口' : '无调整'
+                }}</text>
+              </view>
+              <text
+                class="step-value"
+                :class="{ negative: calorieAdjust < 0, positive: calorieAdjust > 0 }"
+                >{{ calorieAdjust > 0 ? '+' : '' }}{{ calorieAdjust }} kcal</text
+              >
+            </view>
           </view>
         </view>
 
         <!-- 三大营养素分配 -->
         <view v-if="macros" class="macro-section">
-          <text class="section-title">营养素分配建议</text>
-          <view class="macro-grid">
-            <view class="macro-item">
-              <text class="macro-value">{{ macros.protein }}g</text>
-              <text class="macro-label">蛋白质</text>
-              <text class="macro-kcal">{{ macros.proteinKcal }} kcal</text>
+          <text class="section-title">营养素分配</text>
+          <view class="macro-cards">
+            <view class="macro-card protein">
+              <view class="macro-header">
+                <text class="macro-icon">🥩</text>
+                <text class="macro-name">蛋白质</text>
+              </view>
+              <text class="macro-grams">{{ macros.protein }}g</text>
+              <view class="macro-bar-wrap">
+                <view
+                  class="macro-bar"
+                  :style="{ width: (macros.proteinKcal / tdee) * 100 + '%' }"
+                ></view>
+              </view>
+              <text class="macro-kcal">{{ Math.round((macros.proteinKcal / tdee) * 100) }}%</text>
             </view>
-            <view class="macro-item">
-              <text class="macro-value">{{ macros.carbs }}g</text>
-              <text class="macro-label">碳水化合物</text>
-              <text class="macro-kcal">{{ macros.carbsKcal }} kcal</text>
+            <view class="macro-card carbs">
+              <view class="macro-header">
+                <text class="macro-icon">🍚</text>
+                <text class="macro-name">碳水</text>
+              </view>
+              <text class="macro-grams">{{ macros.carbs }}g</text>
+              <view class="macro-bar-wrap">
+                <view
+                  class="macro-bar"
+                  :style="{ width: (macros.carbsKcal / tdee) * 100 + '%' }"
+                ></view>
+              </view>
+              <text class="macro-kcal">{{ Math.round((macros.carbsKcal / tdee) * 100) }}%</text>
             </view>
-            <view class="macro-item">
-              <text class="macro-value">{{ macros.fat }}g</text>
-              <text class="macro-label">脂肪</text>
-              <text class="macro-kcal">{{ macros.fatKcal }} kcal</text>
+            <view class="macro-card fat">
+              <view class="macro-header">
+                <text class="macro-icon">🥑</text>
+                <text class="macro-name">脂肪</text>
+              </view>
+              <text class="macro-grams">{{ macros.fat }}g</text>
+              <view class="macro-bar-wrap">
+                <view
+                  class="macro-bar"
+                  :style="{ width: (macros.fatKcal / tdee) * 100 + '%' }"
+                ></view>
+              </view>
+              <text class="macro-kcal">{{ Math.round((macros.fatKcal / tdee) * 100) }}%</text>
             </view>
           </view>
+        </view>
+
+        <!-- 提示信息 -->
+        <view class="tips-card">
+          <text class="tips-icon">💡</text>
+          <text class="tips-text"
+            >以上数值仅供参考，建议根据实际感受适当调整。如有特殊健康状况，请咨询专业营养师。</text
+          >
         </view>
       </view>
     </view>
@@ -274,6 +334,16 @@ const tdee = computed(() => {
 const macros = computed(() => {
   if (!profile.weight) return null;
   return calculateMacroDistribution(targetCalories.value, profile.weight, profile.goal);
+});
+
+const goalLabel = computed(() => {
+  const goal = goals.find((g) => g.value === profile.goal);
+  return goal?.label || '';
+});
+
+const activityLabel = computed(() => {
+  const level = activityLevels.find((l) => l.value === profile.activityLevel);
+  return level?.label || '';
 });
 
 const toggleTag = (tag: SpecialTag) => {
@@ -564,86 +634,145 @@ const finish = async () => {
   }
 }
 
-.result-card {
-  background: linear-gradient(135deg, #4cd964 0%, #2ecc71 100%);
+// 结果页面样式
+.main-result-card {
+  background: linear-gradient(135deg, #00b171 0%, #00d387 100%);
   border-radius: 32rpx;
-  padding: 60rpx 40rpx;
+  padding: 48rpx 40rpx;
   color: white;
-  display: flex;
-  align-items: center;
-  margin-bottom: 40rpx;
-  box-shadow: 0 10rpx 30rpx rgba(76, 217, 100, 0.3);
+  text-align: center;
+  margin-bottom: 32rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0, 177, 113, 0.3);
 
-  .result-item {
-    flex: 1;
-    text-align: center;
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12rpx;
+    margin-bottom: 24rpx;
 
-    .res-val {
-      font-size: 48rpx;
-      font-weight: bold;
-      display: block;
+    .result-icon {
+      font-size: 40rpx;
     }
 
-    .res-label {
-      font-size: 24rpx;
-      opacity: 0.8;
-    }
-
-    .highlight {
-      font-size: 64rpx;
+    .result-title {
+      font-size: 30rpx;
+      font-weight: 500;
+      opacity: 0.9;
     }
   }
 
-  .divider {
-    width: 2rpx;
-    height: 80rpx;
-    background-color: rgba(255, 255, 255, 0.3);
+  .result-body {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8rpx;
+
+    .big-number {
+      font-size: 96rpx;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .unit {
+      font-size: 32rpx;
+      opacity: 0.8;
+    }
+  }
+
+  .result-footer {
+    margin-top: 24rpx;
+
+    .goal-tag {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8rpx 24rpx;
+      border-radius: 20rpx;
+      font-size: 26rpx;
+    }
   }
 }
 
-.calorie-explain {
-  background-color: #f8f9fa;
-  border-radius: 20rpx;
-  padding: 30rpx;
+.calc-process {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
 
-  .explain-item {
+  .process-title {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 24rpx;
+    display: block;
+  }
+
+  .process-steps {
     display: flex;
-    justify-content: space-between;
-    padding: 16rpx 0;
-    border-bottom: 1rpx solid #eee;
+    flex-direction: column;
+    gap: 20rpx;
+  }
 
-    &:last-child {
-      border-bottom: none;
-    }
+  .process-step {
+    display: flex;
+    align-items: center;
+    padding: 20rpx;
+    background: #f8f9fa;
+    border-radius: 16rpx;
 
-    .explain-label {
-      color: #666;
-      font-size: 28rpx;
-    }
+    .step-left {
+      width: 48rpx;
+      height: 48rpx;
+      background: linear-gradient(135deg, #00b171, #00d387);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 20rpx;
 
-    .explain-value {
-      font-size: 28rpx;
-      font-weight: 500;
-    }
-
-    &.highlight-row {
-      margin-top: 16rpx;
-      padding-top: 24rpx;
-      border-top: 2rpx solid #4cd964;
-      border-bottom: none;
-
-      .explain-label,
-      .explain-value {
-        color: #4cd964;
+      .step-num {
+        color: white;
+        font-size: 24rpx;
         font-weight: 600;
-        font-size: 32rpx;
+      }
+    }
+
+    .step-right {
+      flex: 1;
+
+      .step-name {
+        font-size: 28rpx;
+        font-weight: 500;
+        color: #333;
+        display: block;
+      }
+
+      .step-formula {
+        font-size: 22rpx;
+        color: #999;
+        margin-top: 4rpx;
+      }
+    }
+
+    .step-value {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #333;
+
+      &.negative {
+        color: #ef4444;
+      }
+
+      &.positive {
+        color: #00b171;
       }
     }
   }
 }
 
 .macro-section {
-  margin-top: 30rpx;
+  margin-bottom: 32rpx;
 
   .section-title {
     font-size: 30rpx;
@@ -653,36 +782,113 @@ const finish = async () => {
     display: block;
   }
 
-  .macro-grid {
+  .macro-cards {
     display: flex;
-    gap: 20rpx;
+    flex-direction: column;
+    gap: 16rpx;
   }
 
-  .macro-item {
-    flex: 1;
-    background-color: #f8f9fa;
+  .macro-card {
+    display: flex;
+    align-items: center;
+    padding: 24rpx;
+    background: #fff;
     border-radius: 20rpx;
-    padding: 24rpx 16rpx;
-    text-align: center;
+    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
 
-    .macro-value {
-      font-size: 36rpx;
-      font-weight: bold;
-      color: #4cd964;
-      display: block;
+    .macro-header {
+      width: 140rpx;
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+
+      .macro-icon {
+        font-size: 32rpx;
+      }
+
+      .macro-name {
+        font-size: 26rpx;
+        color: #666;
+      }
     }
 
-    .macro-label {
-      font-size: 24rpx;
-      color: #666;
-      display: block;
-      margin: 8rpx 0 4rpx;
+    .macro-grams {
+      width: 120rpx;
+      font-size: 36rpx;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .macro-bar-wrap {
+      flex: 1;
+      height: 12rpx;
+      background: #f0f0f0;
+      border-radius: 6rpx;
+      overflow: hidden;
+      margin: 0 20rpx;
+
+      .macro-bar {
+        height: 100%;
+        border-radius: 6rpx;
+        transition: width 0.3s ease;
+      }
     }
 
     .macro-kcal {
-      font-size: 22rpx;
-      color: #999;
+      width: 80rpx;
+      text-align: right;
+      font-size: 26rpx;
+      font-weight: 500;
+      color: #666;
     }
+
+    &.protein {
+      .macro-bar {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+      }
+      .macro-grams {
+        color: #ef4444;
+      }
+    }
+
+    &.carbs {
+      .macro-bar {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+      }
+      .macro-grams {
+        color: #f59e0b;
+      }
+    }
+
+    &.fat {
+      .macro-bar {
+        background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+      }
+      .macro-grams {
+        color: #8b5cf6;
+      }
+    }
+  }
+}
+
+.tips-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 24rpx;
+  background: #fffbeb;
+  border-radius: 20rpx;
+  border: 1rpx solid #fcd34d;
+
+  .tips-icon {
+    font-size: 32rpx;
+    flex-shrink: 0;
+  }
+
+  .tips-text {
+    font-size: 24rpx;
+    color: #92400e;
+    line-height: 1.6;
   }
 }
 
