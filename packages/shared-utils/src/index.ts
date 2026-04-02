@@ -28,7 +28,7 @@ export function isEmpty(value: unknown): boolean {
   return false;
 }
 
-import { Gender, ActivityLevel } from '@nutriday/shared-types';
+import { Gender, ActivityLevel, HealthGoal, SpecialTag } from '@nutriday/shared-types';
 
 /**
  * 计算基础代谢率 (BMR) - 使用 Mifflin-St Jeor 公式
@@ -54,4 +54,119 @@ export function calculateBMR(gender: Gender, age: number, height: number, weight
  */
 export function calculateTDEE(bmr: number, activityLevel: ActivityLevel | number): number {
   return Math.round(bmr * activityLevel);
+}
+
+/**
+ * 根据目标计算热量调整值
+ * @param tdee - 每日总能量消耗
+ * @param goal - 健康目标
+ * @returns 热量调整值（正数为增加，负数为减少）
+ */
+export function calculateCalorieAdjust(tdee: number, goal: HealthGoal): number {
+  switch (goal) {
+    case HealthGoal.LOSE_FAT:
+      // 减脂：建议 15-20% 热量缺口，最大不超过 500 kcal
+      return -Math.min(Math.round(tdee * 0.18), 500);
+    case HealthGoal.GAIN_MUSCLE:
+      // 增肌：建议 10-15% 热量盈余
+      return Math.round(tdee * 0.12);
+    case HealthGoal.HEALTH_MANAGEMENT:
+    case HealthGoal.MAINTAIN:
+    default:
+      return 0;
+  }
+}
+
+/**
+ * 计算目标热量
+ * @param tdee - 每日总能量消耗
+ * @param goal - 健康目标
+ * @param specialTags - 特殊标签（如孕期、糖尿病等）
+ * @returns 目标热量 (kcal/day)
+ */
+export function calculateTargetCalories(
+  tdee: number,
+  goal: HealthGoal,
+  specialTags: SpecialTag[] = [],
+): number {
+  let adjust = calculateCalorieAdjust(tdee, goal);
+
+  // 特殊情况调整
+  if (specialTags.includes(SpecialTag.PREGNANCY)) {
+    // 孕期中晚期需要额外热量
+    adjust += 300;
+  }
+  if (specialTags.includes(SpecialTag.LACTATION)) {
+    // 哺乳期需要额外热量
+    adjust += 500;
+  }
+
+  // 糖尿病患者热量缺口不宜过大
+  if (specialTags.includes(SpecialTag.DIABETES) && goal === HealthGoal.LOSE_FAT) {
+    // 限制热量缺口不超过 15%
+    adjust = Math.max(adjust, -Math.round(tdee * 0.15));
+  }
+
+  return Math.round(tdee + adjust);
+}
+
+/** 三大营养素分配结果 */
+export interface MacroDistribution {
+  protein: number; // 克
+  carbs: number; // 克
+  fat: number; // 克
+  proteinKcal: number;
+  carbsKcal: number;
+  fatKcal: number;
+}
+
+/**
+ * 计算三大营养素分配
+ * @param targetCalories - 目标热量
+ * @param weight - 体重 (kg)
+ * @param goal - 健康目标
+ * @returns 三大营养素分配
+ */
+export function calculateMacroDistribution(
+  targetCalories: number,
+  weight: number,
+  goal: HealthGoal,
+): MacroDistribution {
+  let proteinPerKg: number;
+  let fatPercentage: number;
+
+  switch (goal) {
+    case HealthGoal.LOSE_FAT:
+      proteinPerKg = 1.8; // 减脂需要更高蛋白保护肌肉
+      fatPercentage = 0.25;
+      break;
+    case HealthGoal.GAIN_MUSCLE:
+      proteinPerKg = 2.0; // 增肌需要充足蛋白
+      fatPercentage = 0.25;
+      break;
+    case HealthGoal.HEALTH_MANAGEMENT:
+    case HealthGoal.MAINTAIN:
+    default:
+      proteinPerKg = 1.2;
+      fatPercentage = 0.3;
+      break;
+  }
+
+  const protein = Math.round(proteinPerKg * weight);
+  const proteinKcal = protein * 4;
+
+  const fatKcal = Math.round(targetCalories * fatPercentage);
+  const fat = Math.round(fatKcal / 9);
+
+  const carbsKcal = targetCalories - proteinKcal - fatKcal;
+  const carbs = Math.round(carbsKcal / 4);
+
+  return {
+    protein,
+    carbs,
+    fat,
+    proteinKcal,
+    carbsKcal,
+    fatKcal,
+  };
 }

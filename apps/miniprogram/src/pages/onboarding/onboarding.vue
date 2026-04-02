@@ -150,6 +150,28 @@
             <text class="explain-value">{{ tdee }} kcal</text>
           </view>
         </view>
+
+        <!-- 三大营养素分配 -->
+        <view v-if="macros" class="macro-section">
+          <text class="section-title">营养素分配建议</text>
+          <view class="macro-grid">
+            <view class="macro-item">
+              <text class="macro-value">{{ macros.protein }}g</text>
+              <text class="macro-label">蛋白质</text>
+              <text class="macro-kcal">{{ macros.proteinKcal }} kcal</text>
+            </view>
+            <view class="macro-item">
+              <text class="macro-value">{{ macros.carbs }}g</text>
+              <text class="macro-label">碳水化合物</text>
+              <text class="macro-kcal">{{ macros.carbsKcal }} kcal</text>
+            </view>
+            <view class="macro-item">
+              <text class="macro-value">{{ macros.fat }}g</text>
+              <text class="macro-label">脂肪</text>
+              <text class="macro-kcal">{{ macros.fatKcal }} kcal</text>
+            </view>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -169,7 +191,12 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue';
-import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
+import {
+  calculateBMR,
+  calculateTDEE,
+  calculateTargetCalories,
+  calculateMacroDistribution,
+} from '@nutriday/shared-utils';
 import { Gender, HealthGoal, SpecialTag, ActivityLevel } from '@nutriday/shared-types';
 import { saveProfile } from '@/api/profile-api';
 
@@ -188,20 +215,10 @@ const profile = reactive({
 });
 
 const goals = [
-  { label: '减脂', value: HealthGoal.LOSE_FAT, desc: '合理热量差，科学瘦身', calorieAdjust: -400 },
-  {
-    label: '增肌',
-    value: HealthGoal.GAIN_MUSCLE,
-    desc: '高蛋白摄入，力量增长',
-    calorieAdjust: 300,
-  },
-  {
-    label: '健康管理',
-    value: HealthGoal.HEALTH_MANAGEMENT,
-    desc: '均衡饮食，优化体格',
-    calorieAdjust: 0,
-  },
-  { label: '维持现状', value: HealthGoal.MAINTAIN, desc: '保持当前体重与状态', calorieAdjust: 0 },
+  { label: '减脂', value: HealthGoal.LOSE_FAT, desc: '合理热量差，科学瘦身' },
+  { label: '增肌', value: HealthGoal.GAIN_MUSCLE, desc: '高蛋白摄入，力量增长' },
+  { label: '健康管理', value: HealthGoal.HEALTH_MANAGEMENT, desc: '均衡饮食，优化体格' },
+  { label: '维持现状', value: HealthGoal.MAINTAIN, desc: '保持当前体重与状态' },
 ];
 
 const activityLevels = [
@@ -234,18 +251,29 @@ const bmr = computed(() => {
   return Math.round(calculateBMR(profile.gender, profile.age, profile.height, profile.weight));
 });
 
+const baseTdee = computed(() => {
+  return Math.round(calculateTDEE(bmr.value, profile.activityLevel));
+});
+
 const activityCoefficient = computed(() => {
   return profile.activityLevel;
 });
 
+const targetCalories = computed(() => {
+  return calculateTargetCalories(baseTdee.value, profile.goal, profile.tags);
+});
+
 const calorieAdjust = computed(() => {
-  const goal = goals.find((g) => g.value === profile.goal);
-  return goal?.calorieAdjust || 0;
+  return targetCalories.value - baseTdee.value;
 });
 
 const tdee = computed(() => {
-  const baseTdee = calculateTDEE(bmr.value, profile.activityLevel);
-  return Math.round(baseTdee + calorieAdjust.value);
+  return targetCalories.value;
+});
+
+const macros = computed(() => {
+  if (!profile.weight) return null;
+  return calculateMacroDistribution(targetCalories.value, profile.weight, profile.goal);
 });
 
 const toggleTag = (tag: SpecialTag) => {
@@ -271,6 +299,7 @@ const finish = async () => {
     ...profile,
     bmr: bmr.value,
     tdee: tdee.value,
+    targetCalories: tdee.value,
   };
   uni.setStorageSync('user_profile', profileData);
 
@@ -286,6 +315,7 @@ const finish = async () => {
       activityLevel: profile.activityLevel,
       bmr: bmr.value,
       tdee: tdee.value,
+      targetCalories: tdee.value,
     });
   } catch (e) {
     console.warn('保存用户画像到服务器失败：', e);
@@ -608,6 +638,50 @@ const finish = async () => {
         font-weight: 600;
         font-size: 32rpx;
       }
+    }
+  }
+}
+
+.macro-section {
+  margin-top: 30rpx;
+
+  .section-title {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20rpx;
+    display: block;
+  }
+
+  .macro-grid {
+    display: flex;
+    gap: 20rpx;
+  }
+
+  .macro-item {
+    flex: 1;
+    background-color: #f8f9fa;
+    border-radius: 20rpx;
+    padding: 24rpx 16rpx;
+    text-align: center;
+
+    .macro-value {
+      font-size: 36rpx;
+      font-weight: bold;
+      color: #4cd964;
+      display: block;
+    }
+
+    .macro-label {
+      font-size: 24rpx;
+      color: #666;
+      display: block;
+      margin: 8rpx 0 4rpx;
+    }
+
+    .macro-kcal {
+      font-size: 22rpx;
+      color: #999;
     }
   }
 }
