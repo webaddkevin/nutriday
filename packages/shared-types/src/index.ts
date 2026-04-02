@@ -33,36 +33,40 @@ export interface PaginatedData<T = unknown> {
   pageSize: number;
 }
 /** 性别 */
-export enum Gender {
-  MALE = 'male',
-  FEMALE = 'female',
-}
+export const Gender = {
+  MALE: 'male',
+  FEMALE: 'female',
+} as const;
+export type Gender = (typeof Gender)[keyof typeof Gender];
 
 /** 健康目标 */
-export enum HealthGoal {
-  GAIN_MUSCLE = 'gain_muscle',
-  LOSE_FAT = 'lose_fat',
-  MAINTAIN = 'maintain',
-  HEALTH_MANAGEMENT = 'health_management',
-}
+export const HealthGoal = {
+  GAIN_MUSCLE: 'gain_muscle',
+  LOSE_FAT: 'lose_fat',
+  MAINTAIN: 'maintain',
+  HEALTH_MANAGEMENT: 'health_management',
+} as const;
+export type HealthGoal = (typeof HealthGoal)[keyof typeof HealthGoal];
 
 /** 特殊标签 */
-export enum SpecialTag {
-  DIABETES = 'diabetes',
-  HYPERTENSION = 'hypertension',
-  PREGNANCY = 'pregnancy',
-  LACTATION = 'lactation',
-  VEGETARIAN = 'vegetarian',
-}
+export const SpecialTag = {
+  DIABETES: 'diabetes',
+  HYPERTENSION: 'hypertension',
+  PREGNANCY: 'pregnancy',
+  LACTATION: 'lactation',
+  VEGETARIAN: 'vegetarian',
+} as const;
+export type SpecialTag = (typeof SpecialTag)[keyof typeof SpecialTag];
 
 /** 活动水平系数 */
-export enum ActivityLevel {
-  SEDENTARY = 1.2, // 久坐
-  LIGHTLY_ACTIVE = 1.375, // 轻度活跃
-  MODERATELY_ACTIVE = 1.55, // 中度活跃
-  VERY_ACTIVE = 1.725, // 高度活跃
-  EXTRA_ACTIVE = 1.9, // 极高强度
-}
+export const ActivityLevel = {
+  SEDENTARY: 1.2, // 久坐
+  LIGHTLY_ACTIVE: 1.375, // 轻度活跃
+  MODERATELY_ACTIVE: 1.55, // 中度活跃
+  VERY_ACTIVE: 1.725, // 高度活跃
+  EXTRA_ACTIVE: 1.9, // 极高强度
+} as const;
+export type ActivityLevel = (typeof ActivityLevel)[keyof typeof ActivityLevel];
 
 /** 用户画像 */
 export interface UserProfile {
@@ -106,12 +110,13 @@ export interface GoalProgress {
 }
 
 /** 餐食类型 */
-export enum MealType {
-  BREAKFAST = 'breakfast',
-  LUNCH = 'lunch',
-  DINNER = 'dinner',
-  SNACK = 'snack',
-}
+export const MealType = {
+  BREAKFAST: 'breakfast',
+  LUNCH: 'lunch',
+  DINNER: 'dinner',
+  SNACK: 'snack',
+} as const;
+export type MealType = (typeof MealType)[keyof typeof MealType];
 
 /** 餐食类型显示名称 */
 export const MealTypeLabels: Record<MealType, string> = {
