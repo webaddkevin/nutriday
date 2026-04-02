@@ -386,15 +386,20 @@ const finish = async () => {
   const userStore = useUserStore();
   let token = getToken();
 
+  console.log('当前 token:', token);
+
   if (!token) {
     // 未登录，先登录
     try {
       uni.showLoading({ title: '登录中...' });
+      console.log('开始登录...');
       await userStore.login();
       token = getToken();
+      console.log('登录后 token:', token);
       uni.hideLoading();
     } catch (e) {
       uni.hideLoading();
+      console.error('登录失败:', e);
       uni.showToast({ title: '登录失败，请重试', icon: 'none' });
       return;
     }
@@ -430,6 +435,7 @@ const finish = async () => {
     };
 
     console.log('保存用户画像数据:', JSON.stringify(saveData, null, 2));
+    console.log('请求 headers, token:', token);
 
     await saveProfile(saveData);
     uni.hideLoading();
