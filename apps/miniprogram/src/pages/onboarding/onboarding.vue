@@ -259,6 +259,8 @@ import {
 } from '@nutriday/shared-utils';
 import { Gender, HealthGoal, SpecialTag, ActivityLevel } from '@nutriday/shared-types';
 import { saveProfile } from '@/api/profile-api';
+import { useUserStore } from '@/stores/user';
+import { getToken } from '@/utils/request';
 
 const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight || 0);
 const currentStep = ref(1);
@@ -370,6 +372,24 @@ const finish = async () => {
     return;
   }
 
+  // 检查登录状态
+  const userStore = useUserStore();
+  let token = getToken();
+
+  if (!token) {
+    // 未登录，先登录
+    try {
+      uni.showLoading({ title: '登录中...' });
+      await userStore.login();
+      token = getToken();
+      uni.hideLoading();
+    } catch (e) {
+      uni.hideLoading();
+      uni.showToast({ title: '登录失败，请重试', icon: 'none' });
+      return;
+    }
+  }
+
   // 本地持久化（兜底）
   const profileData = {
     ...profile,
@@ -381,6 +401,7 @@ const finish = async () => {
 
   // 调用后端接口保存用户画像
   try {
+    uni.showLoading({ title: '保存中...' });
     await saveProfile({
       gender: profile.gender,
       age: profile.age,
@@ -393,8 +414,11 @@ const finish = async () => {
       tdee: tdee.value,
       targetCalories: tdee.value,
     });
+    uni.hideLoading();
   } catch (e) {
+    uni.hideLoading();
     console.warn('保存用户画像到服务器失败：', e);
+    // 即使保存失败，也允许继续
   }
 
   uni.reLaunch({
