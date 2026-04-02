@@ -1,0 +1,11 @@
+# 编译输出
+dist/
+**/dist/
+
+# Prisma 生成的文件
+**/prisma/*.js
+**/prisma/*.d.ts
+
+# Packages 编译输出
+packages/*/src/*.js
+packages/*/src/*.d.ts
