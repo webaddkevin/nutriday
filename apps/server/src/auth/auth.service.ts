@@ -122,14 +122,10 @@ export class AuthService {
     // 如果没有配置微信凭证，使用开发模式
     if (!appId || !appSecret) {
       this.logger.warn('未配置微信凭证，使用开发模式');
-      // 开发模式：使用固定的 openid，确保同一用户
-      // 如果 code 以 test 开头，使用 code 作为 openid（方便测试）
-      // 否则使用固定的开发用户
-      const openid = code.startsWith('test')
-        ? `dev_openid_${code}`
-        : 'dev_openid_default';
+      // 开发模式：始终使用固定的 openid，确保同一用户
+      // 这样可以保证开发环境下数据一致性
       return {
-        openid,
+        openid: 'dev_openid_default',
         session_key: 'dev_session_key',
       };
     }
