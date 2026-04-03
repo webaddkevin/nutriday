@@ -262,11 +262,6 @@ import { saveProfile } from '@/api/profile-api';
 import { useUserStore } from '@/stores/user';
 import { getToken } from '@/utils/request';
 
-// 调试：打印枚举值
-console.log('Gender enum:', Gender, 'MALE:', Gender.MALE);
-console.log('HealthGoal enum:', HealthGoal, 'HEALTH_MANAGEMENT:', HealthGoal.HEALTH_MANAGEMENT);
-console.log('ActivityLevel enum:', ActivityLevel, 'SEDENTARY:', ActivityLevel.SEDENTARY);
-
 const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight || 0);
 const currentStep = ref(1);
 const totalSteps = 5;
@@ -386,16 +381,12 @@ const finish = async () => {
   const userStore = useUserStore();
   let token = getToken();
 
-  console.log('当前 token:', token);
-
   if (!token) {
     // 未登录，先登录
     try {
       uni.showLoading({ title: '登录中...' });
-      console.log('开始登录...');
       await userStore.login();
       token = getToken();
-      console.log('登录后 token:', token);
       uni.hideLoading();
     } catch (e) {
       uni.hideLoading();
@@ -433,9 +424,6 @@ const finish = async () => {
       tdee: tdee.value,
       targetCalories: tdee.value,
     };
-
-    console.log('保存用户画像数据:', JSON.stringify(saveData, null, 2));
-    console.log('请求 headers, token:', token);
 
     await saveProfile(saveData);
     uni.hideLoading();

@@ -14,9 +14,6 @@ export class ProfileService {
    * 保存用户画像（存在则更新，不存在则创建）
    */
   async saveProfile(dto: SaveProfileDto & { userId: number }) {
-    // 调试：打印接收到的数据
-    console.log('收到保存画像请求:', JSON.stringify(dto, null, 2));
-
     const {
       userId,
       tags,
@@ -29,8 +26,6 @@ export class ProfileService {
       healthNotes,
       ...rest
     } = dto;
-
-    console.log('rest 对象:', JSON.stringify(rest, null, 2));
 
     // 验证必填字段
     if (!rest.gender || !rest.goal) {
