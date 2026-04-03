@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { WechatLoginDto, UpdateUserProfileDto } from './auth.dto';
 
@@ -10,11 +11,21 @@ interface WechatSessionResult {
   errmsg?: string;
 }
 
+interface JwtPayload {
+  sub: number; // userId
+  openid: string;
+  iat?: number;
+  exp?: number;
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
   /**
    * 微信小程序登录
@@ -29,7 +40,7 @@ export class AuthService {
       throw new Error(`微信登录失败: ${wechatResult.errmsg}`);
     }
 
-    const { openid, unionid } = wechatResult;
+    const { openid, unionid, session_key } = wechatResult;
 
     // 2. 查找或创建用户
     let user = await this.prisma.user.findUnique({
@@ -63,8 +74,19 @@ export class AuthService {
       }
     }
 
-    // 3. 生成简单 token（实际项目应使用 JWT）
-    const token = this.generateToken(user.id);
+    // 3. 生成 JWT token
+    const payload: JwtPayload = {
+      sub: user.id,
+      openid: user.openid,
+    };
+    const token = this.jwtService.sign(payload);
+
+    // 4. 存储 session_key（用于后续微信接口调用，如解密手机号）
+    // 实际项目应存入 Redis，这里简化存入数据库
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { sessionKey: session_key },
+    });
 
     return {
       user: {
@@ -137,29 +159,42 @@ export class AuthService {
   }
 
   /**
-   * 生成简单 token
-   * 实际项目应使用 JWT
+   * 验证 JWT token
    */
-  private generateToken(userId: number): string {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2);
-    return `${userId}_${timestamp}_${random}`;
+  async validateToken(token: string): Promise<number | null> {
+    try {
+      const payload = this.jwtService.verify<JwtPayload>(token);
+      const userId = payload.sub;
+
+      // 验证用户是否存在
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      return user ? userId : null;
+    } catch {
+      // JWT 验证失败（过期、签名错误等）
+      return null;
+    }
   }
 
   /**
-   * 验证 token（简化版）
+   * 刷新 token
    */
-  async validateToken(token: string): Promise<number | null> {
-    const parts = token.split('_');
-    if (parts.length < 1) return null;
-
-    const userId = parseInt(parts[0], 10);
-    if (isNaN(userId)) return null;
-
+  async refreshToken(userId: number): Promise<string> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
-    return user ? userId : null;
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+
+    const payload: JwtPayload = {
+      sub: user.id,
+      openid: user.openid,
+    };
+
+    return this.jwtService.sign(payload);
   }
 }
