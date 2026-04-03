@@ -9,7 +9,9 @@
     <view class="header">
       <view class="user-info">
         <text class="greeting"
-          >{{ greeting }}，{{ userProfile?.gender === 'male' ? '先生' : '女士' }}</text
+          >{{ greeting }}，{{
+            userProfile?.nickname || (userProfile?.gender === 'male' ? '先生' : '女士')
+          }}</text
         >
         <text class="date">{{ today }}</text>
       </view>
@@ -286,6 +288,10 @@ async function loadDailySummary() {
 
 async function loadWaterStats() {
   try {
+    // 调试：打印当前 token
+    const token = uni.getStorageSync('nutriday_token');
+    console.log('当前 token:', token);
+
     const stats = await getWaterStats();
     console.log('饮水统计数据:', stats);
     waterAmount.value = stats.today || 0;
