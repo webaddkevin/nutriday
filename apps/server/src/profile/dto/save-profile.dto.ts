@@ -3,12 +3,16 @@ import {
   IsNumber,
   IsOptional,
   IsArray,
-  IsEnum,
+  IsIn,
   Min,
   Max,
   IsNotEmpty,
 } from 'class-validator';
 import { Gender, HealthGoal } from '@nutriday/shared-types';
+
+// 获取 const object 的所有值作为数组
+const genderValues = Object.values(Gender);
+const healthGoalValues = Object.values(HealthGoal);
 
 /**
  * 保存用户画像 DTO
@@ -19,7 +23,7 @@ export class SaveProfileDto {
   userId?: number;
 
   /** 性别 */
-  @IsEnum(Gender, { message: '性别值无效' })
+  @IsIn(genderValues, { message: '性别值无效' })
   gender: Gender;
 
   /** 年龄 */
@@ -41,7 +45,7 @@ export class SaveProfileDto {
   weight: number;
 
   /** 健康目标 */
-  @IsEnum(HealthGoal, { message: '健康目标值无效' })
+  @IsIn(healthGoalValues, { message: '健康目标值无效' })
   goal: HealthGoal;
 
   /** 特殊标签数组 */
