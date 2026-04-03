@@ -287,9 +287,10 @@ async function loadDailySummary() {
 async function loadWaterStats() {
   try {
     const stats = await getWaterStats();
+    console.log('饮水统计数据:', stats);
     waterAmount.value = stats.today || 0;
   } catch (e) {
-    console.warn('获取饮水数据失败', e);
+    console.error('获取饮水数据失败', e);
     waterAmount.value = 0;
   }
 }
