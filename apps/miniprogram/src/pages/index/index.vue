@@ -260,9 +260,8 @@ onLoad(() => {
 });
 
 onShow(async () => {
-  if (userProfile.value) {
-    await Promise.all([loadDailySummary(), loadWaterStats()]);
-  }
+  // 每次显示页面时都重新加载最新数据
+  await Promise.all([loadDailySummary(), loadWaterStats()]);
 });
 
 async function loadDailySummary() {

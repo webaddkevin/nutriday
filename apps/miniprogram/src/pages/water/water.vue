@@ -151,7 +151,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import NutriIcon from '@/components/NutriIcon/NutriIcon.vue';
 import { getWaterStats, addWater } from '@/api/water-api';
 
@@ -256,7 +257,7 @@ function setCustomTarget() {
   }
 }
 
-onMounted(loadData);
+onShow(loadData);
 </script>
 
 <style lang="scss" scoped>
