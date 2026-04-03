@@ -18,6 +18,16 @@
       </view>
     </view>
 
+    <!-- 快捷搜索标签 -->
+    <view v-if="!keyword && foods.length === 0" class="quick-search">
+      <text class="section-title">热门搜索</text>
+      <view class="quick-tags">
+        <view v-for="tag in hotSearchTags" :key="tag" class="quick-tag" @tap="quickSearch(tag)">
+          {{ tag }}
+        </view>
+      </view>
+    </view>
+
     <!-- 分类标签 -->
     <scroll-view class="category-scroll" scroll-x :show-scrollbar="false">
       <view class="category-list">
@@ -41,7 +51,10 @@
 
       <view v-else-if="foods.length === 0" class="empty-state">
         <text class="empty-icon">🔍</text>
-        <text class="empty-text">{{ keyword ? '未找到相关食物' : '请输入食物名称搜索' }}</text>
+        <text class="empty-text">{{
+          keyword ? '未找到相关食物，试试其他关键词' : '点击上方分类或搜索食物'
+        }}</text>
+        <text v-if="keyword" class="empty-hint">提示：可以搜索食物名称或类别</text>
       </view>
 
       <view v-else class="food-items">
@@ -103,6 +116,20 @@ const selectedCategory = ref('全部');
 const loading = ref(false);
 const favoriteIds = ref<number[]>([]);
 
+// 热门搜索标签
+const hotSearchTags = [
+  '鸡胸肉',
+  '鸡蛋',
+  '米饭',
+  '苹果',
+  '牛奶',
+  '西兰花',
+  '香蕉',
+  '三文鱼',
+  '豆腐',
+  '燕麦',
+];
+
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 let mealType = ref<MealType>('breakfast' as MealType);
 let date = ref('');
@@ -127,6 +154,12 @@ function debounceSearch() {
   searchTimer = setTimeout(() => {
     handleSearch();
   }, 300);
+}
+
+// 快捷搜索
+function quickSearch(tag: string) {
+  keyword.value = tag;
+  handleSearch();
 }
 
 async function handleSearch() {
@@ -270,6 +303,37 @@ async function toggleFavorite(food: Food) {
   }
 }
 
+.quick-search {
+  padding: 24rpx 30rpx;
+  background: #fff;
+
+  .section-title {
+    font-size: 26rpx;
+    color: #999;
+    margin-bottom: 16rpx;
+    display: block;
+  }
+
+  .quick-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16rpx;
+  }
+
+  .quick-tag {
+    padding: 12rpx 24rpx;
+    background: #f0fdf4;
+    border: 1rpx solid rgba(0, 177, 113, 0.2);
+    border-radius: 24rpx;
+    font-size: 26rpx;
+    color: $nutri-primary;
+
+    &:active {
+      background: rgba(0, 177, 113, 0.1);
+    }
+  }
+}
+
 .category-scroll {
   background: #fff;
   border-top: 1px solid #f0f0f0;
@@ -315,6 +379,12 @@ async function toggleFavorite(food: Food) {
   .empty-text {
     font-size: 28rpx;
     color: $uni-text-color-grey;
+  }
+
+  .empty-hint {
+    font-size: 24rpx;
+    color: #ccc;
+    margin-top: 12rpx;
   }
 }
 
