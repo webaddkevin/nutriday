@@ -12,8 +12,7 @@ export class FoodController {
    */
   @Post()
   async create(@Body() dto: CreateFoodDto) {
-    const food = await this.foodService.create(dto);
-    return { code: 0, message: '创建成功', data: food };
+    return this.foodService.create(dto);
   }
 
   /**
@@ -21,8 +20,7 @@ export class FoodController {
    */
   @Post('batch')
   async createMany(@Body() foods: CreateFoodDto[]) {
-    const result = await this.foodService.createMany(foods);
-    return { code: 0, message: '批量创建成功', data: result };
+    return this.foodService.createMany(foods);
   }
 
   /**
@@ -34,11 +32,7 @@ export class FoodController {
     @Query('keyword') keyword: string,
     @Query('limit') limit?: string,
   ) {
-    const foods = await this.foodService.search(
-      keyword,
-      limit ? parseInt(limit) : 20,
-    );
-    return { code: 0, message: '查询成功', data: foods };
+    return this.foodService.search(keyword, limit ? parseInt(limit) : 20);
   }
 
   /**
@@ -50,11 +44,10 @@ export class FoodController {
     @Param('category') category: string,
     @Query('limit') limit?: string,
   ) {
-    const foods = await this.foodService.findByCategory(
+    return this.foodService.findByCategory(
       category,
       limit ? parseInt(limit) : 50,
     );
-    return { code: 0, message: '查询成功', data: foods };
   }
 
   /**
@@ -63,8 +56,7 @@ export class FoodController {
   @Public()
   @Get('categories')
   async getCategories() {
-    const categories = await this.foodService.getCategories();
-    return { code: 0, message: '查询成功', data: categories };
+    return this.foodService.getCategories();
   }
 
   /**
@@ -73,10 +65,6 @@ export class FoodController {
   @Public()
   @Get(':id')
   async findById(@Param('id') id: string) {
-    const food = await this.foodService.findById(parseInt(id));
-    if (!food) {
-      return { code: 404, message: '食物不存在', data: null };
-    }
-    return { code: 0, message: '查询成功', data: food };
+    return this.foodService.findById(parseInt(id));
   }
 }

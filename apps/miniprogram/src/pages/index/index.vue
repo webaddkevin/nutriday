@@ -146,6 +146,7 @@ import CustomTabbar from '@/components/CustomTabbar/CustomTabbar.vue';
 import NutriIcon from '@/components/NutriIcon/NutriIcon.vue';
 import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
 import { getDailySummary } from '@/api/meal-log-api';
+import { getWaterStats } from '@/api/water-api';
 import { useUserStore } from '@/stores/user';
 import type { UserProfile, MealType, DailySummary } from '@nutriday/shared-types';
 
@@ -260,7 +261,7 @@ onLoad(() => {
 
 onShow(async () => {
   if (userProfile.value) {
-    await loadDailySummary();
+    await Promise.all([loadDailySummary(), loadWaterStats()]);
   }
 });
 
@@ -281,6 +282,16 @@ async function loadDailySummary() {
         snack: { calories: 0, items: [] },
       },
     };
+  }
+}
+
+async function loadWaterStats() {
+  try {
+    const stats = await getWaterStats();
+    waterAmount.value = stats.today || 0;
+  } catch (e) {
+    console.warn('获取饮水数据失败', e);
+    waterAmount.value = 0;
   }
 }
 

@@ -49,6 +49,19 @@
           <text class="quick-label">{{ option.label }}</text>
         </view>
       </view>
+
+      <!-- 快捷减少 -->
+      <view class="quick-add reduce">
+        <view
+          v-for="option in adjustOptions"
+          :key="option.value"
+          class="quick-btn reduce-btn"
+          @click="quickAdd(option.value)"
+        >
+          <text class="quick-icon">{{ option.icon }}</text>
+          <text class="quick-label">{{ option.label }}</text>
+        </view>
+      </view>
     </view>
 
     <!-- 统计卡片 -->
@@ -154,6 +167,11 @@ const quickOptions = [
   { value: 800, label: '800ml', icon: '🫗' },
 ];
 
+const adjustOptions = [
+  { value: -200, label: '-200ml', icon: '➖' },
+  { value: -300, label: '-300ml', icon: '➖' },
+];
+
 const targetOptions = [
   { value: 1500, label: '1500ml' },
   { value: 2000, label: '2000ml' },
@@ -206,12 +224,19 @@ async function loadData() {
 
 async function quickAdd(amount: number) {
   try {
+    // 如果是减少操作，检查当前饮水量是否足够
+    if (amount < 0 && todayAmount.value + amount < 0) {
+      uni.showToast({ title: '饮水量不能为负数', icon: 'none' });
+      return;
+    }
+
     await addWater(todayStr.value, amount);
-    uni.showToast({ title: `+${amount}ml`, icon: 'success' });
+    const action = amount > 0 ? `+${amount}` : `${amount}`;
+    uni.showToast({ title: `${action}ml`, icon: 'success' });
     await loadData();
   } catch (e) {
     console.error('添加饮水失败', e);
-    uni.showToast({ title: '添加失败', icon: 'none' });
+    uni.showToast({ title: '操作失败', icon: 'none' });
   }
 }
 
@@ -451,6 +476,22 @@ onMounted(loadData);
     .quick-label {
       font-size: 24rpx;
       color: #64748b;
+    }
+  }
+
+  &.reduce {
+    margin-top: 16rpx;
+
+    .reduce-btn {
+      background: #fef2f2;
+
+      &:active {
+        background: rgba(239, 68, 68, 0.1);
+      }
+
+      .quick-label {
+        color: #ef4444;
+      }
     }
   }
 }
