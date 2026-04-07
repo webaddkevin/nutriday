@@ -150,10 +150,10 @@
         </view>
       </view>
     </view>
-
-    <!-- 自定义 Tabbar -->
-    <CustomTabbar current-path="/pages/index/index" />
   </scroll-view>
+
+  <!-- 自定义 Tabbar - 放在 scroll-view 外面，固定在底部 -->
+  <CustomTabbar current-path="/pages/index/index" />
 </template>
 
 <script setup lang="ts">
