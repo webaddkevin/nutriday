@@ -261,7 +261,7 @@
           </view>
         </view>
         <view class="modal-footer">
-          <button class="confirm-btn full" @tap="confirmAdd">确认添加</button>
+          <button class="confirm-btn full" @tap="handleConfirm">确认添加</button>
         </view>
       </view>
     </view>
@@ -503,9 +503,17 @@ const quickSearch = (keyword: string) => {
 
 // 选择食物
 const selectFood = (food: FoodInfo) => {
+  console.log('selectFood called, food:', food);
   selectedFood.value = food;
   inputAmount.value = food.servingSize || 100;
   showAmountModal.value = true;
+  console.log('showAmountModal:', showAmountModal.value);
+};
+
+// 处理确认按钮点击
+const handleConfirm = () => {
+  console.log('handleConfirm called!');
+  confirmAdd();
 };
 
 // 调整份量
@@ -518,7 +526,12 @@ const adjustAmount = (delta: number) => {
 
 // 确认添加
 const confirmAdd = async () => {
-  if (!selectedFood.value) return;
+  console.log('confirmAdd called, selectedFood:', selectedFood.value);
+
+  if (!selectedFood.value) {
+    uni.showToast({ title: '请先选择食物', icon: 'none' });
+    return;
+  }
 
   showAmountModal.value = false;
   loading.value = true;
@@ -527,8 +540,10 @@ const confirmAdd = async () => {
   try {
     // 如果食物没有 ID，先保存到本地数据库
     let foodId = selectedFood.value.id || selectedFood.value.foods?.[0]?.id;
+    console.log('foodId:', foodId);
 
     if (!foodId) {
+      console.log('Saving food to local database...');
       // 保存到本地数据库
       const saveRes = await request({
         url: '/food/save-external',
@@ -548,6 +563,7 @@ const confirmAdd = async () => {
         },
       });
 
+      console.log('saveRes:', saveRes);
       if (saveRes.data?.id) {
         foodId = saveRes.data.id;
       } else {
@@ -556,6 +572,8 @@ const confirmAdd = async () => {
     }
 
     const ratio = inputAmount.value / 100;
+    console.log('Creating meal log with foodId:', foodId);
+
     const res = await request({
       url: '/meal-log',
       method: 'POST',
@@ -572,6 +590,8 @@ const confirmAdd = async () => {
         date: new Date().toISOString().split('T')[0],
       },
     });
+
+    console.log('meal log res:', res);
 
     if (res.success || res.data) {
       uni.showToast({ title: '添加成功', icon: 'success' });

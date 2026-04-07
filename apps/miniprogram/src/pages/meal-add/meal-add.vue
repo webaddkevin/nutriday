@@ -143,11 +143,30 @@ function normalizeAmount() {
 }
 
 async function submitLog() {
-  if (!food.value || submitting.value) return;
+  console.log('submitLog called');
+  console.log('food:', food.value);
+  console.log('submitting:', submitting.value);
+  console.log('foodId:', foodId);
+  console.log('mealType:', mealType);
+  console.log('date:', date);
+  console.log('amount:', amount.value);
+
+  if (!food.value) {
+    console.log('food is null, returning');
+    uni.showToast({ title: '食物信息加载失败', icon: 'none' });
+    return;
+  }
+
+  if (submitting.value) {
+    console.log('already submitting, returning');
+    return;
+  }
 
   submitting.value = true;
+  console.log('calling createMealLog...');
+
   try {
-    await createMealLog({
+    const result = await createMealLog({
       date,
       mealType,
       foodId: food.value.id,
@@ -155,14 +174,15 @@ async function submitLog() {
       note: note.value || undefined,
     });
 
+    console.log('createMealLog result:', result);
     uni.showToast({ title: '记录成功', icon: 'success' });
 
     setTimeout(() => {
       uni.navigateBack();
     }, 1000);
-  } catch (e) {
+  } catch (e: any) {
     console.error('记录失败', e);
-    uni.showToast({ title: '记录失败', icon: 'none' });
+    uni.showToast({ title: e.message || '记录失败', icon: 'none' });
   } finally {
     submitting.value = false;
   }

@@ -225,7 +225,41 @@ function clearKeyword() {
   }
 }
 
-function selectFood(food: Food) {
+async function selectFood(food: Food) {
+  // 如果食物没有 ID，先保存到本地数据库
+  if (!food.id) {
+    try {
+      const res = await request({
+        url: '/food/save-external',
+        method: 'POST',
+        data: {
+          name: food.name,
+          nameEn: food.nameEn,
+          category: food.category || '其他',
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+          fiber: food.fiber,
+          servingSize: food.servingSize || 100,
+          unit: food.unit || 'g',
+          source: food.source || 'external',
+        },
+      });
+
+      if (res.data?.id) {
+        food.id = res.data.id;
+      } else {
+        uni.showToast({ title: '保存食物失败', icon: 'none' });
+        return;
+      }
+    } catch (e) {
+      console.error('保存食物失败', e);
+      uni.showToast({ title: '保存食物失败', icon: 'none' });
+      return;
+    }
+  }
+
   uni.navigateTo({
     url: `/pages/meal-add/meal-add?foodId=${food.id}&mealType=${mealType.value}&date=${date.value}`,
   });
