@@ -1,151 +1,159 @@
 <template>
-  <view class="container">
-    <!-- 顶部装饰背景 -->
-    <view class="bg-decoration">
-      <view class="bg-circle bg-circle-1"></view>
-      <view class="bg-circle bg-circle-2"></view>
+  <scroll-view
+    scroll-y
+    class="scroll-container"
+    refresher-enabled
+    :refresher-triggered="refreshing"
+    @refresherrefresh="onRefresh"
+  >
+    <view class="container">
+      <!-- 顶部装饰背景 -->
+      <view class="bg-decoration">
+        <view class="bg-circle bg-circle-1"></view>
+        <view class="bg-circle bg-circle-2"></view>
+      </view>
+
+      <view class="header">
+        <view class="user-info">
+          <text class="greeting"
+            >{{ greeting }}，{{
+              userProfile?.nickname || (userProfile?.gender === 'male' ? '先生' : '女士')
+            }}</text
+          >
+          <text class="date">{{ today }}</text>
+        </view>
+        <view class="header-actions">
+          <view class="action-btn" @tap="goToScan">
+            <NutriIcon name="scan" size="sm" color="#64748b" />
+          </view>
+        </view>
+      </view>
+
+      <!-- 骨架屏加载状态 -->
+      <view v-if="loading" class="skeleton-wrapper">
+        <Skeleton type="dashboard" />
+        <view class="skeleton-water"></view>
+        <Skeleton type="meal-grid" />
+      </view>
+
+      <!-- 核心营养概览卡片 -->
+      <view v-else class="dashboard-card">
+        <!-- 热量进度环 -->
+        <view class="calorie-ring-container">
+          <view class="calorie-ring">
+            <view class="ring-bg"></view>
+            <view class="ring-progress" :style="{ '--progress': caloriePercent }"></view>
+            <view class="ring-center">
+              <text class="ring-value">{{ remainingCalories }}</text>
+              <text class="ring-label">剩余 kcal</text>
+            </view>
+          </view>
+          <view class="calorie-detail">
+            <view class="detail-item">
+              <text class="detail-label">已摄入</text>
+              <text class="detail-value">{{ consumed.calories }}</text>
+            </view>
+            <view class="detail-divider"></view>
+            <view class="detail-item">
+              <text class="detail-label">目标</text>
+              <text class="detail-value target">{{ targetCalories }}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 营养素进度 -->
+        <view class="nutrient-row">
+          <view v-for="item in nutrientStats" :key="item.label" class="nutrient-item">
+            <view class="nutrient-header">
+              <view class="nutrient-dot" :style="{ background: item.color }"></view>
+              <text class="nutrient-label">{{ item.label }}</text>
+              <text class="nutrient-value">{{ item.value }}g</text>
+            </view>
+            <view class="nutrient-bar">
+              <view
+                class="nutrient-fill"
+                :style="{ width: Math.min(100, item.percent) + '%', background: item.color }"
+              />
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 饮水提醒 -->
+      <view class="water-card" @tap="goToWater">
+        <view class="water-icon">
+          <NutriIcon name="water" size="lg" color="#00bcd4" />
+        </view>
+        <view class="water-info">
+          <text class="water-title">今日饮水</text>
+          <text class="water-value">{{ waterAmount }} / 2000 ml</text>
+        </view>
+        <view class="water-progress">
+          <view class="water-bar">
+            <view class="water-fill" :style="{ width: Math.min(100, waterPercent) + '%' }"></view>
+          </view>
+        </view>
+        <view class="water-arrow">
+          <uni-icons type="right" size="18" color="#00bcd4"></uni-icons>
+        </view>
+      </view>
+
+      <!-- 饮食时段卡片 -->
+      <view class="meal-section">
+        <view class="section-header">
+          <text class="section-title">今日饮食</text>
+          <text class="section-total">{{ totalMealCalories }} kcal</text>
+        </view>
+        <view class="meal-grid">
+          <view
+            v-for="meal in mealCards"
+            :key="meal.type"
+            class="meal-card"
+            :class="{ 'has-items': meal.items.length > 0 }"
+            @tap="goToFoodSearch(meal.type)"
+          >
+            <view class="meal-icon-wrap">
+              <text class="meal-emoji">{{ meal.icon }}</text>
+            </view>
+            <view class="meal-info">
+              <text class="meal-name">{{ meal.name }}</text>
+              <text class="meal-cal">{{
+                meal.calories > 0 ? meal.calories + ' kcal' : '未记录'
+              }}</text>
+            </view>
+            <view v-if="meal.items.length > 0" class="meal-tags">
+              <text v-for="item in meal.items.slice(0, 2)" :key="item.id" class="meal-tag">
+                {{ item.foodName }}
+              </text>
+            </view>
+            <view class="meal-add">
+              <text class="add-icon">+</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- AI 推荐入口 -->
+      <view class="ai-section">
+        <view class="ai-card" @tap="goToRecommendation">
+          <view class="ai-glow"></view>
+          <view class="ai-icon-wrap">
+            <NutriIcon name="ai" size="xl" color="#fff" />
+          </view>
+          <view class="ai-content">
+            <text class="ai-title">AI 智能推荐</text>
+            <text class="ai-desc">根据你的目标推荐健康餐食</text>
+          </view>
+          <view class="ai-arrow">
+            <uni-icons type="right" size="20" color="rgba(255,255,255,0.8)"></uni-icons>
+          </view>
+        </view>
+      </view>
     </view>
 
-    <view class="header">
-      <view class="user-info">
-        <text class="greeting"
-          >{{ greeting }}，{{
-            userProfile?.nickname || (userProfile?.gender === 'male' ? '先生' : '女士')
-          }}</text
-        >
-        <text class="date">{{ today }}</text>
-      </view>
-      <view class="header-actions">
-        <view class="action-btn" @tap="goToScan">
-          <NutriIcon name="scan" size="sm" color="#64748b" />
-        </view>
-      </view>
-    </view>
-
-    <!-- 骨架屏加载状态 -->
-    <view v-if="loading" class="skeleton-wrapper">
-      <Skeleton type="dashboard" />
-      <view class="skeleton-water"></view>
-      <Skeleton type="meal-grid" />
-    </view>
-
-    <!-- 核心营养概览卡片 -->
-    <view v-else class="dashboard-card">
-      <!-- 热量进度环 -->
-      <view class="calorie-ring-container">
-        <view class="calorie-ring">
-          <view class="ring-bg"></view>
-          <view class="ring-progress" :style="{ '--progress': caloriePercent }"></view>
-          <view class="ring-center">
-            <text class="ring-value">{{ remainingCalories }}</text>
-            <text class="ring-label">剩余 kcal</text>
-          </view>
-        </view>
-        <view class="calorie-detail">
-          <view class="detail-item">
-            <text class="detail-label">已摄入</text>
-            <text class="detail-value">{{ consumed.calories }}</text>
-          </view>
-          <view class="detail-divider"></view>
-          <view class="detail-item">
-            <text class="detail-label">目标</text>
-            <text class="detail-value target">{{ targetCalories }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 营养素进度 -->
-      <view class="nutrient-row">
-        <view v-for="item in nutrientStats" :key="item.label" class="nutrient-item">
-          <view class="nutrient-header">
-            <view class="nutrient-dot" :style="{ background: item.color }"></view>
-            <text class="nutrient-label">{{ item.label }}</text>
-            <text class="nutrient-value">{{ item.value }}g</text>
-          </view>
-          <view class="nutrient-bar">
-            <view
-              class="nutrient-fill"
-              :style="{ width: Math.min(100, item.percent) + '%', background: item.color }"
-            />
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 饮水提醒 -->
-    <view class="water-card" @tap="goToWater">
-      <view class="water-icon">
-        <NutriIcon name="water" size="lg" color="#00bcd4" />
-      </view>
-      <view class="water-info">
-        <text class="water-title">今日饮水</text>
-        <text class="water-value">{{ waterAmount }} / 2000 ml</text>
-      </view>
-      <view class="water-progress">
-        <view class="water-bar">
-          <view class="water-fill" :style="{ width: Math.min(100, waterPercent) + '%' }"></view>
-        </view>
-      </view>
-      <view class="water-arrow">
-        <uni-icons type="right" size="18" color="#00bcd4"></uni-icons>
-      </view>
-    </view>
-
-    <!-- 饮食时段卡片 -->
-    <view class="meal-section">
-      <view class="section-header">
-        <text class="section-title">今日饮食</text>
-        <text class="section-total">{{ totalMealCalories }} kcal</text>
-      </view>
-      <view class="meal-grid">
-        <view
-          v-for="meal in mealCards"
-          :key="meal.type"
-          class="meal-card"
-          :class="{ 'has-items': meal.items.length > 0 }"
-          @tap="goToFoodSearch(meal.type)"
-        >
-          <view class="meal-icon-wrap">
-            <text class="meal-emoji">{{ meal.icon }}</text>
-          </view>
-          <view class="meal-info">
-            <text class="meal-name">{{ meal.name }}</text>
-            <text class="meal-cal">{{
-              meal.calories > 0 ? meal.calories + ' kcal' : '未记录'
-            }}</text>
-          </view>
-          <view v-if="meal.items.length > 0" class="meal-tags">
-            <text v-for="item in meal.items.slice(0, 2)" :key="item.id" class="meal-tag">
-              {{ item.foodName }}
-            </text>
-          </view>
-          <view class="meal-add">
-            <text class="add-icon">+</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <!-- AI 推荐入口 -->
-    <view class="ai-section">
-      <view class="ai-card" @tap="goToRecommendation">
-        <view class="ai-glow"></view>
-        <view class="ai-icon-wrap">
-          <NutriIcon name="ai" size="xl" color="#fff" />
-        </view>
-        <view class="ai-content">
-          <text class="ai-title">AI 智能推荐</text>
-          <text class="ai-desc">根据你的目标推荐健康餐食</text>
-        </view>
-        <view class="ai-arrow">
-          <uni-icons type="right" size="20" color="rgba(255,255,255,0.8)"></uni-icons>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 自定义 Tabbar -->
-  <CustomTabbar current-path="/pages/index/index" />
+    <!-- 自定义 Tabbar -->
+    <CustomTabbar current-path="/pages/index/index" />
+  </scroll-view>
 </template>
 
 <script setup lang="ts">
@@ -163,6 +171,7 @@ import type { UserProfile, MealType, DailySummary } from '@nutriday/shared-types
 const _userStore = useUserStore();
 const userProfile = ref<UserProfile | null>(null);
 const loading = ref(true);
+const refreshing = ref(false);
 
 const greeting = computed(() => {
   const hour = new Date().getHours();
@@ -310,6 +319,15 @@ async function loadWaterStats() {
   }
 }
 
+async function onRefresh() {
+  refreshing.value = true;
+  try {
+    await Promise.all([loadDailySummary(), loadWaterStats()]);
+  } finally {
+    refreshing.value = false;
+  }
+}
+
 function goToFoodSearch(mealType: MealType) {
   uni.navigateTo({
     url: `/pages/food-search/food-search?mealType=${mealType}&date=${todayDate}`,
@@ -332,9 +350,14 @@ function goToWater() {
 </script>
 
 <style lang="scss" scoped>
+.scroll-container {
+  height: 100vh;
+  background: linear-gradient(180deg, #f0f4f8 0%, #e8f0e8 100%);
+}
+
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #f0f4f8 0%, #e8f0e8 100%);
+  background: transparent;
   padding: 40rpx;
   padding-bottom: 180rpx;
   color: $uni-text-color;
