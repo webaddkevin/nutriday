@@ -281,7 +281,9 @@ import { ref, computed } from 'vue';
 import { request } from '@/utils/request';
 
 interface FoodInfo {
+  id?: number;
   name: string;
+  nameEn?: string;
   brand?: string;
   category?: string;
   calories: number;
@@ -523,12 +525,42 @@ const confirmAdd = async () => {
   loadingText.value = '正在添加...';
 
   try {
+    // 如果食物没有 ID，先保存到本地数据库
+    let foodId = selectedFood.value.id || selectedFood.value.foods?.[0]?.id;
+
+    if (!foodId) {
+      // 保存到本地数据库
+      const saveRes = await request({
+        url: '/food/save-external',
+        method: 'POST',
+        data: {
+          name: selectedFood.value.name,
+          nameEn: selectedFood.value.nameEn,
+          category: selectedFood.value.category || '其他',
+          calories: selectedFood.value.calories,
+          protein: selectedFood.value.protein,
+          carbs: selectedFood.value.carbs,
+          fat: selectedFood.value.fat,
+          fiber: selectedFood.value.fiber,
+          servingSize: selectedFood.value.servingSize || 100,
+          unit: selectedFood.value.unit || 'g',
+          source: selectedFood.value.source || 'external',
+        },
+      });
+
+      if (saveRes.data?.id) {
+        foodId = saveRes.data.id;
+      } else {
+        throw new Error('保存食物失败');
+      }
+    }
+
     const ratio = inputAmount.value / 100;
     const res = await request({
       url: '/meal-log',
       method: 'POST',
       data: {
-        foodId: selectedFood.value.foods?.[0]?.id || selectedFood.value.id,
+        foodId: foodId,
         foodName: selectedFood.value.name,
         mealType: 'snack', // 默认加餐，用户可在详情页修改
         amount: inputAmount.value,
@@ -541,7 +573,7 @@ const confirmAdd = async () => {
       },
     });
 
-    if (res.success) {
+    if (res.success || res.data) {
       uni.showToast({ title: '添加成功', icon: 'success' });
       scanResult.value = null;
       photoPreview.value = '';
@@ -549,9 +581,9 @@ const confirmAdd = async () => {
       searchResults.value = [];
       searchKeyword.value = '';
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('添加失败:', error);
-    uni.showToast({ title: '添加失败', icon: 'none' });
+    uni.showToast({ title: error.message || '添加失败', icon: 'none' });
   } finally {
     loading.value = false;
   }
