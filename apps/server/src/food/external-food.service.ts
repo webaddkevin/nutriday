@@ -176,6 +176,7 @@ export class ExternalFoodService {
    */
   async searchFood(query: string): Promise<ExternalFood[]> {
     const results: ExternalFood[] = [];
+    const addedNames = new Set<string>(); // 用于去重
 
     // 1. 先搜索本地数据库
     const localFoods = await this.prisma.food.findMany({
@@ -186,23 +187,33 @@ export class ExternalFoodService {
     });
 
     for (const food of localFoods) {
-      results.push({
-        name: food.name,
-        nameEn: food.nameEn || undefined,
-        calories: food.calories,
-        protein: food.protein,
-        carbs: food.carbs,
-        fat: food.fat,
-        fiber: food.fiber || undefined,
-        servingSize: food.servingSize,
-        source: 'local',
-      });
+      const normalizedName = food.name.toLowerCase();
+      if (!addedNames.has(normalizedName)) {
+        addedNames.add(normalizedName);
+        results.push({
+          name: food.name,
+          nameEn: food.nameEn || undefined,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+          fiber: food.fiber || undefined,
+          servingSize: food.servingSize,
+          source: 'local',
+        });
+      }
     }
 
     // 2. 如果本地结果不足，尝试 USDA API
     if (results.length < 5) {
       const usdaFoods = await this.searchFromUSDA(query, 10);
-      results.push(...usdaFoods);
+      for (const food of usdaFoods) {
+        const normalizedName = food.name.toLowerCase();
+        if (!addedNames.has(normalizedName)) {
+          addedNames.add(normalizedName);
+          results.push(food);
+        }
+      }
     }
 
     // 3. 如果还是找不到，使用 AI 估算
