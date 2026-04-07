@@ -11,6 +11,9 @@ const TOKEN_KEY = 'nutriday_token';
 /** 用户 ID 存储 key */
 const USER_ID_KEY = 'nutriday_user_id';
 
+/** 是否正在显示登录提示 */
+let isShowingLoginModal = false;
+
 interface RequestOptions {
   /** 请求路径（不含 baseURL） */
   url: string;
@@ -20,6 +23,8 @@ interface RequestOptions {
   data?: Record<string, unknown> | object;
   /** 是否需要认证 */
   requireAuth?: boolean;
+  /** 是否静默模式（不显示错误提示） */
+  silent?: boolean;
 }
 
 interface ApiResult<T = unknown> {
@@ -67,6 +72,39 @@ export function setUserId(userId: number): void {
 }
 
 /**
+ * 检查是否已登录
+ */
+export function isLoggedIn(): boolean {
+  return !!getToken();
+}
+
+/**
+ * 显示登录提示弹窗
+ */
+function showLoginModal() {
+  if (isShowingLoginModal) return;
+  isShowingLoginModal = true;
+
+  uni.showModal({
+    title: '需要登录',
+    content: '该功能需要登录后才能使用，是否立即登录？',
+    confirmText: '去登录',
+    cancelText: '稍后再说',
+    success: (res) => {
+      isShowingLoginModal = false;
+      if (res.confirm) {
+        uni.navigateTo({
+          url: '/pages/login/login',
+        });
+      }
+    },
+    fail: () => {
+      isShowingLoginModal = false;
+    },
+  });
+}
+
+/**
  * 发起 HTTP 请求
  * @param options 请求选项
  * @returns Promise<ApiResult<T>>
@@ -91,6 +129,18 @@ export function request<T = unknown>(options: RequestOptions): Promise<ApiResult
       success: (res) => {
         const result = res.data as ApiResult<T>;
 
+        // 处理 401 未认证错误
+        if (res.statusCode === 401) {
+          clearToken();
+
+          if (!options.silent) {
+            showLoginModal();
+          }
+
+          reject({ code: 401, message: '未提供认证信息', needLogin: true });
+          return;
+        }
+
         // 兼容多种返回格式：
         // 1. { code: 0, data: T } - 标准格式
         // 2. { success: true, data: T } - barcode 等接口格式
@@ -107,7 +157,23 @@ export function request<T = unknown>(options: RequestOptions): Promise<ApiResult
           if (result.success) {
             resolve(result);
           } else {
-            uni.showToast({ title: result.message || '请求失败', icon: 'none' });
+            // 检查是否是认证错误
+            if (
+              result.code === 401 ||
+              result.message?.includes('认证') ||
+              result.message?.includes('token')
+            ) {
+              clearToken();
+              if (!options.silent) {
+                showLoginModal();
+              }
+              reject({ ...result, needLogin: true });
+              return;
+            }
+
+            if (!options.silent) {
+              uni.showToast({ title: result.message || '请求失败', icon: 'none' });
+            }
             reject(result);
           }
           return;
@@ -123,7 +189,23 @@ export function request<T = unknown>(options: RequestOptions): Promise<ApiResult
 
         // 格式1但 code 不为0
         if (result.code !== undefined && result.code !== 0) {
-          uni.showToast({ title: result.message || '请求失败', icon: 'none' });
+          // 检查是否是认证错误
+          if (
+            result.code === 401 ||
+            result.message?.includes('认证') ||
+            result.message?.includes('token')
+          ) {
+            clearToken();
+            if (!options.silent) {
+              showLoginModal();
+            }
+            reject({ ...result, needLogin: true });
+            return;
+          }
+
+          if (!options.silent) {
+            uni.showToast({ title: result.message || '请求失败', icon: 'none' });
+          }
           reject(result);
           return;
         }
@@ -132,7 +214,9 @@ export function request<T = unknown>(options: RequestOptions): Promise<ApiResult
         resolve(result);
       },
       fail: (err) => {
-        uni.showToast({ title: '网络异常，请稍后重试', icon: 'none' });
+        if (!options.silent) {
+          uni.showToast({ title: '网络异常，请稍后重试', icon: 'none' });
+        }
         reject(err);
       },
     });

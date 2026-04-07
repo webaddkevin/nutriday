@@ -83,6 +83,13 @@
       "style": {
         "navigationBarTitleText": "扫码识别"
       }
+    },
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "subPackages": [
