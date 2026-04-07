@@ -1,6 +1,17 @@
-import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Param,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { FoodService } from './food.service';
 import { ExternalFoodService } from './external-food.service';
+import { AIRecognitionService } from './ai-recognition.service';
 import { CreateFoodDto } from './dto/create-food.dto';
 import { Public } from '../common/decorators/public.decorator';
 
@@ -9,6 +20,7 @@ export class FoodController {
   constructor(
     private readonly foodService: FoodService,
     private readonly externalFoodService: ExternalFoodService,
+    private readonly aiRecognitionService: AIRecognitionService,
   ) {}
 
   /**
@@ -79,6 +91,58 @@ export class FoodController {
   @Get('categories')
   async getCategories() {
     return this.foodService.getCategories();
+  }
+
+  /**
+   * AI 识别食物图片
+   */
+  @Public()
+  @Post('recognize')
+  @UseInterceptors(FileInterceptor('image'))
+  async recognizeFood(@UploadedFile() file: any) {
+    if (!file) {
+      return {
+        success: false,
+        message: '请上传图片',
+        foods: [],
+      };
+    }
+
+    const imageBase64 = file.buffer.toString('base64');
+    return this.aiRecognitionService.recognizeFoodFromImage(imageBase64);
+  }
+
+  /**
+   * 根据食物名称获取营养信息
+   */
+  @Public()
+  @Get('nutrition/:name')
+  async getNutrition(@Param('name') name: string) {
+    const food = await this.aiRecognitionService.getNutritionByName(name);
+    if (!food) {
+      return {
+        success: false,
+        message: '未找到该食物的营养信息',
+      };
+    }
+    return {
+      success: true,
+      food,
+    };
+  }
+
+  /**
+   * 批量获取食物营养信息
+   */
+  @Public()
+  @Post('nutrition/batch')
+  async getNutritionBatch(@Body('names') names: string[]) {
+    const foods = await this.aiRecognitionService.recognizeMultipleFoods(names);
+    return {
+      success: true,
+      foods,
+      totalCalories: foods.reduce((sum, f) => sum + f.calories, 0),
+    };
   }
 
   /**
