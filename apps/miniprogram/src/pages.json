@@ -90,6 +90,12 @@
         "navigationBarTitleText": "登录",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/meal-detail/meal-detail",
+      "style": {
+        "navigationBarTitleText": "饮食详情"
+      }
     }
   ],
   "subPackages": [

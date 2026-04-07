@@ -110,7 +110,7 @@
             :key="meal.type"
             class="meal-card"
             :class="{ 'has-items': meal.items.length > 0 }"
-            @tap="goToFoodSearch(meal.type)"
+            @tap="goToMealDetail(meal.type)"
           >
             <view class="meal-icon-wrap">
               <text class="meal-emoji">{{ meal.icon }}</text>
@@ -331,6 +331,13 @@ async function onRefresh() {
 function goToFoodSearch(mealType: MealType) {
   uni.navigateTo({
     url: `/pages/food-search/food-search?mealType=${mealType}&date=${todayDate}`,
+  });
+}
+
+function goToMealDetail(mealType: MealType) {
+  // 跳转到饮食详情页
+  uni.navigateTo({
+    url: `/pages/meal-detail/meal-detail?mealType=${mealType}&date=${todayDate}`,
   });
 }
 

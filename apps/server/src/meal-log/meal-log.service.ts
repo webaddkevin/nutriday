@@ -123,6 +123,35 @@ export class MealLogService {
   }
 
   /**
+   * 更新饮食记录
+   */
+  async update(
+    id: number,
+    userId: number,
+    data: {
+      amount?: number;
+      calories?: number;
+      protein?: number;
+      carbs?: number;
+      fat?: number;
+      note?: string;
+    },
+  ) {
+    const log = await this.prisma.mealLog.findFirst({
+      where: { id, userId },
+    });
+
+    if (!log) {
+      throw new Error('记录不存在');
+    }
+
+    return this.prisma.mealLog.update({
+      where: { id },
+      data,
+    });
+  }
+
+  /**
    * 批量创建饮食记录（用于添加推荐套餐）
    */
   async createBatch(

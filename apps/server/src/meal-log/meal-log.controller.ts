@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Delete,
   Body,
   Query,
@@ -15,6 +16,15 @@ class CreateBatchDto {
   date: string;
   mealType: string;
   items: Array<{ foodId: number; amount: number }>;
+}
+
+class UpdateMealLogDto {
+  amount?: number;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  note?: string;
 }
 
 @Controller('meal-log')
@@ -90,5 +100,18 @@ export class MealLogController {
   async delete(@UserId() userId: number, @Param('id') id: string) {
     await this.mealLogService.delete(parseInt(id), userId);
     return null;
+  }
+
+  /**
+   * 更新饮食记录
+   */
+  @Put(':id')
+  async update(
+    @UserId() userId: number,
+    @Param('id') id: string,
+    @Body() dto: UpdateMealLogDto,
+  ) {
+    const log = await this.mealLogService.update(parseInt(id), userId, dto);
+    return log;
   }
 }
