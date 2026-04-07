@@ -6,11 +6,32 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('开始种子数据导入...');
 
-  // 导入食物数据
-  const foodCount = await prisma.food.count();
-  if (foodCount === 0) {
-    console.log('导入食物数据...');
-    for (const food of seedFoods) {
+  // 导入食物数据 - 使用 upsert 避免重复
+  console.log('导入/更新食物数据...');
+  let created = 0;
+  let updated = 0;
+
+  for (const food of seedFoods) {
+    const existing = await prisma.food.findFirst({
+      where: { name: food.name },
+    });
+
+    if (existing) {
+      await prisma.food.update({
+        where: { id: existing.id },
+        data: {
+          nameEn: food.nameEn,
+          category: food.category,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+          fiber: food.fiber,
+          servingSize: food.servingSize,
+        },
+      });
+      updated++;
+    } else {
       await prisma.food.create({
         data: {
           name: food.name,
@@ -26,11 +47,14 @@ async function main() {
           source: 'custom',
         },
       });
+      created++;
     }
-    console.log(`已导入 ${seedFoods.length} 种食物`);
-  } else {
-    console.log(`食物数据库已有 ${foodCount} 条记录，跳过导入`);
   }
+
+  const totalCount = await prisma.food.count();
+  console.log(
+    `食物数据导入完成: 新增 ${created} 条, 更新 ${updated} 条, 总计 ${totalCount} 条`,
+  );
 
   console.log('种子数据导入完成！');
 }

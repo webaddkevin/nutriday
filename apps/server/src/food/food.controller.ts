@@ -1,11 +1,15 @@
 import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
 import { FoodService } from './food.service';
+import { ExternalFoodService } from './external-food.service';
 import { CreateFoodDto } from './dto/create-food.dto';
 import { Public } from '../common/decorators/public.decorator';
 
 @Controller('food')
 export class FoodController {
-  constructor(private readonly foodService: FoodService) {}
+  constructor(
+    private readonly foodService: FoodService,
+    private readonly externalFoodService: ExternalFoodService,
+  ) {}
 
   /**
    * 创建食物
@@ -24,7 +28,7 @@ export class FoodController {
   }
 
   /**
-   * 搜索食物
+   * 搜索食物（本地数据库）
    */
   @Public()
   @Get('search')
@@ -33,6 +37,39 @@ export class FoodController {
     @Query('limit') limit?: string,
   ) {
     return this.foodService.search(keyword, limit ? parseInt(limit) : 20);
+  }
+
+  /**
+   * 综合搜索食物（本地 + 外部 API + AI 估算）
+   */
+  @Public()
+  @Get('search/enhanced')
+  async enhancedSearch(@Query('keyword') keyword: string) {
+    return this.externalFoodService.searchFood(keyword);
+  }
+
+  /**
+   * 从 USDA 搜索食物
+   */
+  @Public()
+  @Get('search/usda')
+  async searchUSDA(
+    @Query('keyword') keyword: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.externalFoodService.searchFromUSDA(
+      keyword,
+      limit ? parseInt(limit) : 10,
+    );
+  }
+
+  /**
+   * 保存外部食物到本地
+   */
+  @Post('save-external')
+  async saveExternal(@Body() food: any) {
+    const id = await this.externalFoodService.saveExternalFood(food);
+    return { id, message: '保存成功' };
   }
 
   /**

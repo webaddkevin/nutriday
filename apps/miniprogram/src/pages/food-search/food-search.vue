@@ -104,7 +104,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
-import { searchFood, getFoodByCategory, getFoodCategories } from '@/api/food-api';
+import {
+  searchFood,
+  getFoodByCategory,
+  getFoodCategories,
+  enhancedSearchFood,
+} from '@/api/food-api';
 import { request } from '@/utils/request';
 import { requireUserId } from '@/utils/user';
 import type { Food, MealType } from '@nutriday/shared-types';
@@ -115,6 +120,7 @@ const categories = ref<string[]>(['全部']);
 const selectedCategory = ref('全部');
 const loading = ref(false);
 const favoriteIds = ref<number[]>([]);
+const searchMode = ref<'local' | 'enhanced'>('local');
 
 // 热门搜索标签
 const hotSearchTags = [
@@ -173,8 +179,27 @@ async function handleSearch() {
   }
 
   loading.value = true;
+  searchMode.value = 'local';
+
   try {
-    foods.value = await searchFood(keyword.value.trim());
+    // 先搜索本地数据库
+    let results = await searchFood(keyword.value.trim());
+
+    // 如果本地结果不足 5 条，尝试增强搜索
+    if (results.length < 5) {
+      searchMode.value = 'enhanced';
+      const enhancedResults = await enhancedSearchFood(keyword.value.trim());
+
+      // 合并结果，去重
+      const existingIds = new Set(results.map((f) => f.id));
+      for (const food of enhancedResults) {
+        if (!existingIds.has(food.id)) {
+          results.push(food);
+        }
+      }
+    }
+
+    foods.value = results;
   } catch (e) {
     console.error('搜索失败', e);
     uni.showToast({ title: '搜索失败', icon: 'none' });
