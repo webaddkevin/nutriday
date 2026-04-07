@@ -28,6 +28,15 @@ export class FoodController {
   }
 
   /**
+   * 保存外部食物到本地
+   */
+  @Post('save-external')
+  async saveExternal(@Body() food: any) {
+    const id = await this.externalFoodService.saveExternalFood(food);
+    return { id, message: '保存成功' };
+  }
+
+  /**
    * 搜索食物（本地数据库）
    */
   @Public()
@@ -64,12 +73,12 @@ export class FoodController {
   }
 
   /**
-   * 保存外部食物到本地
+   * 获取所有分类
    */
-  @Post('save-external')
-  async saveExternal(@Body() food: any) {
-    const id = await this.externalFoodService.saveExternalFood(food);
-    return { id, message: '保存成功' };
+  @Public()
+  @Get('categories')
+  async getCategories() {
+    return this.foodService.getCategories();
   }
 
   /**
@@ -88,16 +97,7 @@ export class FoodController {
   }
 
   /**
-   * 获取所有分类
-   */
-  @Public()
-  @Get('categories')
-  async getCategories() {
-    return this.foodService.getCategories();
-  }
-
-  /**
-   * 获取食物详情
+   * 获取食物详情（放在最后，避免路由冲突）
    */
   @Public()
   @Get(':id')
