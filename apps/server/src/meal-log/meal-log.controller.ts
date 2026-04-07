@@ -11,6 +11,12 @@ import { MealLogService } from './meal-log.service';
 import { CreateMealLogDto } from './dto/create-meal-log.dto';
 import { UserId } from '../common/decorators/user.decorator';
 
+class CreateBatchDto {
+  date: string;
+  mealType: string;
+  items: Array<{ foodId: number; amount: number }>;
+}
+
 @Controller('meal-log')
 export class MealLogController {
   constructor(private readonly mealLogService: MealLogService) {}
@@ -22,6 +28,19 @@ export class MealLogController {
   async create(@UserId() userId: number, @Body() dto: CreateMealLogDto) {
     const log = await this.mealLogService.create({ ...dto, userId });
     return log;
+  }
+
+  /**
+   * 批量创建饮食记录（用于添加推荐套餐）
+   */
+  @Post('batch')
+  async createBatch(@UserId() userId: number, @Body() dto: CreateBatchDto) {
+    const logs = await this.mealLogService.createBatch(dto.items, {
+      userId,
+      date: dto.date,
+      mealType: dto.mealType as any,
+    });
+    return { success: true, count: logs.length, logs };
   }
 
   /**

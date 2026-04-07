@@ -450,6 +450,7 @@ onMounted(loadData);
   padding: 16px;
   background: #fff;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 100;
 
   .save-btn {
     width: 100%;

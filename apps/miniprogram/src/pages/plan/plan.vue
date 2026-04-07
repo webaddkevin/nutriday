@@ -712,6 +712,7 @@ onMounted(() => {
   bottom: 180rpx;
   left: 24rpx;
   right: 24rpx;
+  z-index: 100;
 
   .clear-btn {
     width: 100%;

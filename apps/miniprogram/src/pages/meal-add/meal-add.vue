@@ -329,6 +329,7 @@ async function submitLog() {
   padding: 30rpx;
   background: #fff;
   box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  z-index: 100;
 
   .submit-btn {
     width: 100%;

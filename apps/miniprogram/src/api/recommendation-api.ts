@@ -5,7 +5,7 @@ import { request } from '@/utils/request';
 
 export interface MealRecommendation {
   name: string;
-  foods: { name: string; amount: number; unit: string }[];
+  foods: { foodId?: number; name: string; amount: number; unit: string }[];
   totalCalories: number;
   protein: number;
   carbs: number;

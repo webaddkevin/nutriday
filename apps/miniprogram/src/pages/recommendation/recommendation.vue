@@ -91,6 +91,7 @@
 import { ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { getMealRecommendation } from '@/api/recommendation-api';
+import { request } from '@/utils/request';
 import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
 import type { MealRecommendation, MealType, UserProfile } from '@nutriday/shared-types';
 
@@ -103,6 +104,7 @@ const mealTypes = [
 
 const selectedMeal = ref<MealType>('breakfast');
 const loading = ref(false);
+const adding = ref(false);
 const recommendations = ref<MealRecommendation[]>([]);
 const tips = ref<string[]>([]);
 const userProfile = ref<UserProfile | null>(null);
@@ -137,6 +139,9 @@ async function loadRecommendations() {
     const result = await getMealRecommendation(selectedMeal.value, targetCalories);
     recommendations.value = result?.recommendations || [];
     tips.value = result?.tips || [];
+
+    // 调试：打印推荐数据
+    console.log('推荐数据:', JSON.stringify(recommendations.value, null, 2));
   } catch (e) {
     console.error('获取推荐失败', e);
     uni.showToast({ title: '获取推荐失败', icon: 'none' });
@@ -151,11 +156,63 @@ async function selectCombo(combo: MealRecommendation) {
     content: `确定要将「${combo.name}」添加到今日${getMealLabel(selectedMeal.value)}吗？`,
     success: async (res) => {
       if (res.confirm) {
-        // TODO: 实际添加逻辑需要根据食物 ID 添加
-        uni.showToast({ title: '功能开发中', icon: 'none' });
+        await addComboToMeal(combo);
       }
     },
   });
+}
+
+async function addComboToMeal(combo: MealRecommendation) {
+  if (adding.value) return;
+  adding.value = true;
+
+  try {
+    // 调试：打印套餐数据
+    console.log('套餐数据:', JSON.stringify(combo, null, 2));
+    console.log('食物列表:', JSON.stringify(combo.foods, null, 2));
+
+    // 过滤出有 foodId 的食物
+    const items = combo.foods
+      .filter((f) => {
+        console.log('食物项:', f.name, 'foodId:', f.foodId);
+        return f.foodId != null;
+      })
+      .map((f) => ({
+        foodId: f.foodId!,
+        amount: f.amount,
+      }));
+
+    console.log('过滤后的 items:', JSON.stringify(items, null, 2));
+
+    if (items.length === 0) {
+      uni.showToast({ title: '套餐数据不完整', icon: 'none' });
+      return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    await request({
+      url: '/meal-log/batch',
+      method: 'POST',
+      data: {
+        date: today,
+        mealType: selectedMeal.value,
+        items,
+      },
+    });
+
+    uni.showToast({ title: '添加成功', icon: 'success' });
+
+    // 跳转到首页查看
+    setTimeout(() => {
+      uni.switchTab({ url: '/pages/index/index' });
+    }, 1500);
+  } catch (e) {
+    console.error('添加失败', e);
+    uni.showToast({ title: '添加失败', icon: 'none' });
+  } finally {
+    adding.value = false;
+  }
 }
 
 function getMealLabel(meal: MealType): string {

@@ -123,6 +123,45 @@ export class MealLogService {
   }
 
   /**
+   * 批量创建饮食记录（用于添加推荐套餐）
+   */
+  async createBatch(
+    items: Array<{ foodId: number; amount: number }>,
+    params: { userId: number; date: string; mealType: MealType },
+  ) {
+    const results = [];
+
+    for (const item of items) {
+      const food = await this.foodService.findById(item.foodId);
+      if (!food) continue;
+
+      const ratio = item.amount / 100;
+      const calories = Math.round(food.calories * ratio);
+      const protein = Math.round(food.protein * ratio * 10) / 10;
+      const carbs = Math.round(food.carbs * ratio * 10) / 10;
+      const fat = Math.round(food.fat * ratio * 10) / 10;
+
+      const log = await this.prisma.mealLog.create({
+        data: {
+          userId: params.userId,
+          date: params.date,
+          mealType: params.mealType,
+          foodId: item.foodId,
+          foodName: food.name,
+          amount: item.amount,
+          calories,
+          protein,
+          carbs,
+          fat,
+        },
+      });
+      results.push(log);
+    }
+
+    return results;
+  }
+
+  /**
    * 获取日期范围内的饮食记录
    */
   async findByDateRange(userId: number, startDate: string, endDate: string) {

@@ -76,6 +76,31 @@ export class FoodService {
   }
 
   /**
+   * 根据名称精确查找食物
+   */
+  async findByName(name: string) {
+    return this.prisma.food.findFirst({
+      where: { name },
+    });
+  }
+
+  /**
+   * 批量根据名称查找食物
+   */
+  async findByNames(names: string[]): Promise<Map<string, any>> {
+    const foods = await this.prisma.food.findMany({
+      where: {
+        name: { in: names },
+      },
+    });
+    const map = new Map<string, any>();
+    for (const food of foods) {
+      map.set(food.name, food);
+    }
+    return map;
+  }
+
+  /**
    * 批量创建食物（用于初始化数据）
    */
   async createMany(foods: CreateFoodDto[]) {
