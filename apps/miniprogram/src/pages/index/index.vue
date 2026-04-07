@@ -22,8 +22,15 @@
       </view>
     </view>
 
+    <!-- 骨架屏加载状态 -->
+    <view v-if="loading" class="skeleton-wrapper">
+      <Skeleton type="dashboard" />
+      <view class="skeleton-water"></view>
+      <Skeleton type="meal-grid" />
+    </view>
+
     <!-- 核心营养概览卡片 -->
-    <view class="dashboard-card">
+    <view v-else class="dashboard-card">
       <!-- 热量进度环 -->
       <view class="calorie-ring-container">
         <view class="calorie-ring">
@@ -146,6 +153,7 @@ import { ref, computed } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import CustomTabbar from '@/components/CustomTabbar/CustomTabbar.vue';
 import NutriIcon from '@/components/NutriIcon/NutriIcon.vue';
+import Skeleton from '@/components/Skeleton/Skeleton.vue';
 import { calculateBMR, calculateTDEE } from '@nutriday/shared-utils';
 import { getDailySummary } from '@/api/meal-log-api';
 import { getWaterStats } from '@/api/water-api';
@@ -154,6 +162,7 @@ import type { UserProfile, MealType, DailySummary } from '@nutriday/shared-types
 
 const _userStore = useUserStore();
 const userProfile = ref<UserProfile | null>(null);
+const loading = ref(true);
 
 const greeting = computed(() => {
   const hour = new Date().getHours();
@@ -263,7 +272,12 @@ onLoad(() => {
 
 onShow(async () => {
   // 每次显示页面时都重新加载最新数据
-  await Promise.all([loadDailySummary(), loadWaterStats()]);
+  loading.value = true;
+  try {
+    await Promise.all([loadDailySummary(), loadWaterStats()]);
+  } finally {
+    loading.value = false;
+  }
 });
 
 async function loadDailySummary() {
@@ -288,12 +302,7 @@ async function loadDailySummary() {
 
 async function loadWaterStats() {
   try {
-    // 调试：打印当前 token
-    const token = uni.getStorageSync('nutriday_token');
-    console.log('当前 token:', token);
-
     const stats = await getWaterStats();
-    console.log('饮水统计数据:', stats);
     waterAmount.value = stats.today || 0;
   } catch (e) {
     console.error('获取饮水数据失败', e);
@@ -331,6 +340,46 @@ function goToWater() {
   color: $uni-text-color;
   position: relative;
   overflow: hidden;
+}
+
+// 骨架屏样式
+.skeleton-wrapper {
+  position: relative;
+  z-index: 1;
+
+  .skeleton-water {
+    height: 120rpx;
+    background: #fff;
+    border-radius: 24rpx;
+    margin-bottom: 24rpx;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        transparent 100%
+      );
+      animation: shimmer 1.5s infinite;
+    }
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 // 背景装饰

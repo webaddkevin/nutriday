@@ -139,9 +139,6 @@ async function loadRecommendations() {
     const result = await getMealRecommendation(selectedMeal.value, targetCalories);
     recommendations.value = result?.recommendations || [];
     tips.value = result?.tips || [];
-
-    // 调试：打印推荐数据
-    console.log('推荐数据:', JSON.stringify(recommendations.value, null, 2));
   } catch (e) {
     console.error('获取推荐失败', e);
     uni.showToast({ title: '获取推荐失败', icon: 'none' });
@@ -167,22 +164,13 @@ async function addComboToMeal(combo: MealRecommendation) {
   adding.value = true;
 
   try {
-    // 调试：打印套餐数据
-    console.log('套餐数据:', JSON.stringify(combo, null, 2));
-    console.log('食物列表:', JSON.stringify(combo.foods, null, 2));
-
     // 过滤出有 foodId 的食物
     const items = combo.foods
-      .filter((f) => {
-        console.log('食物项:', f.name, 'foodId:', f.foodId);
-        return f.foodId != null;
-      })
+      .filter((f) => f.foodId != null)
       .map((f) => ({
         foodId: f.foodId!,
         amount: f.amount,
       }));
-
-    console.log('过滤后的 items:', JSON.stringify(items, null, 2));
 
     if (items.length === 0) {
       uni.showToast({ title: '套餐数据不完整', icon: 'none' });

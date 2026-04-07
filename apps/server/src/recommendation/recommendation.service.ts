@@ -202,16 +202,6 @@ export class RecommendationService {
   ): any[] {
     const combos: any[] = [];
 
-    // 调试：打印食物数量
-    console.log(`[推荐服务] 数据库中共有 ${foods.length} 个食物`);
-    console.log(
-      '[推荐服务] 食物名称列表:',
-      foods
-        .map((f) => f.name)
-        .slice(0, 20)
-        .join(', '),
-    );
-
     // 早餐组合
     if (mealType === 'breakfast') {
       const eggs = foods.find((f) => f.name === '鸡蛋');
@@ -219,14 +209,6 @@ export class RecommendationService {
       const bread = foods.find((f) => f.name === '全麦面包');
       const oatmeal = foods.find((f) => f.name === '燕麦');
       const banana = foods.find((f) => f.name === '香蕉');
-
-      console.log('[推荐服务] 早餐食材查找结果:', {
-        eggs: !!eggs,
-        milk: !!milk,
-        bread: !!bread,
-        oatmeal: !!oatmeal,
-        banana: !!banana,
-      });
 
       if (eggs && bread) {
         combos.push(
