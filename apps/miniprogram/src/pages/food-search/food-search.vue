@@ -400,6 +400,7 @@ async function toggleFavorite(food: Food) {
 .food-list {
   flex: 1;
   padding: 24rpx 32rpx;
+  box-sizing: border-box;
 }
 
 .loading-state,
