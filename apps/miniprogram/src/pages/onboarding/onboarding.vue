@@ -2,7 +2,13 @@
   <view class="onboarding-container">
     <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
 
-    <view class="content">
+    <!-- 加载状态 -->
+    <view v-if="isLoading" class="loading-state">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <view v-else class="content">
       <view class="progress-bar">
         <view class="progress-fill" :style="{ width: progressWidth }"></view>
       </view>
@@ -250,7 +256,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, onMounted } from 'vue';
 import {
   calculateBMR,
   calculateTDEE,
@@ -258,13 +264,14 @@ import {
   calculateMacroDistribution,
 } from '@nutriday/shared-utils';
 import { Gender, HealthGoal, SpecialTag, ActivityLevel } from '@nutriday/shared-types';
-import { saveProfile } from '@/api/profile-api';
+import { saveProfile, getProfile } from '@/api/profile-api';
 import { useUserStore } from '@/stores/user';
 import { getToken } from '@/utils/request';
 
 const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight || 0);
 const currentStep = ref(1);
 const totalSteps = 5;
+const isLoading = ref(true);
 
 const profile = reactive({
   gender: Gender.MALE,
@@ -275,6 +282,49 @@ const profile = reactive({
   tags: [] as SpecialTag[],
   activityLevel: ActivityLevel.SEDENTARY,
 });
+
+// 加载已有资料
+onMounted(async () => {
+  try {
+    // 先尝试从本地存储加载
+    const localProfile = uni.getStorageSync('user_profile');
+    if (localProfile) {
+      fillProfile(localProfile);
+      isLoading.value = false;
+      return;
+    }
+
+    // 如果已登录，从服务器加载
+    const token = getToken();
+    if (token) {
+      try {
+        const serverProfile = await getProfile();
+        if (serverProfile) {
+          fillProfile(serverProfile);
+          // 同步到本地存储
+          uni.setStorageSync('user_profile', serverProfile);
+        }
+      } catch (e) {
+        console.warn('从服务器加载资料失败:', e);
+      }
+    }
+  } finally {
+    isLoading.value = false;
+  }
+});
+
+// 填充表单数据
+function fillProfile(data: any) {
+  if (data.gender !== undefined) profile.gender = data.gender;
+  if (data.age !== undefined) profile.age = Number(data.age);
+  if (data.height !== undefined) profile.height = Number(data.height);
+  if (data.weight !== undefined) profile.weight = Number(data.weight);
+  if (data.goal !== undefined) profile.goal = data.goal;
+  if (data.activityLevel !== undefined) profile.activityLevel = data.activityLevel;
+  if (data.tags && Array.isArray(data.tags)) {
+    profile.tags = data.tags;
+  }
+}
 
 const goals = [
   { label: '减脂', value: HealthGoal.LOSE_FAT, desc: '合理热量差，科学瘦身' },
@@ -446,6 +496,35 @@ const finish = async () => {
   height: 100vh;
   padding: 0 40rpx;
   background-color: #ffffff;
+}
+
+.loading-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .loading-spinner {
+    width: 60rpx;
+    height: 60rpx;
+    border: 4rpx solid #f0f0f0;
+    border-top-color: #4cd964;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loading-text {
+    margin-top: 20rpx;
+    font-size: 28rpx;
+    color: #999;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .progress-bar {
