@@ -587,6 +587,14 @@ const openAgreement = (type: 'user' | 'privacy') => {
   border: none;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+
+  &::after {
+    border: none;
+  }
 
   .btn-glow {
     position: absolute;
@@ -704,7 +712,13 @@ const openAgreement = (type: 'user' | 'privacy') => {
     color: #00b171;
     font-weight: 500;
     padding: 0;
-    line-height: 68rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &::after {
+      border: none;
+    }
 
     &.active {
       color: #94a3b8;
@@ -722,6 +736,14 @@ const openAgreement = (type: 'user' | 'privacy') => {
   position: relative;
   overflow: hidden;
   margin-top: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+
+  &::after {
+    border: none;
+  }
 
   .btn-glow {
     position: absolute;
