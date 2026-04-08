@@ -399,7 +399,7 @@ async function toggleFavorite(food: Food) {
 
 .food-list {
   flex: 1;
-  padding: 20rpx 30rpx;
+  padding: 24rpx 32rpx;
 }
 
 .loading-state,
@@ -428,19 +428,19 @@ async function toggleFavorite(food: Food) {
 .food-items {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 24rpx;
 }
 
 .food-card {
   @include glass-morphism;
-  border-radius: 24rpx;
-  padding: 28rpx;
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
 
   .food-main {
-    margin-bottom: 20rpx;
+    margin-bottom: 16rpx;
 
     .food-name {
-      font-size: 32rpx;
+      font-size: 30rpx;
       font-weight: 600;
       color: $uni-text-color;
     }
@@ -458,7 +458,7 @@ async function toggleFavorite(food: Food) {
       background: rgba(0, 177, 113, 0.1);
       padding: 4rpx 12rpx;
       border-radius: 8rpx;
-      margin-top: 12rpx;
+      margin-top: 10rpx;
     }
   }
 
@@ -466,7 +466,7 @@ async function toggleFavorite(food: Food) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16rpx 0;
+    padding: 14rpx 0;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
 
     .nutrition-item {
@@ -475,7 +475,7 @@ async function toggleFavorite(food: Food) {
       flex: 1;
 
       .nutrition-value {
-        font-size: 28rpx;
+        font-size: 26rpx;
         font-weight: 600;
         color: $uni-text-color;
       }
@@ -489,7 +489,7 @@ async function toggleFavorite(food: Food) {
 
     .nutrition-divider {
       width: 1px;
-      height: 40rpx;
+      height: 36rpx;
       background: rgba(0, 0, 0, 0.05);
     }
   }
@@ -503,7 +503,7 @@ async function toggleFavorite(food: Food) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 12rpx;
+    margin-top: 10rpx;
   }
 
   .favorite-btn {
