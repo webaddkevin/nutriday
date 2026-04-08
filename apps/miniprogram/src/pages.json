@@ -96,6 +96,13 @@
       "style": {
         "navigationBarTitleText": "饮食详情"
       }
+    },
+    {
+      "path": "pages/agreement/agreement",
+      "style": {
+        "navigationBarTitleText": "协议",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "subPackages": [

@@ -318,7 +318,7 @@ const loginAsGuest = () => {
 // 打开协议
 const openAgreement = (type: 'user' | 'privacy') => {
   uni.navigateTo({
-    url: `/pages/webview/webview?type=${type}`,
+    url: `/pages/agreement/agreement?type=${type}`,
   });
 };
 </script>
