@@ -104,6 +104,14 @@
           <text class="section-title">今日饮食</text>
           <text class="section-total">{{ totalMealCalories }} kcal</text>
         </view>
+
+        <!-- 空状态引导 -->
+        <view v-if="totalMealCalories === 0" class="empty-meal-guide">
+          <view class="guide-icon">🍽️</view>
+          <text class="guide-title">开始记录今日饮食</text>
+          <text class="guide-desc">点击下方卡片添加食物，追踪你的营养摄入</text>
+        </view>
+
         <view class="meal-grid">
           <view
             v-for="meal in mealCards"
@@ -718,6 +726,34 @@ function goToWater() {
       color: #00b171;
       font-weight: 600;
     }
+  }
+}
+
+.empty-meal-guide {
+  background: linear-gradient(135deg, rgba(0, 177, 113, 0.05) 0%, rgba(0, 177, 113, 0.02) 100%);
+  border: 1rpx dashed rgba(0, 177, 113, 0.3);
+  border-radius: 24rpx;
+  padding: 40rpx 30rpx;
+  margin-bottom: 20rpx;
+  text-align: center;
+
+  .guide-icon {
+    font-size: 60rpx;
+    margin-bottom: 16rpx;
+  }
+
+  .guide-title {
+    display: block;
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8rpx;
+  }
+
+  .guide-desc {
+    display: block;
+    font-size: 24rpx;
+    color: #64748b;
   }
 }
 

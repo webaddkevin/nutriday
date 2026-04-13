@@ -18,6 +18,25 @@
       </view>
     </view>
 
+    <!-- 搜索历史 -->
+    <view v-if="!keyword && foods.length === 0 && searchHistory.length > 0" class="history-section">
+      <view class="section-header">
+        <text class="section-title">搜索历史</text>
+        <text class="clear-history" @tap="clearHistory">清空</text>
+      </view>
+      <view class="history-tags">
+        <view
+          v-for="item in searchHistory"
+          :key="item"
+          class="history-tag"
+          @tap="quickSearch(item)"
+        >
+          <text class="history-icon">🕐</text>
+          <text class="history-text">{{ item }}</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 快捷搜索标签 -->
     <view v-if="!keyword && foods.length === 0" class="quick-search">
       <text class="section-title">热门搜索</text>
@@ -115,6 +134,11 @@ const categories = ref<string[]>(['全部']);
 const selectedCategory = ref('全部');
 const loading = ref(false);
 const favoriteIds = ref<number[]>([]);
+const searchHistory = ref<string[]>([]);
+
+// 搜索历史存储 key
+const HISTORY_KEY = 'nutriday_search_history';
+const MAX_HISTORY = 10;
 
 // 热门搜索标签
 const hotSearchTags = [
@@ -144,10 +168,40 @@ onMounted(async () => {
     const cats = await getFoodCategories();
     categories.value = ['全部', ...cats];
     await loadFavorites();
+    loadSearchHistory();
   } catch (e) {
     console.error('获取分类失败', e);
   }
 });
+
+// 加载搜索历史
+function loadSearchHistory() {
+  const history = uni.getStorageSync(HISTORY_KEY);
+  if (history && Array.isArray(history)) {
+    searchHistory.value = history;
+  }
+}
+
+// 保存搜索历史
+function saveSearchHistory(keyword: string) {
+  const kw = keyword.trim();
+  if (!kw) return;
+
+  // 移除重复项
+  const newHistory = [kw, ...searchHistory.value.filter((item) => item !== kw)].slice(
+    0,
+    MAX_HISTORY,
+  );
+  searchHistory.value = newHistory;
+  uni.setStorageSync(HISTORY_KEY, newHistory);
+}
+
+// 清空搜索历史
+function clearHistory() {
+  searchHistory.value = [];
+  uni.removeStorageSync(HISTORY_KEY);
+  uni.showToast({ title: '已清空', icon: 'success' });
+}
 
 function debounceSearch() {
   if (searchTimer) clearTimeout(searchTimer);
@@ -173,6 +227,9 @@ async function handleSearch() {
   }
 
   loading.value = true;
+
+  // 保存搜索历史
+  saveSearchHistory(keyword.value.trim());
 
   try {
     // 直接使用增强搜索（包含本地数据库 + 外部 API + AI 估算）
@@ -367,6 +424,64 @@ async function toggleFavorite(food: Food) {
 
     &:active {
       background: rgba(0, 177, 113, 0.1);
+    }
+  }
+}
+
+.history-section {
+  padding: 24rpx 30rpx;
+  background: #fff;
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16rpx;
+
+    .section-title {
+      font-size: 26rpx;
+      color: #999;
+    }
+
+    .clear-history {
+      font-size: 24rpx;
+      color: #ccc;
+
+      &:active {
+        color: #999;
+      }
+    }
+  }
+
+  .history-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16rpx;
+  }
+
+  .history-tag {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    padding: 12rpx 20rpx;
+    background: #f8fafc;
+    border-radius: 24rpx;
+    font-size: 26rpx;
+    color: #64748b;
+
+    &:active {
+      background: #f1f5f9;
+    }
+
+    .history-icon {
+      font-size: 22rpx;
+    }
+
+    .history-text {
+      max-width: 200rpx;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }

@@ -33,8 +33,23 @@
     <!-- 食物列表 -->
     <view class="food-list">
       <view class="list-header">
-        <text class="list-title">食物明细</text>
-        <text class="list-count">{{ mealLogs.length }} 项</text>
+        <view class="list-left">
+          <text class="list-title">食物明细</text>
+          <text class="list-count">{{ mealLogs.length }} 项</text>
+        </view>
+        <view v-if="mealLogs.length > 1 && !isSelectMode" class="list-actions">
+          <text class="action-text" @tap="enterSelectMode">批量管理</text>
+        </view>
+        <view v-else-if="isSelectMode" class="list-actions">
+          <text class="action-text cancel" @tap="exitSelectMode">取消</text>
+          <text
+            class="action-text delete"
+            :class="{ disabled: selectedIds.length === 0 }"
+            @tap="batchDelete"
+          >
+            删除 ({{ selectedIds.length }})
+          </text>
+        </view>
       </view>
 
       <view v-if="loading" class="loading-state">
@@ -48,7 +63,20 @@
       </view>
 
       <view v-else class="food-items">
-        <view v-for="log in mealLogs" :key="log.id" class="food-item" @tap="showActions(log)">
+        <view
+          v-for="log in mealLogs"
+          :key="log.id"
+          class="food-item"
+          :class="{ selected: selectedIds.includes(log.id), 'select-mode': isSelectMode }"
+          @tap="isSelectMode ? toggleSelect(log.id) : showActions(log)"
+        >
+          <!-- 选择模式下显示复选框 -->
+          <view v-if="isSelectMode" class="checkbox">
+            <view class="checkbox-inner" :class="{ checked: selectedIds.includes(log.id) }">
+              <text v-if="selectedIds.includes(log.id)" class="check-icon">✓</text>
+            </view>
+          </view>
+
           <view class="food-main">
             <view class="food-info">
               <text class="food-name">{{ log.foodName }}</text>
@@ -62,7 +90,7 @@
               </text>
             </view>
           </view>
-          <view class="food-actions">
+          <view v-if="!isSelectMode" class="food-actions">
             <text class="action-icon">›</text>
           </view>
         </view>
@@ -70,7 +98,7 @@
     </view>
 
     <!-- 添加按钮 -->
-    <view class="fab" @tap="goToAdd">
+    <view v-if="!isSelectMode" class="fab" @tap="goToAdd">
       <text class="fab-icon">+</text>
     </view>
 
@@ -127,6 +155,10 @@ const showActionSheet = ref(false);
 const showEditModal = ref(false);
 const selectedLog = ref<MealLog | null>(null);
 const editAmount = ref(100);
+
+// 批量选择模式
+const isSelectMode = ref(false);
+const selectedIds = ref<number[]>([]);
 
 const mealTitles: Record<MealType, string> = {
   breakfast: '早餐',
@@ -263,6 +295,60 @@ async function deleteLog() {
     uni.showToast({ title: '删除失败', icon: 'none' });
   }
 }
+
+// 进入选择模式
+function enterSelectMode() {
+  isSelectMode.value = true;
+  selectedIds.value = [];
+}
+
+// 退出选择模式
+function exitSelectMode() {
+  isSelectMode.value = false;
+  selectedIds.value = [];
+}
+
+// 切换选择
+function toggleSelect(id: number) {
+  const index = selectedIds.value.indexOf(id);
+  if (index > -1) {
+    selectedIds.value.splice(index, 1);
+  } else {
+    selectedIds.value.push(id);
+  }
+}
+
+// 批量删除
+async function batchDelete() {
+  if (selectedIds.value.length === 0) return;
+
+  try {
+    uni.showModal({
+      title: '确认删除',
+      content: `确定要删除选中的 ${selectedIds.value.length} 条记录吗？`,
+      success: async (res) => {
+        if (res.confirm) {
+          // 并行删除所有选中的记录
+          await Promise.all(
+            selectedIds.value.map((id) =>
+              request({
+                url: `/meal-log/${id}`,
+                method: 'DELETE',
+              }),
+            ),
+          );
+
+          uni.showToast({ title: '删除成功', icon: 'success' });
+          exitSelectMode();
+          await loadMealLogs();
+        }
+      },
+    });
+  } catch (e) {
+    console.error('批量删除失败', e);
+    uni.showToast({ title: '删除失败', icon: 'none' });
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -355,6 +441,12 @@ async function deleteLog() {
   margin-bottom: 16rpx;
 }
 
+.list-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
 .list-title {
   font-size: 30rpx;
   font-weight: 600;
@@ -364,6 +456,28 @@ async function deleteLog() {
 .list-count {
   font-size: 26rpx;
   color: #94a3b8;
+}
+
+.list-actions {
+  display: flex;
+  gap: 24rpx;
+
+  .action-text {
+    font-size: 26rpx;
+    color: #00b171;
+
+    &.cancel {
+      color: #64748b;
+    }
+
+    &.delete {
+      color: #ef4444;
+
+      &.disabled {
+        color: #cbd5e1;
+      }
+    }
+  }
 }
 
 .loading-state,
@@ -408,9 +522,44 @@ async function deleteLog() {
   align-items: center;
   padding: 24rpx;
   border-bottom: 1rpx solid #f1f5f9;
+  transition: background 0.2s ease;
 
   &:last-child {
     border-bottom: none;
+  }
+
+  &.select-mode {
+    padding-left: 16rpx;
+  }
+
+  &.selected {
+    background: rgba(0, 177, 113, 0.05);
+  }
+}
+
+.checkbox {
+  margin-right: 16rpx;
+
+  .checkbox-inner {
+    width: 44rpx;
+    height: 44rpx;
+    border: 2rpx solid #cbd5e1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    &.checked {
+      background: #00b171;
+      border-color: #00b171;
+    }
+
+    .check-icon {
+      color: #fff;
+      font-size: 24rpx;
+      font-weight: 600;
+    }
   }
 }
 
