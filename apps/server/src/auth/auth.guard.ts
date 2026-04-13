@@ -40,8 +40,8 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('无效的认证信息');
     }
 
-    // 将 userId 挂载到 request 上
-    request.userId = userId;
+    // 将用户信息挂载到 request 上
+    request.user = { userId };
     return true;
   }
 }
