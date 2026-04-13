@@ -8,10 +8,10 @@ import {
   Request,
 } from '@nestjs/common';
 import { ExportService } from './export.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('export')
-@UseGuards(JwtAuthGuard)
+@UseGuards(AuthGuard)
 export class ExportController {
   constructor(private exportService: ExportService) {}
 

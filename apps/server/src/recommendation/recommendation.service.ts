@@ -155,7 +155,7 @@ export class RecommendationService {
       snack: _targetCalories * 0.05,
     };
 
-    const mealTarget = mealCalorieTargets[mealType] || targetCalories * 0.25;
+    const mealTarget = mealCalorieTargets[mealType] || _targetCalories * 0.25;
 
     // 根据餐食类型选择食物
     const mealFoods = this.selectFoodsForMeal(

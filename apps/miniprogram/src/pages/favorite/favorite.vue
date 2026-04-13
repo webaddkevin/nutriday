@@ -275,7 +275,7 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .favorite-page {
   min-height: 100vh;
   background: #f5f5f5;
