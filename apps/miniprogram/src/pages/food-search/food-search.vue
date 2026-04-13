@@ -135,6 +135,7 @@ const selectedCategory = ref('全部');
 const loading = ref(false);
 const favoriteIds = ref<number[]>([]);
 const searchHistory = ref<string[]>([]);
+const compareMode = ref('add'); // 'add' 或 'compare'
 
 // 搜索历史存储 key
 const HISTORY_KEY = 'nutriday_search_history';
@@ -161,6 +162,7 @@ let date = ref('');
 onLoad((options) => {
   mealType.value = (options?.mealType as MealType) || 'breakfast';
   date.value = options?.date || new Date().toISOString().split('T')[0];
+  compareMode.value = options?.mode || 'add';
 });
 
 onMounted(async () => {
@@ -283,6 +285,13 @@ function clearKeyword() {
 }
 
 async function selectFood(food: Food) {
+  // 对比模式：直接返回选中的食物
+  if (compareMode.value === 'compare') {
+    uni.$emit('food-selected', food);
+    uni.navigateBack();
+    return;
+  }
+
   // 如果食物没有 ID，先保存到本地数据库
   if (!food.id) {
     try {

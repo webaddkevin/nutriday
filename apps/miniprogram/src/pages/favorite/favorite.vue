@@ -23,6 +23,12 @@
           <text class="stat-label">搜索结果</text>
         </view>
       </view>
+      <view class="action-row">
+        <button class="compare-btn" @click="goToCompare">
+          <text class="btn-icon">⚖️</text>
+          <text class="btn-text">食物对比</text>
+        </button>
+      </view>
     </view>
 
     <!-- 收藏列表 -->
@@ -177,6 +183,13 @@ const selectFood = (item: FoodFavorite) => {
   });
 };
 
+// 跳转食物对比页
+const goToCompare = () => {
+  uni.navigateTo({
+    url: '/pages/food-compare/food-compare',
+  });
+};
+
 // 编辑备注
 const editNote = (item: FoodFavorite) => {
   editingItem.value = item;
@@ -316,6 +329,34 @@ onMounted(() => {
   font-size: 24rpx;
   color: #999;
   margin-top: 8rpx;
+}
+
+.action-row {
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #f1f5f9;
+}
+
+.compare-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  width: 100%;
+  height: 80rpx;
+  background: linear-gradient(135deg, #00b171 0%, #00d68f 100%);
+  border: none;
+  border-radius: 12rpx;
+
+  .btn-icon {
+    font-size: 28rpx;
+  }
+
+  .btn-text {
+    font-size: 28rpx;
+    color: #fff;
+    font-weight: 500;
+  }
 }
 
 .list-card {

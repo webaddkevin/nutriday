@@ -109,6 +109,12 @@
       "style": {
         "navigationBarTitleText": "数据导出"
       }
+    },
+    {
+      "path": "pages/food-compare/food-compare",
+      "style": {
+        "navigationBarTitleText": "食物对比"
+      }
     }
   ],
   "subPackages": [
