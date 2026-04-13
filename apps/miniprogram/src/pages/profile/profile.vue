@@ -160,6 +160,19 @@
             <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
           </view>
         </view>
+
+        <view class="menu-item" @tap="goToExport">
+          <view class="menu-icon-wrap bg-green">
+            <text class="menu-emoji">📥</text>
+          </view>
+          <view class="menu-content">
+            <text class="menu-title">数据导出</text>
+            <text class="menu-subtitle">导出饮食和健康数据</text>
+          </view>
+          <view class="menu-arrow">
+            <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -275,6 +288,12 @@ const goToWater = () => {
 const goToFavorite = () => {
   uni.navigateTo({
     url: '/pages/favorite/favorite',
+  });
+};
+
+const goToExport = () => {
+  uni.navigateTo({
+    url: '/pages/data-export/data-export',
   });
 };
 
@@ -587,6 +606,13 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
         &.bg-orange {
           background: rgba(230, 126, 34, 0.1);
         }
+        &.bg-green {
+          background: rgba(34, 197, 94, 0.1);
+        }
+      }
+
+      .menu-emoji {
+        font-size: 36rpx;
       }
 
       .menu-content {

@@ -14,6 +14,7 @@ import { MealPlanModule } from './meal-plan/meal-plan.module';
 import { FoodFavoriteModule } from './food-favorite/food-favorite.module';
 import { BarcodeModule } from './barcode/barcode.module';
 import { StatsModule } from './stats/stats.module';
+import { ExportModule } from './export/export.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { StatsModule } from './stats/stats.module';
     FoodFavoriteModule,
     BarcodeModule,
     StatsModule,
+    ExportModule,
   ],
   controllers: [AppController],
   providers: [AppService],

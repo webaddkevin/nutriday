@@ -103,6 +103,12 @@
         "navigationBarTitleText": "协议",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/data-export/data-export",
+      "style": {
+        "navigationBarTitleText": "数据导出"
+      }
     }
   ],
   "subPackages": [
