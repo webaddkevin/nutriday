@@ -328,7 +328,7 @@ async function onRefresh() {
   }
 }
 
-function goToFoodSearch(mealType: MealType) {
+function _goToFoodSearch(mealType: MealType) {
   uni.navigateTo({
     url: `/pages/food-search/food-search?mealType=${mealType}&date=${todayDate}`,
   });

@@ -268,7 +268,8 @@ import { saveProfile, getProfile } from '@/api/profile-api';
 import { useUserStore } from '@/stores/user';
 import { getToken } from '@/utils/request';
 
-const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight || 0);
+// 使用新 API 获取窗口信息
+const statusBarHeight = ref(uni.getWindowInfo().statusBarHeight || 0);
 const currentStep = ref(1);
 const totalSteps = 5;
 const isLoading = ref(true);
@@ -314,7 +315,15 @@ onMounted(async () => {
 });
 
 // 填充表单数据
-function fillProfile(data: any) {
+function fillProfile(data: {
+  gender?: string;
+  age?: number;
+  height?: number;
+  weight?: number;
+  goal?: string;
+  activityLevel?: number;
+  tags?: string[];
+}) {
   if (data.gender !== undefined) profile.gender = data.gender;
   if (data.age !== undefined) profile.age = Number(data.age);
   if (data.height !== undefined) profile.height = Number(data.height);

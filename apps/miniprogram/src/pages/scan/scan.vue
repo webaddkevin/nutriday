@@ -601,7 +601,7 @@ const confirmAdd = async () => {
       searchResults.value = [];
       searchKeyword.value = '';
     }
-  } catch (error: any) {
+  } catch (error: { message?: string }) {
     console.error('添加失败:', error);
     uni.showToast({ title: error.message || '添加失败', icon: 'none' });
   } finally {

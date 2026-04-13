@@ -29,8 +29,9 @@ const props = defineProps<{
 }>();
 
 const safeAreaBottom = computed(() => {
-  const info = uni.getSystemInfoSync();
-  return info.safeAreaInsets?.bottom || 0;
+  // 使用新 API 获取窗口信息
+  const windowInfo = uni.getWindowInfo();
+  return windowInfo.safeAreaInsets?.bottom || 0;
 });
 
 const tabs = [

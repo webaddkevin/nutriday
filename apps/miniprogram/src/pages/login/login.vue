@@ -192,6 +192,7 @@ const canLogin = computed(() => {
 });
 
 // 微信一键登录
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onGetPhoneNumber = async (e: any) => {
   if (!agreed.value) {
     uni.showToast({ title: '请先同意用户协议', icon: 'none' });
@@ -235,7 +236,7 @@ const onGetPhoneNumber = async (e: any) => {
         }
       }, 1000);
     }
-  } catch (error) {
+  } catch {
     uni.showToast({ title: '登录失败，请重试', icon: 'none' });
   } finally {
     loading.value = false;
@@ -267,7 +268,7 @@ const sendVerifyCode = async () => {
         }
       }, 1000);
     }
-  } catch (error) {
+  } catch {
     uni.showToast({ title: '发送失败，请重试', icon: 'none' });
   }
 };
@@ -303,7 +304,7 @@ const loginWithPhone = async () => {
         }
       }, 1000);
     }
-  } catch (error) {
+  } catch {
     uni.showToast({ title: '登录失败，请重试', icon: 'none' });
   } finally {
     loading.value = false;

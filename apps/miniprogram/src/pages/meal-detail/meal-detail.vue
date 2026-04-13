@@ -114,7 +114,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import { request } from '@/utils/request';
 import type { MealType, MealLog } from '@nutriday/shared-types';
 
@@ -157,12 +157,23 @@ const totalCarbs = computed(() => mealLogs.value.reduce((sum, log) => sum + (log
 
 const totalFat = computed(() => mealLogs.value.reduce((sum, log) => sum + (log.fat || 0), 0));
 
+let isFirstLoad = true;
+
 onLoad(async (options) => {
   date.value = options?.date || new Date().toISOString().split('T')[0];
   mealType.value = (options?.mealType as MealType) || 'breakfast';
 
   uni.setNavigationBarTitle({ title: mealTitles[mealType.value] });
 
+  // 首次加载数据
+  await loadMealLogs();
+  isFirstLoad = false;
+});
+
+// 每次页面显示时刷新数据（从添加食物页面返回时会触发）
+onShow(async () => {
+  // 跳过首次加载（已在 onLoad 中处理）
+  if (isFirstLoad) return;
   await loadMealLogs();
 });
 

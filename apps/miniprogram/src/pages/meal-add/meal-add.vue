@@ -86,7 +86,6 @@ import { ref, computed } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { getFoodById } from '@/api/food-api';
 import { createMealLog } from '@/api/meal-log-api';
-import { requireUserId } from '@/utils/user';
 import type { Food, MealType } from '@nutriday/shared-types';
 
 const food = ref<Food | null>(null);
@@ -178,9 +177,10 @@ async function submitLog() {
     uni.showToast({ title: '记录成功', icon: 'success' });
 
     setTimeout(() => {
-      uni.navigateBack();
+      // 直接返回到 meal-detail 页面（跳过 food-search 页面）
+      uni.navigateBack({ delta: 2 });
     }, 1000);
-  } catch (e: any) {
+  } catch (e: { message?: string }) {
     console.error('记录失败', e);
     uni.showToast({ title: e.message || '记录失败', icon: 'none' });
   } finally {

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { FoodFavorite, Prisma } from '@prisma/client';
+import { FoodFavorite } from '@prisma/client';
 
 @Injectable()
 export class FoodFavoriteService {

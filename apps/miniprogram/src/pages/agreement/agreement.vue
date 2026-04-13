@@ -180,7 +180,7 @@ const title = computed(() => {
   return type.value === 'user' ? '用户协议' : '隐私政策';
 });
 
-onLoad((options: any) => {
+onLoad((options: { type?: string }) => {
   if (options?.type) {
     type.value = options.type;
   }

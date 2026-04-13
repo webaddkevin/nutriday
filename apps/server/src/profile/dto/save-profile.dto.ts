@@ -6,7 +6,6 @@ import {
   IsIn,
   Min,
   Max,
-  IsNotEmpty,
 } from 'class-validator';
 import { Gender, HealthGoal } from '@nutriday/shared-types';
 

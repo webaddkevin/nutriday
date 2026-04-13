@@ -2,17 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FoodService } from '../food/food.service';
 
-interface UserProfileData {
-  gender: string;
-  age: number;
-  height: number;
-  weight: number;
-  goal: string;
-  activityLevel: number;
-  bmr?: number;
-  tdee?: number;
-}
-
 interface DailyNutrition {
   calories: number;
   protein: number;
@@ -132,7 +121,7 @@ export class RecommendationService {
     profile: any,
     avgNutrition: DailyNutrition,
     mealType: string,
-    targetCalories: number,
+    _targetCalories: number,
     foods: any[],
   ): any[] {
     const recommendations: any[] = [];
@@ -160,10 +149,10 @@ export class RecommendationService {
 
     // 每餐热量目标
     const mealCalorieTargets: Record<string, number> = {
-      breakfast: targetCalories * 0.3,
-      lunch: targetCalories * 0.4,
-      dinner: targetCalories * 0.25,
-      snack: targetCalories * 0.05,
+      breakfast: _targetCalories * 0.3,
+      lunch: _targetCalories * 0.4,
+      dinner: _targetCalories * 0.25,
+      snack: _targetCalories * 0.05,
     };
 
     const mealTarget = mealCalorieTargets[mealType] || targetCalories * 0.25;
@@ -197,7 +186,7 @@ export class RecommendationService {
   private selectFoodsForMeal(
     foods: any[],
     mealType: string,
-    targetCalories: number,
+    _targetCalories: number,
     _goal: string,
   ): any[] {
     const combos: any[] = [];
