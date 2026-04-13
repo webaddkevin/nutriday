@@ -127,6 +127,12 @@
       "style": {
         "navigationBarTitleText": "营养评分"
       }
+    },
+    {
+      "path": "pages/meal-template/meal-template",
+      "style": {
+        "navigationBarTitleText": "饮食模板"
+      }
     }
   ],
   "subPackages": [

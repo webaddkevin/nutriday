@@ -28,6 +28,10 @@
           <text class="btn-icon">⚖️</text>
           <text class="btn-text">食物对比</text>
         </button>
+        <button class="template-btn" @click="goToTemplate">
+          <text class="btn-icon">📋</text>
+          <text class="btn-text">饮食模板</text>
+        </button>
       </view>
     </view>
 
@@ -190,6 +194,13 @@ const goToCompare = () => {
   });
 };
 
+// 跳转饮食模板页
+const goToTemplate = () => {
+  uni.navigateTo({
+    url: '/pages/meal-template/meal-template',
+  });
+};
+
 // 编辑备注
 const editNote = (item: FoodFavorite) => {
   editingItem.value = item;
@@ -335,16 +346,18 @@ onMounted(() => {
   margin-top: 24rpx;
   padding-top: 24rpx;
   border-top: 1rpx solid #f1f5f9;
+  display: flex;
+  gap: 16rpx;
 }
 
-.compare-btn {
+.compare-btn,
+.template-btn {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12rpx;
-  width: 100%;
   height: 80rpx;
-  background: linear-gradient(135deg, #00b171 0%, #00d68f 100%);
   border: none;
   border-radius: 12rpx;
 
@@ -354,8 +367,24 @@ onMounted(() => {
 
   .btn-text {
     font-size: 28rpx;
-    color: #fff;
     font-weight: 500;
+  }
+}
+
+.compare-btn {
+  background: linear-gradient(135deg, #00b171 0%, #00d68f 100%);
+
+  .btn-text {
+    color: #fff;
+  }
+}
+
+.template-btn {
+  background: #f8fafc;
+  border: 2rpx solid #e2e8f0;
+
+  .btn-text {
+    color: #64748b;
   }
 }
 
