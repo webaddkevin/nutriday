@@ -115,6 +115,18 @@
       "style": {
         "navigationBarTitleText": "食物对比"
       }
+    },
+    {
+      "path": "pages/reminder/reminder",
+      "style": {
+        "navigationBarTitleText": "提醒设置"
+      }
+    },
+    {
+      "path": "pages/nutrition-score/nutrition-score",
+      "style": {
+        "navigationBarTitleText": "营养评分"
+      }
     }
   ],
   "subPackages": [

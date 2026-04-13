@@ -173,6 +173,19 @@
             <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
           </view>
         </view>
+
+        <view class="menu-item" @tap="goToReminder">
+          <view class="menu-icon-wrap bg-purple">
+            <text class="menu-emoji">⏰</text>
+          </view>
+          <view class="menu-content">
+            <text class="menu-title">提醒设置</text>
+            <text class="menu-subtitle">喝水、吃饭、称重提醒</text>
+          </view>
+          <view class="menu-arrow">
+            <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -294,6 +307,12 @@ const goToFavorite = () => {
 const goToExport = () => {
   uni.navigateTo({
     url: '/pages/data-export/data-export',
+  });
+};
+
+const goToReminder = () => {
+  uni.navigateTo({
+    url: '/pages/reminder/reminder',
   });
 };
 
@@ -608,6 +627,9 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
         }
         &.bg-green {
           background: rgba(34, 197, 94, 0.1);
+        }
+        &.bg-purple {
+          background: rgba(139, 92, 246, 0.1);
         }
       }
 

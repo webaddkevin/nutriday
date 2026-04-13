@@ -98,6 +98,22 @@
         </view>
       </view>
 
+      <!-- 营养评分卡片 -->
+      <view class="score-card" @tap="goToNutritionScore">
+        <view class="score-left">
+          <text class="score-icon">📊</text>
+          <view class="score-info">
+            <text class="score-title">营养评分</text>
+            <text class="score-desc">查看今日营养分析</text>
+          </view>
+        </view>
+        <view class="score-right">
+          <text class="score-value">{{ nutritionScore }}</text>
+          <text class="score-unit">分</text>
+          <uni-icons type="right" size="18" color="#00b171"></uni-icons>
+        </view>
+      </view>
+
       <!-- 饮食时段卡片 -->
       <view class="meal-section">
         <view class="section-header">
@@ -245,6 +261,8 @@ const caloriePercent = computed(() =>
 
 const waterPercent = computed(() => (waterAmount.value / 2000) * 100);
 
+const nutritionScore = ref(0);
+
 const colors = {
   protein: '#f59e0b',
   carbs: '#3b82f6',
@@ -300,6 +318,8 @@ onShow(async () => {
 async function loadDailySummary() {
   try {
     dailySummary.value = await getDailySummary(todayDate);
+    // 计算营养评分
+    calculateNutritionScore();
   } catch (e) {
     console.warn('获取每日汇总失败', e);
     dailySummary.value = {
@@ -315,6 +335,35 @@ async function loadDailySummary() {
       },
     };
   }
+}
+
+function calculateNutritionScore() {
+  const data = consumed.value;
+  const target = {
+    calories: targetCalories.value,
+    protein: targetNutrients.value.protein,
+    carbs: targetNutrients.value.carbs,
+    fat: targetNutrients.value.fat,
+  };
+
+  const calcScore = (actual: number, goal: number) => {
+    if (goal === 0) return 0;
+    const ratio = actual / goal;
+    if (ratio >= 0.9 && ratio <= 1.1) return 100;
+    if (ratio >= 0.8 && ratio <= 1.2) return 80;
+    if (ratio >= 0.7 && ratio <= 1.3) return 60;
+    return 40;
+  };
+
+  const scores = [
+    calcScore(data.calories, target.calories) * 0.3,
+    calcScore(data.protein, target.protein) * 0.25,
+    calcScore(data.carbs, target.carbs) * 0.2,
+    calcScore(data.fat, target.fat) * 0.15,
+    Math.min(100, ((data.fiber || 0) / 25) * 100) * 0.1,
+  ];
+
+  nutritionScore.value = Math.round(scores.reduce((a, b) => a + b, 0));
 }
 
 async function loadWaterStats() {
@@ -361,6 +410,10 @@ function goToScan() {
 
 function goToWater() {
   uni.navigateTo({ url: '/pages/water/water' });
+}
+
+function goToNutritionScore() {
+  uni.navigateTo({ url: '/pages/nutrition-score/nutrition-score' });
 }
 </script>
 
@@ -699,6 +752,64 @@ function goToWater() {
         border-radius: 4rpx;
         transition: width 0.3s ease;
       }
+    }
+  }
+}
+
+// 营养评分卡片
+.score-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.03);
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  .score-left {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+
+    .score-icon {
+      font-size: 40rpx;
+    }
+
+    .score-info {
+      .score-title {
+        display: block;
+        font-size: 28rpx;
+        font-weight: 600;
+        color: #1e293b;
+      }
+
+      .score-desc {
+        font-size: 24rpx;
+        color: #94a3b8;
+      }
+    }
+  }
+
+  .score-right {
+    display: flex;
+    align-items: center;
+    gap: 4rpx;
+
+    .score-value {
+      font-size: 40rpx;
+      font-weight: 700;
+      color: #00b171;
+    }
+
+    .score-unit {
+      font-size: 24rpx;
+      color: #64748b;
+      margin-right: 8rpx;
     }
   }
 }
