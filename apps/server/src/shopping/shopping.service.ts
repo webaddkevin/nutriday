@@ -16,9 +16,15 @@ export class ShoppingService {
     return this.prisma.shoppingItem.create({
       data: {
         userId: dto.userId,
+        foodId: dto.foodId || null,
         name: dto.name,
         category: dto.category,
-        amount: dto.amount || '',
+        amount: dto.amount?.toString() || '',
+        unit: dto.unit || 'g',
+        calories: dto.calories || 0,
+        protein: dto.protein || 0,
+        carbs: dto.carbs || 0,
+        fat: dto.fat || 0,
         checked: dto.checked || false,
       },
     });

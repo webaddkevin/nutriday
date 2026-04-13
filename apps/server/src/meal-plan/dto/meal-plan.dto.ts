@@ -1,22 +1,41 @@
-import { IsNumber, IsString, IsOptional } from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateMealPlanDto {
-  @IsNumber()
-  @IsOptional()
-  userId?: number; // 从 token 中获取，可选
-
   @IsString()
   date: string;
 
   @IsString()
   mealType: string;
 
+  @IsNumber()
+  @IsOptional()
+  foodId?: number;
+
+  @IsString()
+  @IsOptional()
+  foodName?: string;
+
   @IsString()
   dishName: string;
 
   @IsNumber()
   @IsOptional()
-  calories?: number;
+  amount?: number;
+
+  @IsNumber()
+  calories: number;
+
+  @IsNumber()
+  @IsOptional()
+  protein?: number;
+
+  @IsNumber()
+  @IsOptional()
+  carbs?: number;
+
+  @IsNumber()
+  @IsOptional()
+  fat?: number;
 
   @IsString()
   @IsOptional()
@@ -34,7 +53,27 @@ export class UpdateMealPlanDto {
 
   @IsNumber()
   @IsOptional()
+  amount?: number;
+
+  @IsNumber()
+  @IsOptional()
   calories?: number;
+
+  @IsNumber()
+  @IsOptional()
+  protein?: number;
+
+  @IsNumber()
+  @IsOptional()
+  carbs?: number;
+
+  @IsNumber()
+  @IsOptional()
+  fat?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  logged?: boolean;
 
   @IsString()
   @IsOptional()

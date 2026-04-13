@@ -3,7 +3,7 @@ import { IsNumber, IsString, IsBoolean, IsOptional } from 'class-validator';
 export class CreateShoppingItemDto {
   @IsNumber()
   @IsOptional()
-  userId?: number; // 从 token 中获取，可选
+  foodId?: number;
 
   @IsString()
   name: string;
@@ -11,9 +11,29 @@ export class CreateShoppingItemDto {
   @IsString()
   category: string;
 
+  @IsNumber()
+  @IsOptional()
+  amount?: number;
+
   @IsString()
   @IsOptional()
-  amount?: string;
+  unit?: string;
+
+  @IsNumber()
+  @IsOptional()
+  calories?: number;
+
+  @IsNumber()
+  @IsOptional()
+  protein?: number;
+
+  @IsNumber()
+  @IsOptional()
+  carbs?: number;
+
+  @IsNumber()
+  @IsOptional()
+  fat?: number;
 
   @IsBoolean()
   @IsOptional()

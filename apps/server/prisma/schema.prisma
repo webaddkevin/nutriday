@@ -116,9 +116,15 @@ model MealLog {
 model ShoppingItem {
   id        Int      @id @default(autoincrement())
   userId    Int
+  foodId    Int?
   name      String
   category  String
   amount    String
+  unit      String   @default("g")
+  calories  Int      @default(0)
+  protein   Float    @default(0)
+  carbs     Float    @default(0)
+  fat       Float    @default(0)
   checked   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -133,14 +139,22 @@ model MealPlan {
   userId    Int
   date      String
   mealType  String
+  foodId    Int?
+  foodName  String?
   dishName  String
+  amount    Int?
   calories  Int
+  protein   Float?
+  carbs     Float?
+  fat       Float?
+  logged    Boolean  @default(false)
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId, date])
+  @@index([userId, date, mealType])
 }
 
 // 体重记录

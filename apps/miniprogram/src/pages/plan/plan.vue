@@ -7,16 +7,12 @@
           :class="['tab', { active: activeTab === 'shopping' }]"
           @click="activeTab = 'shopping'"
         >
-          <NutriIcon
-            name="star"
-            size="sm"
-            :color="activeTab === 'shopping' ? '#00b171' : '#94a3b8'"
-          />
+          <text class="tab-icon">🛒</text>
           <text class="tab-text">购物清单</text>
           <view v-if="shoppingItems.length > 0" class="tab-badge">{{ shoppingItems.length }}</view>
         </view>
         <view :class="['tab', { active: activeTab === 'meal' }]" @click="activeTab = 'meal'">
-          <NutriIcon name="plan" size="sm" :color="activeTab === 'meal' ? '#00b171' : '#94a3b8'" />
+          <text class="tab-icon">📅</text>
           <text class="tab-text">备餐计划</text>
         </view>
       </view>
@@ -27,23 +23,52 @@
       <!-- 添加区域 -->
       <view class="add-card">
         <view class="add-row">
-          <input
-            v-model="newItemName"
-            placeholder="添加购物项..."
-            class="add-input"
-            @confirm="addShoppingItem"
-          />
-          <picker mode="selector" :range="categories" @change="onCategoryChange">
-            <view class="category-picker">
-              <text class="category-text">{{ selectedCategory }}</text>
-              <text class="category-arrow">▼</text>
-            </view>
-          </picker>
+          <view class="food-select" @click="showFoodSearch = true">
+            <text v-if="!selectedFood" class="placeholder">点击选择食物...</text>
+            <text v-else class="selected-food">{{ selectedFood.name }}</text>
+            <text class="select-arrow">🔍</text>
+          </view>
         </view>
-        <button class="add-btn" @click="addShoppingItem">
-          <text class="btn-icon">+</text>
-          <text class="btn-text">添加</text>
-        </button>
+        <view v-if="selectedFood" class="food-detail">
+          <view class="detail-row">
+            <text class="detail-label">数量</text>
+            <view class="amount-input-wrap">
+              <input
+                v-model.number="newItemAmount"
+                type="digit"
+                class="amount-input"
+                placeholder="100"
+              />
+              <picker mode="selector" :range="units" @change="onUnitChange">
+                <view class="unit-picker">{{ selectedUnit }}</view>
+              </picker>
+            </view>
+          </view>
+          <view class="nutrition-preview">
+            <view class="nutrition-item">
+              <text class="nutrition-value">{{ estimatedCalories }}</text>
+              <text class="nutrition-label">kcal</text>
+            </view>
+            <view class="nutrition-item">
+              <text class="nutrition-value">{{ estimatedProtein }}g</text>
+              <text class="nutrition-label">蛋白质</text>
+            </view>
+            <view class="nutrition-item">
+              <text class="nutrition-value">{{ estimatedCarbs }}g</text>
+              <text class="nutrition-label">碳水</text>
+            </view>
+            <view class="nutrition-item">
+              <text class="nutrition-value">{{ estimatedFat }}g</text>
+              <text class="nutrition-label">脂肪</text>
+            </view>
+          </view>
+        </view>
+        <view class="add-actions">
+          <button v-if="selectedFood" class="clear-btn" @click="clearFoodSelect">清除</button>
+          <button class="add-btn" :disabled="!selectedFood" @click="addShoppingItem">
+            <text class="btn-text">{{ selectedFood ? '添加到清单' : '请先选择食物' }}</text>
+          </button>
+        </view>
       </view>
 
       <!-- 购物列表 -->
@@ -68,11 +93,16 @@
                 </view>
               </view>
               <view class="item-content">
-                <text class="item-name">{{ item.name }}</text>
-                <text v-if="item.amount" class="item-amount">{{ item.amount }}</text>
+                <view class="item-main">
+                  <text class="item-name">{{ item.name }}</text>
+                  <text class="item-amount">{{ item.amount }}{{ item.unit }}</text>
+                </view>
+                <view class="item-nutrition">
+                  <text class="item-calories">{{ item.calories }} kcal</text>
+                </view>
               </view>
               <view class="item-delete" @click="deleteItem(item)">
-                <uni-icons type="trash" size="18" color="#ef4444"></uni-icons>
+                <text class="delete-icon">🗑️</text>
               </view>
             </view>
           </view>
@@ -81,19 +111,24 @@
 
       <!-- 空状态 -->
       <view v-else class="empty-state">
-        <view class="empty-icon-wrap">
-          <text class="empty-icon">🛒</text>
-        </view>
+        <text class="empty-icon">🛒</text>
         <text class="empty-title">购物清单为空</text>
         <text class="empty-hint">添加需要购买的食材吧</text>
       </view>
 
-      <!-- 底部操作 -->
-      <view v-if="shoppingItems.some((i) => i.checked)" class="bottom-actions">
-        <button class="clear-btn" @click="clearChecked">
-          <uni-icons type="trash" size="16" color="#fff" />
-          <text>清空已勾选</text>
-        </button>
+      <!-- 底部汇总 -->
+      <view v-if="shoppingItems.length > 0" class="summary-card">
+        <view class="summary-row">
+          <text class="summary-label">总计</text>
+          <text class="summary-value">{{ shoppingItems.length }} 项</text>
+        </view>
+        <view class="summary-row">
+          <text class="summary-label">预估热量</text>
+          <text class="summary-value highlight">{{ totalCalories }} kcal</text>
+        </view>
+        <view v-if="shoppingItems.some((i) => i.checked)" class="summary-actions">
+          <button class="clear-checked-btn" @click="clearChecked">清空已勾选</button>
+        </view>
       </view>
     </view>
 
@@ -103,11 +138,11 @@
       <view class="date-card">
         <view class="date-nav">
           <view class="nav-btn" @click="prevWeek">
-            <uni-icons type="left" size="18" color="#00b171" />
+            <text class="nav-icon">◀</text>
           </view>
           <text class="date-range">{{ weekRange }}</text>
           <view class="nav-btn" @click="nextWeek">
-            <uni-icons type="right" size="18" color="#00b171" />
+            <text class="nav-icon">▶</text>
           </view>
         </view>
         <view class="week-days">
@@ -124,10 +159,38 @@
         </view>
       </view>
 
+      <!-- 每日营养汇总 -->
+      <view class="daily-summary">
+        <view class="summary-header">
+          <text class="summary-title">今日营养</text>
+          <text class="summary-date">{{ selectedDate }}</text>
+        </view>
+        <view class="summary-bars">
+          <view class="bar-item">
+            <view class="bar-header">
+              <text class="bar-label">热量</text>
+              <text class="bar-value">{{ dailyCalories }} / {{ targetCalories }} kcal</text>
+            </view>
+            <view class="bar-track">
+              <view class="bar-fill calories" :style="{ width: caloriesProgress + '%' }"></view>
+            </view>
+          </view>
+          <view class="bar-item">
+            <view class="bar-header">
+              <text class="bar-label">蛋白质</text>
+              <text class="bar-value">{{ dailyProtein }}g</text>
+            </view>
+            <view class="bar-track">
+              <view class="bar-fill protein" :style="{ width: proteinProgress + '%' }"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <!-- 当日计划 -->
       <view class="meal-plans">
         <view v-for="mealType in mealTypes" :key="mealType.value" class="meal-section">
-          <view class="meal-header" @click="showAddMeal(mealType.value)">
+          <view class="meal-header">
             <view class="meal-icon-wrap" :style="{ background: mealType.color }">
               <text class="meal-icon">{{ mealType.icon }}</text>
             </view>
@@ -135,8 +198,14 @@
               <text class="meal-name">{{ mealType.label }}</text>
               <text class="meal-cal-total">{{ getMealCalories(mealType.value) }} kcal</text>
             </view>
-            <view class="add-meal-btn">
-              <text class="add-icon">+</text>
+            <view class="header-actions">
+              <view class="add-food-btn" @click="showAddMealFood(mealType.value)">
+                <text class="action-icon">🍽️</text>
+                <text class="action-text">选食物</text>
+              </view>
+              <view class="add-custom-btn" @click="showAddMealCustom(mealType.value)">
+                <text class="action-icon">✏️</text>
+              </view>
             </view>
           </view>
           <view v-if="getMealPlansByType(mealType.value).length > 0" class="meal-items">
@@ -146,11 +215,23 @@
               class="meal-item"
             >
               <view class="meal-item-content">
-                <text class="meal-dish">{{ plan.dishName }}</text>
-                <text v-if="plan.calories" class="meal-calories">{{ plan.calories }} kcal</text>
+                <text class="meal-dish">{{ plan.foodName || plan.dishName }}</text>
+                <text v-if="plan.amount" class="meal-amount">{{ plan.amount }}g</text>
               </view>
-              <view class="meal-item-delete" @click="deleteMealPlanHandler(plan)">
-                <uni-icons type="closeempty" size="16" color="#94a3b8" />
+              <view class="meal-item-nutrition">
+                <text class="meal-calories">{{ plan.calories }} kcal</text>
+                <text v-if="plan.protein" class="meal-macro">P{{ plan.protein }}g</text>
+              </view>
+              <view class="meal-item-actions">
+                <view v-if="!plan.logged" class="log-btn" @click="logToMeal(plan)">
+                  <text class="log-icon">📝</text>
+                </view>
+                <view v-else class="logged-badge">
+                  <text class="logged-icon">✓</text>
+                </view>
+                <view class="delete-btn" @click="deleteMealPlanHandler(plan)">
+                  <text class="delete-icon">×</text>
+                </view>
               </view>
             </view>
           </view>
@@ -158,14 +239,50 @@
       </view>
     </view>
 
-    <!-- 添加菜品弹窗 -->
+    <!-- 食物搜索弹窗 -->
+    <view v-if="showFoodSearch" class="modal-overlay" @click="showFoodSearch = false">
+      <view class="food-search-modal" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">选择食物</text>
+          <text class="modal-close" @click="showFoodSearch = false">×</text>
+        </view>
+        <view class="search-bar">
+          <input
+            v-model="foodSearchKeyword"
+            placeholder="搜索食物..."
+            class="search-input"
+            @confirm="searchFoods"
+          />
+          <button class="search-btn" @click="searchFoods">搜索</button>
+        </view>
+        <scroll-view scroll-y class="food-list">
+          <view
+            v-for="food in foodSearchResults"
+            :key="food.id"
+            class="food-option"
+            @click="selectFood(food)"
+          >
+            <view class="food-info">
+              <text class="food-name">{{ food.name }}</text>
+              <text class="food-category">{{ food.category }}</text>
+            </view>
+            <view class="food-nutrition">
+              <text class="food-calories">{{ food.calories }} kcal/100g</text>
+            </view>
+          </view>
+          <view v-if="foodSearchResults.length === 0 && foodSearchKeyword" class="no-result">
+            <text>未找到相关食物</text>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+
+    <!-- 添加自定义菜品弹窗 -->
     <view v-if="showAddModal" class="modal-overlay" @click="showAddModal = false">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
-          <text class="modal-title">添加 {{ currentMealLabel }}</text>
-          <view class="modal-close" @click="showAddModal = false">
-            <uni-icons type="closeempty" size="20" color="#94a3b8" />
-          </view>
+          <text class="modal-title">{{ currentMealLabel }} - 添加菜品</text>
+          <text class="modal-close" @click="showAddModal = false">×</text>
         </view>
         <view class="modal-body">
           <view class="input-group">
@@ -173,8 +290,22 @@
             <input v-model="newDishName" placeholder="例如：番茄炒蛋" class="modal-input" />
           </view>
           <view class="input-group">
+            <text class="input-label">份量 (克)</text>
+            <input
+              v-model.number="newDishAmount"
+              type="digit"
+              placeholder="如：200"
+              class="modal-input"
+            />
+          </view>
+          <view class="input-group">
             <text class="input-label">预估热量 (kcal)</text>
-            <input v-model="newDishCalories" placeholder="可选" type="number" class="modal-input" />
+            <input
+              v-model.number="newDishCalories"
+              type="digit"
+              placeholder="可选，系统会估算"
+              class="modal-input"
+            />
           </view>
         </view>
         <view class="modal-footer">
@@ -192,37 +323,70 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import CustomTabbar from '@/components/CustomTabbar/CustomTabbar.vue';
-import NutriIcon from '@/components/NutriIcon/NutriIcon.vue';
-import {
-  getShoppingItems,
-  createShoppingItem,
-  toggleShoppingItem,
-  deleteShoppingItem,
-  clearCheckedItems,
-  type ShoppingItem,
-} from '@/api/shopping-api';
-import {
-  getMealPlansByRange,
-  createMealPlan,
-  deleteMealPlan as deleteMealPlanApi,
-  type MealPlan,
-} from '@/api/meal-plan-api';
+import { request } from '@/utils/request';
 
+// Types
+interface Food {
+  id: number;
+  name: string;
+  category: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+interface ShoppingItem {
+  id: number;
+  name: string;
+  category: string;
+  amount: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  checked: boolean;
+}
+
+interface MealPlanItem {
+  id: number;
+  date: string;
+  mealType: string;
+  foodId?: number;
+  foodName?: string;
+  dishName?: string;
+  amount?: number;
+  calories: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  logged?: boolean;
+}
+
+// State
 const activeTab = ref<'shopping' | 'meal'>('shopping');
 const shoppingItems = ref<ShoppingItem[]>([]);
-const mealPlans = ref<MealPlan[]>([]);
+const mealPlans = ref<MealPlanItem[]>([]);
 
-const newItemName = ref('');
-const categories = ['蔬菜', '水果', '肉类', '海鲜', '乳制品', '主食', '调味料', '零食', '其他'];
-const selectedCategory = ref('蔬菜');
+// 购物清单相关
+const showFoodSearch = ref(false);
+const foodSearchKeyword = ref('');
+const foodSearchResults = ref<Food[]>([]);
+const selectedFood = ref<Food | null>(null);
+const newItemAmount = ref(100);
+const selectedUnit = ref('g');
+const units = ['g', 'kg', '个', '份', '盒', '袋'];
 
+// 备餐计划相关
 const selectedDate = ref(new Date().toISOString().split('T')[0]);
 const weekOffset = ref(0);
-
 const showAddModal = ref(false);
 const currentMealType = ref('');
 const newDishName = ref('');
-const newDishCalories = ref('');
+const newDishAmount = ref(200);
+const newDishCalories = ref<number | undefined>(undefined);
+const targetCalories = ref(2000);
 
 const mealTypes = [
   { value: 'breakfast', label: '早餐', icon: '🍳', color: 'rgba(245, 158, 11, 0.1)' },
@@ -243,9 +407,30 @@ const categoryColors: Record<string, string> = {
   其他: '#94a3b8',
 };
 
-function getCategoryColor(category: string): string {
-  return categoryColors[category] || '#94a3b8';
-}
+// Computed
+const estimatedCalories = computed(() => {
+  if (!selectedFood.value) return 0;
+  const factor = selectedUnit.value === 'kg' ? 10 : selectedUnit.value === 'g' ? 0.01 : 1;
+  return Math.round(selectedFood.value.calories * newItemAmount.value * factor);
+});
+
+const estimatedProtein = computed(() => {
+  if (!selectedFood.value) return 0;
+  const factor = selectedUnit.value === 'kg' ? 10 : selectedUnit.value === 'g' ? 0.01 : 1;
+  return Math.round(selectedFood.value.protein * newItemAmount.value * factor * 10) / 10;
+});
+
+const estimatedCarbs = computed(() => {
+  if (!selectedFood.value) return 0;
+  const factor = selectedUnit.value === 'kg' ? 10 : selectedUnit.value === 'g' ? 0.01 : 1;
+  return Math.round(selectedFood.value.carbs * newItemAmount.value * factor * 10) / 10;
+});
+
+const estimatedFat = computed(() => {
+  if (!selectedFood.value) return 0;
+  const factor = selectedUnit.value === 'kg' ? 10 : selectedUnit.value === 'g' ? 0.01 : 1;
+  return Math.round(selectedFood.value.fat * newItemAmount.value * factor * 10) / 10;
+});
 
 const groupedItems = computed(() => {
   const groups: Record<string, ShoppingItem[]> = {};
@@ -256,6 +441,10 @@ const groupedItems = computed(() => {
     groups[item.category].push(item);
   }
   return groups;
+});
+
+const totalCalories = computed(() => {
+  return shoppingItems.value.reduce((sum, item) => sum + item.calories, 0);
 });
 
 const weekDays = computed(() => {
@@ -291,28 +480,89 @@ const currentMealLabel = computed(() => {
   return mealTypes.find((m) => m.value === currentMealType.value)?.label || '';
 });
 
-function onCategoryChange(e: { detail: { value: number } }) {
-  selectedCategory.value = categories[e.detail.value];
+const dailyCalories = computed(() => {
+  return mealPlans.value
+    .filter((p) => p.date === selectedDate.value)
+    .reduce((sum, p) => sum + p.calories, 0);
+});
+
+const dailyProtein = computed(() => {
+  return (
+    Math.round(
+      mealPlans.value
+        .filter((p) => p.date === selectedDate.value)
+        .reduce((sum, p) => sum + (p.protein || 0), 0) * 10,
+    ) / 10
+  );
+});
+
+const caloriesProgress = computed(() => {
+  return Math.min((dailyCalories.value / targetCalories.value) * 100, 100);
+});
+
+const proteinProgress = computed(() => {
+  const target = (targetCalories.value * 0.25) / 4; // 25%热量来自蛋白质
+  return Math.min((dailyProtein.value / target) * 100, 100);
+});
+
+// Methods
+function getCategoryColor(category: string): string {
+  return categoryColors[category] || '#94a3b8';
 }
 
-async function loadShoppingItems() {
+function onUnitChange(e: { detail: { value: number } }) {
+  selectedUnit.value = units[e.detail.value];
+}
+
+// 购物清单方法
+async function searchFoods() {
+  if (!foodSearchKeyword.value.trim()) return;
+
   try {
-    shoppingItems.value = await getShoppingItems();
+    const res = await request({
+      url: '/food/search',
+      data: { keyword: foodSearchKeyword.value },
+    });
+    foodSearchResults.value = res.data || [];
   } catch (e) {
-    console.error('加载购物清单失败', e);
+    console.error('搜索失败', e);
+    foodSearchResults.value = [];
   }
 }
 
+function selectFood(food: Food) {
+  selectedFood.value = food;
+  showFoodSearch.value = false;
+  foodSearchKeyword.value = '';
+  foodSearchResults.value = [];
+}
+
+function clearFoodSelect() {
+  selectedFood.value = null;
+  newItemAmount.value = 100;
+  selectedUnit.value = 'g';
+}
+
 async function addShoppingItem() {
-  const name = newItemName.value.trim();
-  if (!name) return;
+  if (!selectedFood.value) return;
 
   try {
-    await createShoppingItem({
-      name,
-      category: selectedCategory.value,
+    await request({
+      url: '/shopping',
+      method: 'POST',
+      data: {
+        foodId: selectedFood.value.id,
+        name: selectedFood.value.name,
+        category: selectedFood.value.category,
+        amount: newItemAmount.value,
+        unit: selectedUnit.value,
+        calories: estimatedCalories.value,
+        protein: estimatedProtein.value,
+        carbs: estimatedCarbs.value,
+        fat: estimatedFat.value,
+      },
     });
-    newItemName.value = '';
+    clearFoodSelect();
     await loadShoppingItems();
     uni.showToast({ title: '添加成功', icon: 'success' });
   } catch (e) {
@@ -321,9 +571,21 @@ async function addShoppingItem() {
   }
 }
 
+async function loadShoppingItems() {
+  try {
+    const res = await request({ url: '/shopping' });
+    shoppingItems.value = res.data || [];
+  } catch (e) {
+    console.error('加载购物清单失败', e);
+  }
+}
+
 async function toggleItem(item: ShoppingItem) {
   try {
-    await toggleShoppingItem(item.id);
+    await request({
+      url: `/shopping/${item.id}/toggle`,
+      method: 'PUT',
+    });
     await loadShoppingItems();
   } catch (e) {
     console.error('切换状态失败', e);
@@ -332,7 +594,10 @@ async function toggleItem(item: ShoppingItem) {
 
 async function deleteItem(item: ShoppingItem) {
   try {
-    await deleteShoppingItem(item.id);
+    await request({
+      url: `/shopping/${item.id}`,
+      method: 'DELETE',
+    });
     await loadShoppingItems();
     uni.showToast({ title: '已删除', icon: 'success' });
   } catch (e) {
@@ -342,7 +607,10 @@ async function deleteItem(item: ShoppingItem) {
 
 async function clearChecked() {
   try {
-    await clearCheckedItems();
+    await request({
+      url: '/shopping/clear-checked',
+      method: 'DELETE',
+    });
     await loadShoppingItems();
     uni.showToast({ title: '已清空', icon: 'success' });
   } catch (e) {
@@ -350,6 +618,7 @@ async function clearChecked() {
   }
 }
 
+// 备餐计划方法
 function prevWeek() {
   weekOffset.value--;
 }
@@ -364,28 +633,39 @@ async function loadMealPlans() {
   const endDate = weekDays.value[6].date;
 
   try {
-    mealPlans.value = await getMealPlansByRange(startDate, endDate);
+    const res = await request({
+      url: '/meal-plan',
+      data: { startDate, endDate },
+    });
+    mealPlans.value = res.data || [];
   } catch (e) {
     console.error('加载备餐计划失败', e);
   }
 }
 
-function getMealPlansByType(mealType: string): MealPlan[] {
+function getMealPlansByType(mealType: string): MealPlanItem[] {
   return mealPlans.value.filter((p) => p.date === selectedDate.value && p.mealType === mealType);
 }
 
 function getMealCalories(mealType: string): number {
-  return getMealPlansByType(mealType).reduce((sum, p) => sum + (p.calories || 0), 0);
+  return getMealPlansByType(mealType).reduce((sum, p) => sum + p.calories, 0);
 }
 
 function hasPlanOnDay(date: string): boolean {
   return mealPlans.value.some((p) => p.date === date);
 }
 
-function showAddMeal(mealType: string) {
+function showAddMealFood(mealType: string) {
+  currentMealType.value = mealType;
+  // 打开食物搜索
+  showFoodSearch.value = true;
+}
+
+function showAddMealCustom(mealType: string) {
   currentMealType.value = mealType;
   newDishName.value = '';
-  newDishCalories.value = '';
+  newDishAmount.value = 200;
+  newDishCalories.value = undefined;
   showAddModal.value = true;
 }
 
@@ -396,12 +676,20 @@ async function addMealPlan() {
     return;
   }
 
+  // 如果没有输入热量，估算一个（假设平均 150kcal/100g）
+  const calories = newDishCalories.value || Math.round(newDishAmount.value * 1.5);
+
   try {
-    await createMealPlan({
-      date: selectedDate.value,
-      mealType: currentMealType.value,
-      dishName,
-      calories: newDishCalories.value ? parseInt(newDishCalories.value) : undefined,
+    await request({
+      url: '/meal-plan',
+      method: 'POST',
+      data: {
+        date: selectedDate.value,
+        mealType: currentMealType.value,
+        dishName,
+        amount: newDishAmount.value,
+        calories,
+      },
     });
     showAddModal.value = false;
     await loadMealPlans();
@@ -412,9 +700,12 @@ async function addMealPlan() {
   }
 }
 
-async function deleteMealPlanHandler(plan: MealPlan) {
+async function deleteMealPlanHandler(plan: MealPlanItem) {
   try {
-    await deleteMealPlanApi(plan.id);
+    await request({
+      url: `/meal-plan/${plan.id}`,
+      method: 'DELETE',
+    });
     await loadMealPlans();
     uni.showToast({ title: '已删除', icon: 'success' });
   } catch (e) {
@@ -422,12 +713,88 @@ async function deleteMealPlanHandler(plan: MealPlan) {
   }
 }
 
+// 一键记录到饮食日志
+async function logToMeal(plan: MealPlanItem) {
+  try {
+    await request({
+      url: '/meal-log',
+      method: 'POST',
+      data: {
+        date: plan.date,
+        mealType: plan.mealType,
+        foodId: plan.foodId,
+        foodName: plan.foodName || plan.dishName,
+        amount: plan.amount || 100,
+        calories: plan.calories,
+        protein: plan.protein,
+        carbs: plan.carbs,
+        fat: plan.fat,
+      },
+    });
+
+    // 标记为已记录
+    plan.logged = true;
+    uni.showToast({ title: '已记录到饮食日志', icon: 'success' });
+  } catch (e) {
+    console.error('记录失败', e);
+    uni.showToast({ title: '记录失败', icon: 'none' });
+  }
+}
+
+// 加载用户目标
+async function loadUserTarget() {
+  try {
+    const res = await request({ url: '/profile' });
+    targetCalories.value = res.data?.targetCalories || res.data?.tdee || 2000;
+  } catch (e) {
+    console.error('加载用户目标失败', e);
+  }
+}
+
+// Watch
 watch(weekOffset, loadMealPlans);
 watch(activeTab, (val) => {
   if (val === 'meal') {
     loadMealPlans();
+    loadUserTarget();
   }
 });
+
+// 监听食物选择后添加到备餐计划
+watch(showFoodSearch, (val) => {
+  if (!val && selectedFood.value && currentMealType.value) {
+    // 从食物搜索选择后，添加到备餐计划
+    addFoodToMealPlan();
+  }
+});
+
+async function addFoodToMealPlan() {
+  if (!selectedFood.value || !currentMealType.value) return;
+
+  try {
+    await request({
+      url: '/meal-plan',
+      method: 'POST',
+      data: {
+        date: selectedDate.value,
+        mealType: currentMealType.value,
+        foodId: selectedFood.value.id,
+        foodName: selectedFood.value.name,
+        amount: 100,
+        calories: selectedFood.value.calories,
+        protein: selectedFood.value.protein,
+        carbs: selectedFood.value.carbs,
+        fat: selectedFood.value.fat,
+      },
+    });
+    clearFoodSelect();
+    currentMealType.value = '';
+    await loadMealPlans();
+    uni.showToast({ title: '添加成功', icon: 'success' });
+  } catch (e) {
+    console.error('添加失败', e);
+  }
+}
 
 onMounted(() => {
   loadShoppingItems();
@@ -470,6 +837,10 @@ onMounted(() => {
       box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
     }
 
+    .tab-icon {
+      font-size: 28rpx;
+    }
+
     .tab-text {
       font-size: 28rpx;
       color: #64748b;
@@ -503,70 +874,133 @@ onMounted(() => {
   border-radius: 24rpx;
   padding: 24rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 
   .add-row {
-    display: flex;
-    gap: 16rpx;
     margin-bottom: 16rpx;
   }
 
-  .add-input {
-    flex: 1;
-    height: 80rpx;
+  .food-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 88rpx;
     padding: 0 24rpx;
+    background: #f8fafc;
     border: 2rpx solid #e2e8f0;
     border-radius: 16rpx;
-    font-size: 28rpx;
-    background: #f8fafc;
 
-    &:focus {
-      border-color: #00b171;
-      background: #fff;
+    .placeholder {
+      color: #94a3b8;
+      font-size: 28rpx;
+    }
+
+    .selected-food {
+      color: #1e293b;
+      font-size: 28rpx;
+      font-weight: 500;
+    }
+
+    .select-arrow {
+      font-size: 28rpx;
     }
   }
 
-  .category-picker {
-    display: flex;
-    align-items: center;
-    gap: 8rpx;
-    padding: 0 24rpx;
-    height: 80rpx;
+  .food-detail {
     background: #f8fafc;
     border-radius: 16rpx;
-    border: 2rpx solid #e2e8f0;
+    padding: 20rpx;
+    margin-bottom: 16rpx;
 
-    .category-text {
-      font-size: 26rpx;
+    .detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16rpx;
+
+      .detail-label {
+        font-size: 26rpx;
+        color: #64748b;
+      }
+
+      .amount-input-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12rpx;
+
+        .amount-input {
+          width: 120rpx;
+          height: 64rpx;
+          text-align: center;
+          background: #fff;
+          border: 2rpx solid #e2e8f0;
+          border-radius: 12rpx;
+          font-size: 28rpx;
+        }
+
+        .unit-picker {
+          padding: 0 20rpx;
+          height: 64rpx;
+          background: #fff;
+          border: 2rpx solid #e2e8f0;
+          border-radius: 12rpx;
+          font-size: 26rpx;
+          color: #64748b;
+          line-height: 64rpx;
+        }
+      }
+    }
+
+    .nutrition-preview {
+      display: flex;
+      gap: 12rpx;
+
+      .nutrition-item {
+        flex: 1;
+        text-align: center;
+        padding: 12rpx;
+        background: #fff;
+        border-radius: 12rpx;
+
+        .nutrition-value {
+          display: block;
+          font-size: 26rpx;
+          font-weight: 600;
+          color: #1e293b;
+        }
+
+        .nutrition-label {
+          font-size: 20rpx;
+          color: #94a3b8;
+        }
+      }
+    }
+  }
+
+  .add-actions {
+    display: flex;
+    gap: 16rpx;
+
+    button {
+      flex: 1;
+      height: 80rpx;
+      border-radius: 16rpx;
+      font-size: 28rpx;
+      font-weight: 600;
+      border: none;
+    }
+
+    .clear-btn {
+      background: #f1f5f9;
       color: #64748b;
     }
 
-    .category-arrow {
-      font-size: 18rpx;
-      color: #94a3b8;
-    }
-  }
-
-  .add-btn {
-    width: 100%;
-    height: 80rpx;
-    background: linear-gradient(135deg, #00b171 0%, #00d387 100%);
-    border: none;
-    border-radius: 16rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8rpx;
-
-    .btn-icon {
+    .add-btn {
+      background: linear-gradient(135deg, #00b171 0%, #00d387 100%);
       color: #fff;
-      font-size: 32rpx;
-    }
 
-    .btn-text {
-      color: #fff;
-      font-size: 28rpx;
-      font-weight: 600;
+      &[disabled] {
+        opacity: 0.5;
+      }
     }
   }
 }
@@ -578,7 +1012,6 @@ onMounted(() => {
     border-radius: 24rpx;
     margin-bottom: 20rpx;
     overflow: hidden;
-    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
   }
 
   .category-header {
@@ -636,8 +1069,9 @@ onMounted(() => {
         height: 40rpx;
         border: 2rpx solid #cbd5e1;
         border-radius: 10rpx;
-        @include flex-center;
-        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
         &.checked {
           background: #00b171;
@@ -647,7 +1081,6 @@ onMounted(() => {
         .check-mark {
           color: #fff;
           font-size: 24rpx;
-          font-weight: 600;
         }
       }
     }
@@ -655,20 +1088,81 @@ onMounted(() => {
     .item-content {
       flex: 1;
 
-      .item-name {
-        font-size: 28rpx;
-        color: #1e293b;
+      .item-main {
+        margin-bottom: 4rpx;
+
+        .item-name {
+          font-size: 28rpx;
+          color: #1e293b;
+        }
+
+        .item-amount {
+          font-size: 24rpx;
+          color: #64748b;
+          margin-left: 12rpx;
+        }
       }
 
-      .item-amount {
-        font-size: 24rpx;
-        color: #94a3b8;
-        margin-left: 12rpx;
+      .item-nutrition {
+        .item-calories {
+          font-size: 22rpx;
+          color: #00b171;
+        }
       }
     }
 
     .item-delete {
       padding: 8rpx;
+
+      .delete-icon {
+        font-size: 28rpx;
+      }
+    }
+  }
+}
+
+// 汇总卡片
+.summary-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-top: 24rpx;
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12rpx 0;
+
+    .summary-label {
+      font-size: 26rpx;
+      color: #64748b;
+    }
+
+    .summary-value {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #1e293b;
+
+      &.highlight {
+        color: #00b171;
+      }
+    }
+  }
+
+  .summary-actions {
+    margin-top: 16rpx;
+    padding-top: 16rpx;
+    border-top: 1rpx solid #f1f5f9;
+
+    .clear-checked-btn {
+      width: 100%;
+      height: 72rpx;
+      background: #fef2f2;
+      color: #ef4444;
+      border: none;
+      border-radius: 12rpx;
+      font-size: 26rpx;
     }
   }
 }
@@ -680,17 +1174,9 @@ onMounted(() => {
   align-items: center;
   padding: 80rpx 0;
 
-  .empty-icon-wrap {
-    width: 120rpx;
-    height: 120rpx;
-    background: #f1f5f9;
-    border-radius: 40rpx;
-    @include flex-center;
-    margin-bottom: 24rpx;
-  }
-
   .empty-icon {
-    font-size: 56rpx;
+    font-size: 80rpx;
+    margin-bottom: 20rpx;
   }
 
   .empty-title {
@@ -706,38 +1192,12 @@ onMounted(() => {
   }
 }
 
-// 底部操作
-.bottom-actions {
-  position: fixed;
-  bottom: 180rpx;
-  left: 24rpx;
-  right: 24rpx;
-  z-index: 100;
-
-  .clear-btn {
-    width: 100%;
-    height: 88rpx;
-    background: #ef4444;
-    border: none;
-    border-radius: 20rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8rpx;
-    color: #fff;
-    font-size: 28rpx;
-    font-weight: 600;
-    box-shadow: 0 8rpx 24rpx rgba(239, 68, 68, 0.3);
-  }
-}
-
 // 日期卡片
 .date-card {
   background: #fff;
   border-radius: 24rpx;
   padding: 24rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 
   .date-nav {
     display: flex;
@@ -750,7 +1210,14 @@ onMounted(() => {
       height: 56rpx;
       background: #f1f5f9;
       border-radius: 50%;
-      @include flex-center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .nav-icon {
+        font-size: 24rpx;
+        color: #00b171;
+      }
     }
 
     .date-range {
@@ -816,6 +1283,80 @@ onMounted(() => {
   }
 }
 
+// 每日营养汇总
+.daily-summary {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+
+  .summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+
+    .summary-title {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .summary-date {
+      font-size: 24rpx;
+      color: #94a3b8;
+    }
+  }
+
+  .summary-bars {
+    .bar-item {
+      margin-bottom: 16rpx;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .bar-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8rpx;
+
+        .bar-label {
+          font-size: 24rpx;
+          color: #64748b;
+        }
+
+        .bar-value {
+          font-size: 24rpx;
+          color: #1e293b;
+          font-weight: 500;
+        }
+      }
+
+      .bar-track {
+        height: 12rpx;
+        background: #f1f5f9;
+        border-radius: 6rpx;
+        overflow: hidden;
+
+        .bar-fill {
+          height: 100%;
+          border-radius: 6rpx;
+          transition: width 0.3s ease;
+
+          &.calories {
+            background: linear-gradient(90deg, #00b171 0%, #00d387 100%);
+          }
+
+          &.protein {
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+          }
+        }
+      }
+    }
+  }
+}
+
 // 备餐计划
 .meal-plans {
   .meal-section {
@@ -823,7 +1364,6 @@ onMounted(() => {
     border-radius: 24rpx;
     margin-bottom: 20rpx;
     overflow: hidden;
-    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 
     .meal-header {
       display: flex;
@@ -835,7 +1375,9 @@ onMounted(() => {
         width: 64rpx;
         height: 64rpx;
         border-radius: 18rpx;
-        @include flex-center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
         .meal-icon {
           font-size: 32rpx;
@@ -859,17 +1401,35 @@ onMounted(() => {
         }
       }
 
-      .add-meal-btn {
-        width: 56rpx;
-        height: 56rpx;
-        background: #f1f5f9;
-        border-radius: 50%;
-        @include flex-center;
+      .header-actions {
+        display: flex;
+        gap: 12rpx;
 
-        .add-icon {
-          font-size: 32rpx;
-          color: #00b171;
-          font-weight: 300;
+        .add-food-btn,
+        .add-custom-btn {
+          padding: 12rpx 20rpx;
+          border-radius: 12rpx;
+          display: flex;
+          align-items: center;
+          gap: 6rpx;
+        }
+
+        .add-food-btn {
+          background: #00b171;
+
+          .action-icon,
+          .action-text {
+            color: #fff;
+            font-size: 24rpx;
+          }
+        }
+
+        .add-custom-btn {
+          background: #f1f5f9;
+
+          .action-icon {
+            font-size: 24rpx;
+          }
         }
       }
     }
@@ -879,7 +1439,6 @@ onMounted(() => {
 
       .meal-item {
         display: flex;
-        justify-content: space-between;
         align-items: center;
         padding: 16rpx;
         background: #f8fafc;
@@ -891,20 +1450,77 @@ onMounted(() => {
         }
 
         .meal-item-content {
+          flex: 1;
+
           .meal-dish {
             font-size: 28rpx;
             color: #1e293b;
           }
 
-          .meal-calories {
+          .meal-amount {
             font-size: 24rpx;
-            color: #94a3b8;
-            margin-left: 12rpx;
+            color: #64748b;
+            margin-left: 8rpx;
           }
         }
 
-        .meal-item-delete {
-          padding: 8rpx;
+        .meal-item-nutrition {
+          text-align: right;
+          margin-right: 16rpx;
+
+          .meal-calories {
+            display: block;
+            font-size: 24rpx;
+            color: #00b171;
+            font-weight: 500;
+          }
+
+          .meal-macro {
+            font-size: 20rpx;
+            color: #94a3b8;
+          }
+        }
+
+        .meal-item-actions {
+          display: flex;
+          gap: 8rpx;
+
+          .log-btn,
+          .logged-badge,
+          .delete-btn {
+            width: 48rpx;
+            height: 48rpx;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .log-btn {
+            background: #00b171;
+
+            .log-icon {
+              font-size: 24rpx;
+            }
+          }
+
+          .logged-badge {
+            background: #f0fdf4;
+
+            .logged-icon {
+              color: #00b171;
+              font-size: 24rpx;
+            }
+          }
+
+          .delete-btn {
+            background: #fef2f2;
+
+            .delete-icon {
+              color: #ef4444;
+              font-size: 28rpx;
+            }
+          }
         }
       }
     }
@@ -946,7 +1562,8 @@ onMounted(() => {
   }
 
   .modal-close {
-    padding: 8rpx;
+    font-size: 40rpx;
+    color: #94a3b8;
   }
 }
 
@@ -975,10 +1592,6 @@ onMounted(() => {
       border-radius: 16rpx;
       font-size: 28rpx;
       box-sizing: border-box;
-
-      &:focus {
-        border-color: #00b171;
-      }
     }
   }
 }
@@ -987,8 +1600,7 @@ onMounted(() => {
   display: flex;
   border-top: 1rpx solid #f1f5f9;
 
-  .cancel-btn,
-  .confirm-btn {
+  button {
     flex: 1;
     height: 100rpx;
     border: none;
@@ -1005,6 +1617,89 @@ onMounted(() => {
   .confirm-btn {
     color: #00b171;
     font-weight: 600;
+  }
+}
+
+// 食物搜索弹窗
+.food-search-modal {
+  width: 90%;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 28rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .search-bar {
+    display: flex;
+    gap: 16rpx;
+    padding: 24rpx;
+    border-bottom: 1rpx solid #f1f5f9;
+
+    .search-input {
+      flex: 1;
+      height: 80rpx;
+      padding: 0 24rpx;
+      background: #f8fafc;
+      border: 2rpx solid #e2e8f0;
+      border-radius: 16rpx;
+      font-size: 28rpx;
+    }
+
+    .search-btn {
+      width: 140rpx;
+      height: 80rpx;
+      background: #00b171;
+      color: #fff;
+      border: none;
+      border-radius: 16rpx;
+      font-size: 28rpx;
+    }
+  }
+
+  .food-list {
+    flex: 1;
+    max-height: 60vh;
+
+    .food-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24rpx;
+      border-bottom: 1rpx solid #f1f5f9;
+
+      &:active {
+        background: #f8fafc;
+      }
+
+      .food-info {
+        .food-name {
+          display: block;
+          font-size: 28rpx;
+          color: #1e293b;
+          margin-bottom: 4rpx;
+        }
+
+        .food-category {
+          font-size: 22rpx;
+          color: #94a3b8;
+        }
+      }
+
+      .food-nutrition {
+        .food-calories {
+          font-size: 24rpx;
+          color: #00b171;
+        }
+      }
+    }
+
+    .no-result {
+      padding: 60rpx;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 26rpx;
+    }
   }
 }
 </style>
