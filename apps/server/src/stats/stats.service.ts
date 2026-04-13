@@ -231,6 +231,92 @@ export class StatsService {
   }
 
   /**
+   * 获取用户统计数据（用于成就系统）
+   */
+  async getUserStats(userId: number) {
+    // 获取所有饮食记录
+    const mealLogs = await this.prisma.mealLog.findMany({
+      where: { userId },
+      select: { date: true, foodId: true },
+    });
+
+    // 获取所有饮水记录
+    const waterLogs = await this.prisma.waterLog.findMany({
+      where: { userId },
+      select: { date: true, amount: true },
+    });
+
+    // 获取所有体重记录
+    const weightLogs = await this.prisma.weightLog.findMany({
+      where: { userId },
+      select: { date: true },
+    });
+
+    // 获取用户目标
+    const profile = await this.prisma.userProfile.findUnique({
+      where: { userId },
+      select: { targetCalories: true, tdee: true },
+    });
+    const targetCalories = profile?.targetCalories || profile?.tdee || 2000;
+
+    // 计算总天数
+    const uniqueDates = new Set(mealLogs.map((m) => m.date));
+    const totalDays = uniqueDates.size;
+
+    // 计算连续天数
+    const sortedDates = Array.from(uniqueDates).sort().reverse();
+    let consecutiveDays = 0;
+
+    for (let i = 0; i < sortedDates.length; i++) {
+      const expectedDate = new Date();
+      expectedDate.setDate(expectedDate.getDate() - i);
+      const expectedDateStr = expectedDate.toISOString().split('T')[0];
+
+      if (sortedDates[i] === expectedDateStr) {
+        consecutiveDays++;
+      } else {
+        break;
+      }
+    }
+
+    // 计算总餐数
+    const totalMeals = mealLogs.length;
+
+    // 计算不同食物数
+    const uniqueFoods = new Set(mealLogs.map((m) => m.foodId).filter(Boolean));
+    const totalFoods = uniqueFoods.size;
+
+    // 计算达成饮水目标的天数
+    const waterGoalDays = waterLogs.filter((w) => w.amount >= 2000).length;
+
+    // 计算达成热量目标的天数（需要重新查询带热量数据）
+    const mealLogsWithCalories = await this.prisma.mealLog.findMany({
+      where: { userId },
+      select: { date: true, calories: true },
+    });
+
+    const dailyCalories: Record<string, number> = {};
+    for (const log of mealLogsWithCalories) {
+      if (!dailyCalories[log.date]) dailyCalories[log.date] = 0;
+      dailyCalories[log.date] += log.calories;
+    }
+
+    const calorieGoalDays = Object.values(dailyCalories).filter(
+      (cal) => cal >= targetCalories * 0.9 && cal <= targetCalories * 1.1,
+    ).length;
+
+    return {
+      totalDays,
+      consecutiveDays,
+      totalMeals,
+      totalFoods,
+      waterGoalDays,
+      calorieGoalDays,
+      weightLogs: weightLogs.length,
+    };
+  }
+
+  /**
    * 按日期分组
    */
   private groupByDate(

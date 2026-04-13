@@ -59,4 +59,12 @@ export class StatsController {
       days ? parseInt(days) : 7,
     );
   }
+
+  /**
+   * 获取用户统计数据（用于成就系统）
+   */
+  @Get('user')
+  async getUserStats(@UserId() userId: number) {
+    return this.statsService.getUserStats(userId);
+  }
 }

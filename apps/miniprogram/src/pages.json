@@ -133,6 +133,12 @@
       "style": {
         "navigationBarTitleText": "饮食模板"
       }
+    },
+    {
+      "path": "pages/achievement/achievement",
+      "style": {
+        "navigationBarTitleText": "我的成就"
+      }
     }
   ],
   "subPackages": [

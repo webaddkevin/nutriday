@@ -186,6 +186,19 @@
             <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
           </view>
         </view>
+
+        <view class="menu-item" @tap="goToAchievement">
+          <view class="menu-icon-wrap bg-yellow">
+            <text class="menu-emoji">🏆</text>
+          </view>
+          <view class="menu-content">
+            <text class="menu-title">我的成就</text>
+            <text class="menu-subtitle">查看解锁的成就徽章</text>
+          </view>
+          <view class="menu-arrow">
+            <uni-icons type="right" size="16" color="#cbd5e1"></uni-icons>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -313,6 +326,12 @@ const goToExport = () => {
 const goToReminder = () => {
   uni.navigateTo({
     url: '/pages/reminder/reminder',
+  });
+};
+
+const goToAchievement = () => {
+  uni.navigateTo({
+    url: '/pages/achievement/achievement',
   });
 };
 
@@ -630,6 +649,9 @@ const saveUserInfo = async (updates: { nickname?: string; avatarUrl?: string }) 
         }
         &.bg-purple {
           background: rgba(139, 92, 246, 0.1);
+        }
+        &.bg-yellow {
+          background: rgba(245, 158, 11, 0.1);
         }
       }
 
